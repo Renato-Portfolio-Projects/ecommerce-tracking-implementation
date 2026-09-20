@@ -1,0 +1,23 @@
+:root {
+  /* Paper and ink. Every neutral leans warm, never pure white or black. */
+  --paper: oklch(96% 0.014 85);
+  --paper-shade: oklch(92% 0.02 85);
+  --ink: oklch(24% 0.02 60);
+  --ink-soft: oklch(42% 0.02 60);
+
+  /* Two spot inks. Printed one over the other, slightly off, they make the "second impression". */
+  --spot-red: oklch(60% 0.19 32);
+  --spot-blue: oklch(45% 0.13 255);
+
+  /* Type. System fonts until the brand pass in v0.2 picks self-hosted ones. */
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: ui-serif, Georgia, 'Times New Roman', serif;
+
+  /* Space scale. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --space-6: 4rem;
+}

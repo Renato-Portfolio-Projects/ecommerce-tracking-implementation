@@ -1,0 +1,53 @@
+# Automatic checks for this repository.
+#
+# Why this exists
+# Every change is checked by GitHub on a clean computer before it can reach
+# the main branch. That catches mistakes early, and it lets anyone reading the
+# repository see that each change was checked, instead of relying on someone
+# remembering to run the checks by hand.
+#
+# Why it is written this way
+# - "verify" runs the same single command (npm run verify) that is used on a
+#   laptop, so a pass here means exactly what a pass there means. It installs
+#   the exact versions recorded in package-lock.json.
+# - "secrets" reads the full history (fetch-depth: 0), because a secret that
+#   was committed once stays findable even after the file is deleted.
+# - It runs on pull requests and on pushes to main, so a change is checked
+#   before it is merged and again after.
+#
+# Who decides
+# Changes to this file are proposed and explained to Renato first, and are
+# committed only after he approves them.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Checks the code itself: types, unit tests, the build, and the built page.
+  verify:
+    name: Type check, tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+
+  # Looks through the whole history for passwords, keys and tokens.
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

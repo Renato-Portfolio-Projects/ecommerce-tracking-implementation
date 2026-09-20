@@ -1,7 +1,7 @@
 # Dummy Store: Design Spec
 
 Date: 2026-09-19 (updated after the cost and decisions round)
-Status: draft, waiting on Renato's review
+Status: approved by Renato on 2026-09-19
 Owner: Renato Perocchio
 
 ## 1. Purpose and success criteria
@@ -25,21 +25,19 @@ Success looks like this:
 | Back end | Light back end: Vercel serverless functions plus Upstash Redis on the Free plan (no card). Redis deletes each record itself after 7 days, so the retention promise does not depend on a cleanup script |
 | Framework | Astro, multi-page, latest stable at build time. Next.js was considered and rejected: the target roles screen for tracking skills, and client-side navigation would add virtual-pageview work that competes with the tracking story |
 | Hosting | Vercel Hobby (a personal portfolio fits its non-commercial terms) |
-| Domain | Dedicated domain from Namecheap. The only planned cost (section 12) |
+| Domain | `secondimpression.ca`, bought from Namecheap on 2026-09-19 for USD 11.98 a year (CAD 16.78 charged to Renato's card after conversion). The only planned cost (section 12) |
 | Cost target | $0 beyond the domain. Free plans only, no upgrades, no card entered anywhere |
 | Server-side tagging | Stape Free plan only. No card, no upgrade. 10K requests a month per container. At the limit the container is disabled and stays disabled (no automatic charge, no monthly reset) until upgraded. Up to 5 free containers per Stape account, each with its own quota, so several projects can share one account, each in its own container. A custom domain is listed as paid-only, so the server container uses Stape's default URL and the case study says so plainly |
 | Consent | Custom-built banner with Google Consent Mode v2 in **basic** mode: no Google or Meta tag loads until the visitor opts in. Advanced mode was considered and dropped. It sends cookieless pings before consent (which Quebec's Law 25 reads strictly) and would spend server quota on visitors who said no. Its one real benefit, Google's behavioral modeling, needs roughly 1,000 denied-consent events a day for at least 7 days plus 1,000 daily consenting users, which a portfolio demo will not reach. Decided by Renato's delegation on 2026-09-19 |
 | Product category | Clothing (t-shirts and pants). Comics was dropped: inventing titles and cover art is extra work with no tracking value |
-| Naming | Working project name: Dummy Store. Storefront brand: **Second Impression**, chosen by Renato on 2026-09-19. It refers to the second pass in screen printing and to the second ad impression in retargeting. Tagline idea: "Worth a second look." Domains `secondimpressionco`, `secondimpressionsupply` and `secondimpressiongoods` were open on `.com` and `.ca` in a registry check, and no existing apparel brand with that name turned up in a web search. It is not trademark-cleared, so a CIPO and USPTO search comes before buying. The case study gets a short "About the name" note. Rejected for close existing brands: WayBack Wears, Near Mint, Backstock, Thread Count, Yore, Bygone, Rewind |
+| Naming | Working project name: Dummy Store. Storefront brand: **Second Impression**, chosen by Renato on 2026-09-19. It refers to the second pass in screen printing and to the second ad impression in retargeting. Tagline idea: "Worth a second look." Domains `secondimpressionco`, `secondimpressionsupply` and `secondimpressiongoods` were open on `.com` and `.ca` in a registry check, and no existing apparel brand with that name turned up in a web search. Renato searched the Canadian (CIPO) and US (USPTO) trademark databases on 2026-09-19. Neither showed a mark named Second Impression, and the one close variant found, a "2nd Impression" record in the US, is cancelled. That is a due-diligence check, not legal clearance, and it cannot see names that are in use but never registered. The case study gets a short "About the name" note. Rejected for close existing brands: WayBack Wears, Near Mint, Backstock, Thread Count, Yore, Bygone, Rewind |
 | Lead popup | Shows after 5 seconds or 40% scroll, whichever comes first. The README states that 5 seconds is a deliberate demo setting |
 | Currency | Header selector for CAD, USD, EUR and GBP at fixed, documented demo rates. Base currency CAD. The currency locks once checkout starts. The default comes from the visitor's country (Vercel's country header, country-level only, never stored): Canada CAD, US USD, UK GBP, euro countries EUR, everywhere else USD. Built in v0.2 |
-| Repository | New public repo under Renato-Portfolio-Projects, named `ecommerce-tracking-implementation` ("implementation" is the word job postings use for this work). The description and GitHub topics still need Renato's approval before anything is created. Protected `main`, a PR per phase |
+| Repository | New public repo under Renato-Portfolio-Projects, named `ecommerce-tracking-implementation` ("implementation" is the word job postings use for this work). The description and topics were approved by Renato on 2026-09-19 and applied. Protected `main`, a PR per phase |
 | AI attribution | Commits keep the Claude co-author trailer, and the README has a "How this was built" section |
 
 ### Open
 
-- Repo description wording and GitHub topics: proposed for Renato's approval before anything is created.
-- Domain: which `.com` or `.ca` variant of Second Impression, decided at purchase and after a trademark search on CIPO and USPTO.
 - TypeScript versus plain JavaScript: TypeScript is assumed.
 
 ## 3. Architecture
@@ -201,7 +199,7 @@ Planned entries for v1.0:
 - **Testing and QA:** Playwright, GTM Preview, GA4 DebugView, Meta Events Manager Test Events, Meta Pixel Helper, Lighthouse CI, gitleaks, a link checker.
 - **Repo and development:** Git and GitHub (Actions, secret scanning), Claude Code (AI-assisted), VS Code.
 
-Later entries (v1.x): TikTok Pixel and Events API, Microsoft Clarity, Looker Studio, BigQuery export (sandbox only), catalog feed (Meta Commerce Manager, Google Merchant Center), Klaviyo.
+Later entries (v1.x): TikTok Pixel and Events API, LinkedIn Insight Tag and Conversions API, Microsoft Clarity, Looker Studio, BigQuery export (sandbox only), catalog feed (Meta Commerce Manager, Google Merchant Center), Klaviyo.
 
 ## 8. Repository workflow
 
@@ -226,7 +224,7 @@ Later entries (v1.x): TikTok Pixel and Events API, Microsoft Clarity, Looker Stu
 | v0.5 Proof and case study | `/proof`, `/case-study`, stack section, outbox | A stranger completes the tour |
 | v1.0 Release | CI complete, Lighthouse budgets met, README, walkthrough video, container exports, decision records, security review, link audit, redacted screenshots | Release checklist signed off by Renato |
 
-v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok Events API, labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
+v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
 
 ## 10. Verification strategy
 
@@ -256,7 +254,7 @@ Target: $0 beyond the domain.
 
 | Item | Cost | Catch |
 |---|---|---|
-| Domain (Namecheap) | The one real cost. A `.com` is often promo-priced in year one (about USD 7) and renews near USD 15 (verify at checkout). A `.ca` can be about CAD 12 a year | It must stay registered while the portfolio is in use. Decline registrar upsells |
+| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. Confirm the renewal price on the order page | It must stay registered while the portfolio is in use. Decline registrar upsells |
 | Stape Free | $0, no card | Disabled at 10K requests a month per container. Never charged automatically |
 | Vercel Hobby | $0 | Hard caps, no overage billing. Non-commercial use only, which fits |
 | Redis (Upstash Free) | $0, no card | 500K commands a month, 256 MB (verify at signup). Choose the Free plan when the Vercel Marketplace asks |
