@@ -11,7 +11,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The design spec for the store and its tracking.
 - A tracking plan covering each platform and event, checked against the code.
 - A list of every tool and its cost, checked so that only the domain can cost money.
-- A holding page with the demo notice, kept out of search engines.
+- A placeholder page with the demo notice, kept out of search engines. It stays until the real store is built.
 - Security headers and a `robots.txt`.
 - CI that type-checks, tests, builds and scans for secrets on every push.
 - Brand notes, and a checklist of the accounts and domain steps that need Renato.

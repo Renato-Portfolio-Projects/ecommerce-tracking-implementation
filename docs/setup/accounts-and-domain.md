@@ -59,7 +59,7 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 - [ ] Sign in with GitHub.
 - [ ] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
 - [ ] Add the environment variable `PUBLIC_SITE_URL` with the final `https://` address of the domain.
-- [ ] Deploy, and confirm the `*.vercel.app` address loads the holding page.
+- [ ] Deploy, and confirm the `*.vercel.app` address loads the placeholder page.
 - [ ] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project.
 - [ ] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works.
 - [ ] Confirm the account is on the Hobby plan and no card is on file.

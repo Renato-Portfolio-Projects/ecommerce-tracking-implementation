@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const html = readFileSync(new URL('../../dist/index.html', import.meta.url), 'utf8');
 
-describe('the built holding page', () => {
+describe('the built placeholder page', () => {
   it('tells search engines to stay away', () => {
     expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"\s*\/?>/);
   });

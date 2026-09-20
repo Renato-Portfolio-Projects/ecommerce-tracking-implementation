@@ -24,7 +24,7 @@ body {
   text-align: center;
 }
 
-.holding {
+.placeholder {
   min-height: 70vh;
   display: grid;
   place-content: center;
@@ -33,7 +33,7 @@ body {
   text-align: center;
 }
 
-.holding .eyebrow {
+.placeholder .eyebrow {
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.875rem;
@@ -41,7 +41,7 @@ body {
   text-transform: uppercase;
 }
 
-.holding h1 {
+.placeholder h1 {
   margin: 0;
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 9vw, 5.5rem);
@@ -52,7 +52,7 @@ body {
   text-shadow: 0.04em 0.03em 0 var(--spot-blue);
 }
 
-.holding .tagline {
+.placeholder .tagline {
   margin: 0;
   font-size: 1.25rem;
 }
