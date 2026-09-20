@@ -224,7 +224,7 @@ Later entries (v1.x): TikTok Pixel and Events API, LinkedIn Insight Tag and Conv
 | v0.5 Proof and case study | `/proof`, `/case-study`, stack section, outbox | A stranger completes the tour |
 | v1.0 Release | CI complete, Lighthouse budgets met, README, walkthrough video, container exports, decision records, security review, link audit, redacted screenshots | Release checklist signed off by Renato |
 
-v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
+v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, collection pages reached from cards on the home page (a `select_promotion` click on the card, then a `view_item_list` on the collection page), a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
 
 ## 10. Verification strategy
 
