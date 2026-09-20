@@ -28,13 +28,15 @@ The same personal Google login can stay in use. What keeps this project separate
 
 Because this project has its own GTM and GA4 accounts, an interviewer can be given read-only access to them without seeing anything else.
 
-## 1. Trademark search (before buying anything)
+## 1. Trademark search
 
 Not legal advice. This is a due-diligence check on the name.
 
-- [ ] Search "Second Impression" in the Canadian Trademarks Database (CIPO). Look at class 25 (clothing) and class 35 (retail store services).
-- [ ] Do the same in the USPTO trademark search.
-- [ ] If a live mark for clothing turns up, stop and talk it through with Claude before going further.
+- [x] Search "Second Impression" in the Canadian Trademarks Database (CIPO). Look at class 25 (clothing) and class 35 (retail store services). Done on 2026-09-19: no mark named Second Impression turned up.
+- [x] Do the same in the USPTO trademark search. Done on 2026-09-19: no mark named Second Impression turned up. A close variant, "2nd Impression", has a record that is cancelled, so it is no longer in force.
+- [x] If a live mark for clothing turns up, stop and talk it through with Claude before going further. None turned up.
+
+This is a due-diligence check, not legal clearance. Trademark registers do not list a name that is in use but never registered.
 
 ## 2. Domain (Namecheap)
 
@@ -51,6 +53,8 @@ The domain is the one planned cost.
 Claude creates it with `gh` once Renato has approved the name, description and topics. See Task 11 of the v0.1 plan.
 
 ## 4. Vercel (Hobby plan)
+
+Do not create a second Vercel account for this project. Vercel links one GitHub login to exactly one Vercel account, so connecting the same GitHub login to a second account unlinks the first account's projects and stops their automatic deploys. Add this site as a new project inside your existing account.
 
 - [ ] Sign in with GitHub.
 - [ ] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
