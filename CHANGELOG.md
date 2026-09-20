@@ -4,6 +4,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-19
+
 ### Added
 
 - The design spec for the store and its tracking.
@@ -13,3 +15,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Security headers and a `robots.txt`.
 - CI that type-checks, tests, builds and scans for secrets on every push.
 - Brand notes, and a checklist of the accounts and domain steps that need Renato.
+- The domain, secondimpression.ca, bought from Namecheap. It is the project's only cost.
