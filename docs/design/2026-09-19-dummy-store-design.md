@@ -217,8 +217,8 @@ Later entries (v1.x): TikTok Pixel and Events API, LinkedIn Insight Tag and Conv
 
 | Release | Ships | Exit check |
 |---|---|---|
-| v0.1 Foundations | Repo scaffold, `.gitignore`, `.env.example`, brand and domain, accounts (GTM web, GA4 property, Meta dataset), tracking plan, tools data file | Tracking plan approved; empty site deployed on the domain |
-| v0.2 Storefront and web tracking | Pages, cart, checkout, money rules, default currency by country, `/api/lead`, `/api/order`, the events above | All events verified in GTM Preview against the schema on test IDs; not announced publicly |
+| v0.1 Foundations | Repo scaffold, `.gitignore`, `.env.example`, brand and domain, tracking plan, tools data file | Tracking plan approved; placeholder page deployed on the domain |
+| v0.2 Storefront and web tracking | The accounts (GTM web, GA4 property, Meta dataset) first, then pages, cart, checkout, money rules, default currency by country, `/api/lead`, `/api/order`, the events above | All events verified in GTM Preview against the schema on test IDs; not announced publicly |
 | v0.3 Consent and privacy | Banner, Consent Mode v2 (basic), Meta gating, privacy and cookie pages | Consent matrix passes in CI |
 | v0.4 Server-side | Stape Free server container, GA4 client, Meta CAPI for the four key events, `event_id` deduplication, `/api/receipt` | Test Events shows a deduplicated pair; consent respected server-side; usage well under quota |
 | v0.5 Proof and case study | `/proof`, `/case-study`, stack section, outbox | A stranger completes the tour |
