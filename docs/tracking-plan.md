@@ -24,9 +24,11 @@ The event names on this page are platform-neutral dataLayer names. Google Tag Ma
 | `meta-capi` | Meta Conversions API | Meta | server | v1.0 |
 | `tiktok-pixel` | TikTok Pixel | TikTok | browser | later |
 | `tiktok-events-api` | TikTok Events API | TikTok | server | later |
+| `linkedin-insight-tag` | LinkedIn Insight Tag | LinkedIn | browser | later |
+| `linkedin-conversions-api` | LinkedIn Conversions API | LinkedIn | server | later |
 
 - Browser platforms are called by tags in the web GTM container. Server platforms are called from the Stape server container.
-- TikTok is planned for after v1.0. Its event names get added to the Events table when it is built, and a test fails if any event is sent to a platform that is not live yet.
+- TikTok and LinkedIn are possible later steps after v1.0. Their event names get added to the Events table when they are built, and a test fails if any event is sent to a platform that is not live yet.
 
 ## Events
 

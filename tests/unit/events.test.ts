@@ -69,16 +69,21 @@ describe('EVENTS', () => {
 });
 
 describe('PLATFORMS', () => {
-  it('lists Google and Meta for v1.0, and marks TikTok as later', () => {
+  it('lists Google and Meta for v1.0, and marks TikTok and LinkedIn as later', () => {
     const live = PLATFORMS.filter((platform) => platform.status === 'v1.0').map((p) => p.id);
     const later = PLATFORMS.filter((platform) => platform.status === 'later').map((p) => p.id);
     expect(live).toEqual(['ga4', 'meta-pixel', 'meta-capi']);
-    expect(later).toEqual(['tiktok-pixel', 'tiktok-events-api']);
+    expect(later).toEqual([
+      'tiktok-pixel',
+      'tiktok-events-api',
+      'linkedin-insight-tag',
+      'linkedin-conversions-api',
+    ]);
   });
 
   it('says which platforms are called from the server', () => {
     const server = PLATFORMS.filter((platform) => platform.runsIn === 'server').map((p) => p.id);
-    expect(server).toEqual(['meta-capi', 'tiktok-events-api']);
+    expect(server).toEqual(['meta-capi', 'tiktok-events-api', 'linkedin-conversions-api']);
   });
 
   it('only sends events to platforms that are live in v1.0', () => {
@@ -109,5 +114,6 @@ describe('platformEventName', () => {
     expect(platformEventName(eventNamed('view_item'), 'meta-capi')).toBeUndefined();
     expect(platformEventName(eventNamed('cta_click'), 'meta-pixel')).toBeUndefined();
     expect(platformEventName(eventNamed('purchase'), 'tiktok-pixel')).toBeUndefined();
+    expect(platformEventName(eventNamed('purchase'), 'linkedin-insight-tag')).toBeUndefined();
   });
 });

@@ -201,7 +201,7 @@ Planned entries for v1.0:
 - **Testing and QA:** Playwright, GTM Preview, GA4 DebugView, Meta Events Manager Test Events, Meta Pixel Helper, Lighthouse CI, gitleaks, a link checker.
 - **Repo and development:** Git and GitHub (Actions, secret scanning), Claude Code (AI-assisted), VS Code.
 
-Later entries (v1.x): TikTok Pixel and Events API, Microsoft Clarity, Looker Studio, BigQuery export (sandbox only), catalog feed (Meta Commerce Manager, Google Merchant Center), Klaviyo.
+Later entries (v1.x): TikTok Pixel and Events API, LinkedIn Insight Tag and Conversions API, Microsoft Clarity, Looker Studio, BigQuery export (sandbox only), catalog feed (Meta Commerce Manager, Google Merchant Center), Klaviyo.
 
 ## 8. Repository workflow
 
@@ -226,7 +226,7 @@ Later entries (v1.x): TikTok Pixel and Events API, Microsoft Clarity, Looker Stu
 | v0.5 Proof and case study | `/proof`, `/case-study`, stack section, outbox | A stranger completes the tour |
 | v1.0 Release | CI complete, Lighthouse budgets met, README, walkthrough video, container exports, decision records, security review, link audit, redacted screenshots | Release checklist signed off by Renato |
 
-v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok Events API, labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
+v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
 
 ## 10. Verification strategy
 

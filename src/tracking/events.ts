@@ -1,4 +1,4 @@
-export type Vendor = 'Google' | 'Meta' | 'TikTok';
+export type Vendor = 'Google' | 'Meta' | 'TikTok' | 'LinkedIn';
 
 /** Every platform an event can be sent to. */
 export type Destination =
@@ -6,7 +6,9 @@ export type Destination =
   | 'meta-pixel'
   | 'meta-capi'
   | 'tiktok-pixel'
-  | 'tiktok-events-api';
+  | 'tiktok-events-api'
+  | 'linkedin-insight-tag'
+  | 'linkedin-conversions-api';
 
 export interface Platform {
   id: Destination;
@@ -33,6 +35,20 @@ export const PLATFORMS: Platform[] = [
     id: 'tiktok-events-api',
     name: 'TikTok Events API',
     vendor: 'TikTok',
+    runsIn: 'server',
+    status: 'later',
+  },
+  {
+    id: 'linkedin-insight-tag',
+    name: 'LinkedIn Insight Tag',
+    vendor: 'LinkedIn',
+    runsIn: 'browser',
+    status: 'later',
+  },
+  {
+    id: 'linkedin-conversions-api',
+    name: 'LinkedIn Conversions API',
+    vendor: 'LinkedIn',
     runsIn: 'server',
     status: 'later',
   },
@@ -197,7 +213,7 @@ export const EVENTS: EventSpec[] = [
 /**
  * The event name a platform receives, or undefined when the event is not sent
  * to that platform. GA4 uses the dataLayer name. Meta uses its own standard
- * event name. TikTok names are added when TikTok is built.
+ * event name. TikTok and LinkedIn names are added when they are built.
  */
 export function platformEventName(event: EventSpec, platform: Destination): string | undefined {
   if (!event.destinations.includes(platform)) return undefined;
