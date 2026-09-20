@@ -2,7 +2,7 @@
 
 A fictional online store, Second Impression, built to demonstrate production-style tracking: Google Tag Manager, GA4, Meta Pixel and Conversions API through a server container, consent handling, and a live page where you can check every event yourself.
 
-> **Status:** version 0.1, foundations. The store itself is not built yet. Today the repo holds the design, the tracking plan and a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready).
+> **Status:** version 0.1, foundations, is released. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready). The store itself is not built yet. Today the repo holds the design, the tracking plan and that page.
 
 ## What this will show
 
@@ -16,7 +16,7 @@ A fictional online store, Second Impression, built to demonstrate production-sty
 
 | Version | What ships | Status |
 |---|---|---|
-| 0.1 | Foundations: design, tracking plan, placeholder page, CI | In progress |
+| 0.1 | Foundations: design, tracking plan, placeholder page, CI | Released |
 | 0.2 | Storefront and web tracking | Planned |
 | 0.3 | Consent and privacy | Planned |
 | 0.4 | Server-side tracking | Planned |

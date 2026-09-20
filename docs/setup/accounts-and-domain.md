@@ -28,6 +28,8 @@ The same personal Google login can stay in use. What keeps this project separate
 
 Because this project has its own GTM and GA4 accounts, an interviewer can be given read-only access to them without seeing anything else.
 
+Sections 5 to 7 are needed at the start of version 0.2, when the first tracking is built. They are not part of version 0.1.
+
 ## 1. Trademark search
 
 Not legal advice. This is a due-diligence check on the name.
@@ -50,28 +52,28 @@ The domain is the one planned cost.
 
 ## 3. GitHub repository
 
-Claude creates it with `gh` once Renato has approved the name, description and topics. See Task 11 of the v0.1 plan.
+Done on 2026-09-19, with the name, description and topics Renato approved. The `main` branch is protected: both CI checks have to pass before anything merges into it.
 
 ## 4. Vercel (Hobby plan)
 
 Do not create a second Vercel account for this project. Vercel links one GitHub login to exactly one Vercel account, so connecting the same GitHub login to a second account unlinks the first account's projects and stops their automatic deploys. Add this site as a new project inside your existing account.
 
-- [ ] Sign in with GitHub.
-- [ ] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
-- [ ] Add the environment variable `PUBLIC_SITE_URL` with the final `https://` address of the domain.
-- [ ] Deploy, and confirm the `*.vercel.app` address loads the placeholder page.
-- [ ] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project.
-- [ ] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works.
+- [x] Sign in with GitHub.
+- [x] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
+- [x] Add the environment variable `PUBLIC_SITE_URL` with the final `https://` address of the domain.
+- [x] Deploy, and confirm the `*.vercel.app` address loads the placeholder page. Done: the project is `second-impression`.
+- [x] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project. Done for `secondimpression.ca`, and for `www.secondimpression.ca`, which redirects permanently to it.
+- [x] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works. Done: an A record for `@` and a CNAME record for `www`. The live site passed every check on 2026-09-19.
 - [ ] Confirm the account is on the Hobby plan and no card is on file.
 
-## 5. Google Tag Manager
+## 5. Google Tag Manager (needed for 0.2)
 
 - [ ] Create an account named "Second Impression Portfolio". Country: Canada.
 - [ ] Create a web container named after the domain.
 - [ ] Do not add the snippet to the site and do not publish anything. That starts in v0.2.
 - [ ] Note the container ID (`GTM-` followed by letters and numbers).
 
-## 6. Google Analytics 4
+## 6. Google Analytics 4 (needed for 0.2)
 
 - [ ] Create an account named "Second Impression Portfolio".
 - [ ] Create two properties: "Second Impression - Live" and "Second Impression - Test". Time zone: Toronto. Currency: Canadian dollar.
@@ -79,7 +81,7 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 - [ ] In each property, find the event data retention setting and set it to 14 months.
 - [ ] Note both measurement IDs (`G-` followed by letters and numbers).
 
-## 7. Meta
+## 7. Meta (needed for 0.2)
 
 - [ ] In Events Manager, create two datasets under the existing business portfolio: "Second Impression - Live" and "Second Impression - Test".
 - [ ] Do not create an ad account for this project, and never run ads to this domain.

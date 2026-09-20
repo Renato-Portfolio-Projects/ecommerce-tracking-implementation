@@ -16,3 +16,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - CI that type-checks, tests, builds and scans for secrets on every push.
 - Brand notes, and a checklist of the accounts and domain steps that need Renato.
 - The domain, secondimpression.ca, bought from Namecheap. It is the project's only cost.
+- The placeholder page is live at https://secondimpression.ca, hosted on Vercel, and `www.secondimpression.ca` redirects to it.
