@@ -40,11 +40,11 @@ Not legal advice. This is a due-diligence check on the name.
 
 The domain is the one planned cost.
 
-- [ ] Choose one name: `secondimpressionco`, `secondimpressionsupply` or `secondimpressiongoods`, on `.com` or `.ca`. All six were unregistered in a registry check on 2026-09-19.
+- [x] Chosen and bought: `secondimpression.ca`, on 2026-09-19. A registry check that day showed it unregistered.
 - [ ] Check availability and price again at the Namecheap checkout. Write down the year-one price and the renewal price.
 - [ ] Keep any free privacy option offered. Decline the paid extras.
 - [ ] Decide whether auto-renew is on. The domain has to stay registered for as long as the portfolio is in use.
-- [ ] Tell Claude the yearly renewal price shown at checkout (in US dollars if it shows that, otherwise the Canadian price). Claude then updates the domain's cost in `src/data/stack.ts`, which holds a rough guess of 15 for now. It is the renewal price, not the first-year promo, because that is what the domain costs over time.
+- [x] The price is recorded in `src/data/stack.ts`: USD 11.98 a year, which is Namecheap's price. Your card was charged CAD 16.78 after conversion. Confirm on the Namecheap order page that the renewal price is the same, because the renewal price is what the domain costs over time.
 
 ## 3. GitHub repository
 

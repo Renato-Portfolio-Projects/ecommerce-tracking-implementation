@@ -25,7 +25,7 @@ Success looks like this:
 | Back end | Light back end: Vercel serverless functions plus Upstash Redis on the Free plan (no card). Redis deletes each record itself after 7 days, so the retention promise does not depend on a cleanup script |
 | Framework | Astro, multi-page, latest stable at build time. Next.js was considered and rejected: the target roles screen for tracking skills, and client-side navigation would add virtual-pageview work that competes with the tracking story |
 | Hosting | Vercel Hobby (a personal portfolio fits its non-commercial terms) |
-| Domain | Dedicated domain from Namecheap. The only planned cost (section 12) |
+| Domain | `secondimpression.ca`, bought from Namecheap on 2026-09-19 for USD 11.98 a year (CAD 16.78 charged to Renato's card after conversion). The only planned cost (section 12) |
 | Cost target | $0 beyond the domain. Free plans only, no upgrades, no card entered anywhere |
 | Server-side tagging | Stape Free plan only. No card, no upgrade. 10K requests a month per container. At the limit the container is disabled and stays disabled (no automatic charge, no monthly reset) until upgraded. Up to 5 free containers per Stape account, each with its own quota, so several projects can share one account, each in its own container. A custom domain is listed as paid-only, so the server container uses Stape's default URL and the case study says so plainly |
 | Consent | Custom-built banner with Google Consent Mode v2 in **basic** mode: no Google or Meta tag loads until the visitor opts in. Advanced mode was considered and dropped. It sends cookieless pings before consent (which Quebec's Law 25 reads strictly) and would spend server quota on visitors who said no. Its one real benefit, Google's behavioral modeling, needs roughly 1,000 denied-consent events a day for at least 7 days plus 1,000 daily consenting users, which a portfolio demo will not reach. Decided by Renato's delegation on 2026-09-19 |
@@ -38,7 +38,6 @@ Success looks like this:
 
 ### Open
 
-- Domain: which `.com` or `.ca` variant of Second Impression, decided at purchase and after a trademark search on CIPO and USPTO.
 - TypeScript versus plain JavaScript: TypeScript is assumed.
 
 ## 3. Architecture
@@ -255,7 +254,7 @@ Target: $0 beyond the domain.
 
 | Item | Cost | Catch |
 |---|---|---|
-| Domain (Namecheap) | The one real cost. A `.com` is often promo-priced in year one (about USD 7) and renews near USD 15 (verify at checkout). A `.ca` can be about CAD 12 a year | It must stay registered while the portfolio is in use. Decline registrar upsells |
+| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. Confirm the renewal price on the order page | It must stay registered while the portfolio is in use. Decline registrar upsells |
 | Stape Free | $0, no card | Disabled at 10K requests a month per container. Never charged automatically |
 | Vercel Hobby | $0 | Hard caps, no overage billing. Non-commercial use only, which fits |
 | Redis (Upstash Free) | $0, no card | 500K commands a month, 256 MB (verify at signup). Choose the Free plan when the Vercel Marketplace asks |
