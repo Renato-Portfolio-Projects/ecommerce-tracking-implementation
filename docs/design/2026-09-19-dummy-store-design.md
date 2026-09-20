@@ -1,7 +1,7 @@
 # Dummy Store: Design Spec
 
 Date: 2026-09-19 (updated after the cost and decisions round)
-Status: draft, waiting on Renato's review
+Status: approved by Renato on 2026-09-19
 Owner: Renato Perocchio
 
 ## 1. Purpose and success criteria
@@ -33,12 +33,11 @@ Success looks like this:
 | Naming | Working project name: Dummy Store. Storefront brand: **Second Impression**, chosen by Renato on 2026-09-19. It refers to the second pass in screen printing and to the second ad impression in retargeting. Tagline idea: "Worth a second look." Domains `secondimpressionco`, `secondimpressionsupply` and `secondimpressiongoods` were open on `.com` and `.ca` in a registry check, and no existing apparel brand with that name turned up in a web search. It is not trademark-cleared, so a CIPO and USPTO search comes before buying. The case study gets a short "About the name" note. Rejected for close existing brands: WayBack Wears, Near Mint, Backstock, Thread Count, Yore, Bygone, Rewind |
 | Lead popup | Shows after 5 seconds or 40% scroll, whichever comes first. The README states that 5 seconds is a deliberate demo setting |
 | Currency | Header selector for CAD, USD, EUR and GBP at fixed, documented demo rates. Base currency CAD. The currency locks once checkout starts. The default comes from the visitor's country (Vercel's country header, country-level only, never stored): Canada CAD, US USD, UK GBP, euro countries EUR, everywhere else USD. Built in v0.2 |
-| Repository | New public repo under Renato-Portfolio-Projects, named `ecommerce-tracking-implementation` ("implementation" is the word job postings use for this work). The description and GitHub topics still need Renato's approval before anything is created. Protected `main`, a PR per phase |
+| Repository | New public repo under Renato-Portfolio-Projects, named `ecommerce-tracking-implementation` ("implementation" is the word job postings use for this work). The description and topics were approved by Renato on 2026-09-19 and applied. Protected `main`, a PR per phase |
 | AI attribution | Commits keep the Claude co-author trailer, and the README has a "How this was built" section |
 
 ### Open
 
-- Repo description wording and GitHub topics: proposed for Renato's approval before anything is created.
 - Domain: which `.com` or `.ca` variant of Second Impression, decided at purchase and after a trademark search on CIPO and USPTO.
 - TypeScript versus plain JavaScript: TypeScript is assumed.
 

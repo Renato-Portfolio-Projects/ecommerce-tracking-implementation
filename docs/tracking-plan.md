@@ -1,6 +1,6 @@
 # Tracking plan
 
-Version 0.1. Draft, waiting on Renato's approval.
+Version 0.1. Approved by Renato on 2026-09-19.
 
 This is the list of everything the store announces to the dataLayer, which platforms each event goes to, and what each event carries. The events and platforms themselves live in `src/tracking/events.ts`. This page describes them in words, and `npm test` fails if the two disagree.
 
