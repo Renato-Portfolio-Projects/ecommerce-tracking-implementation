@@ -142,7 +142,7 @@ One data file (SKU, slug, collection, variants, price, sale price, stock, images
 
 ### Money
 
-CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU demo rates). Flat shipping with a free-shipping threshold and a cart progress bar. `WELCOME10` works and is recorded on the order. Currency selector in the header, persistent, locked once checkout starts.
+CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU demo rates). Two shipping methods, Standard and Express, at flat prices that are the same for every destination, so `shipping_tier` on `add_shipping_info` carries a real choice. Standard is free when the discounted items reach a threshold, and a cart progress bar shows how close the shopper is. `WELCOME10` works and is recorded on the order. Currency selector in the header, persistent, locked once checkout starts.
 
 ### Checkout
 
@@ -176,9 +176,9 @@ Mobile-first, WCAG AA, `prefers-reduced-motion`, and an LCP and layout-shift bud
 
 ### `/proof` (tracking inspector, your session only, keyed by a random token, no IP)
 
-1. Consent state, timestamp, whether GPC was seen, marketing-email consent.
-2. Live event log: every dataLayer push with `event_id` and expandable payload.
-3. Server receipts paired with their browser twin by `event_id`: "deduplicated" or "recovered by server (browser blocked)".
+1. Consent state, timestamp, whether GPC was seen, marketing-email consent. If tracking consent is denied or not yet given, this panel says so in plain words: nothing was sent because of the visitor's choice, that is by design and not a fault, and "Cookie settings" turns tracking on.
+2. Live event log: every dataLayer push with `event_id` and expandable payload. With tracking denied it shows the same explanation instead of an empty list.
+3. Server receipts paired with their browser twin by `event_id`: "deduplicated" or "recovered by server (browser blocked)". With marketing consent denied it explains that no server event was sent.
 4. Your lead, order, and first/last-touch attribution.
 5. Simulated outbox: welcome and order-confirmation emails, rendered but never sent.
 6. Recent activity: a masked, anonymised feed of the last 20 events.
