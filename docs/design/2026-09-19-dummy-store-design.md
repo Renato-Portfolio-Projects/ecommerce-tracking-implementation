@@ -254,7 +254,7 @@ Target: $0 beyond the domain.
 
 | Item | Cost | Catch |
 |---|---|---|
-| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. Confirm the renewal price on the order page | It must stay registered while the portfolio is in use. Decline registrar upsells |
+| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. The renewal price is the same, and auto-renew is on | It must stay registered while the portfolio is in use. Decline registrar upsells |
 | Stape Free | $0, no card | Disabled at 10K requests a month per container. Never charged automatically |
 | Vercel Hobby | $0 | Hard caps, no overage billing. Non-commercial use only, which fits |
 | Redis (Upstash Free) | $0, no card | 500K commands a month, 256 MB (verify at signup). Choose the Free plan when the Vercel Marketplace asks |

@@ -77,8 +77,9 @@ export const STACK: StackEntry[] = [
     role: 'Registers the domain and hosts its DNS records.',
     plan: 'Domain only (secondimpression.ca)',
     // Namecheap's price for secondimpression.ca on 2026-09-19: USD 11.98 a year.
-    // Renato's card was charged CAD 16.78 after conversion. Confirm the renewal
-    // price on the order page.
+    // Renato's card was charged CAD 16.78 after conversion. The renewal price is the
+    // same (confirmed by Renato on 2026-09-20) and auto-renew is on, so this is what
+    // the domain costs over time.
     annualCostUsd: 11.98,
     dataTouched: 'none',
     consent: 'none',
