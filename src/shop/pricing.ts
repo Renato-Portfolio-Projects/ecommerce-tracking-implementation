@@ -4,6 +4,7 @@ import {
   findProduct,
   isSoldOut,
   variantLabel,
+  variantSku,
   type Product,
 } from './catalog';
 import { checkCoupon, type CouponCheck } from './coupons';
@@ -75,6 +76,8 @@ export interface PricedLine {
   size: string;
   /** GA4 `item_variant`, for example "Ink / M". */
   variant: string;
+  /** The SKU of this exact colour and size, for example SI-TEE-002-INK-M. It is not GA4's `item_id`. */
+  variantSku: string;
   quantity: number;
   /** One unit, before any coupon. The sale price on a sale item. */
   unitPrice: number;
@@ -134,13 +137,17 @@ export type PricingResult =
   | { ok: true; order: PricedOrder }
   | { ok: false; problems: PricingProblem[] };
 
-function checkLine(
+/**
+ * Checks one cart line against the catalog. The words of a problem name the product, so a shopper
+ * can tell what is wrong. The line's position in the cart, when it is given, is passed along as a
+ * separate number for code that needs it.
+ */
+export function checkLine(
   line: LineInput,
-  index: number,
+  index?: number,
 ): { product: Product } | { problem: PricingProblem } {
-  const where = `Line ${index + 1}`;
   const fail = (code: PricingProblemCode, message: string) => ({
-    problem: { code, line: index, message: `${where}: ${message}` },
+    problem: index === undefined ? { code, message } : { code, line: index, message },
   });
 
   const product = findProduct(line.sku);
@@ -157,7 +164,7 @@ function checkLine(
   ) {
     return fail(
       'bad_quantity',
-      `quantity must be a whole number from 1 to ${MAX_QUANTITY_PER_LINE}.`,
+      `${product.name}: the quantity must be a whole number from 1 to ${MAX_QUANTITY_PER_LINE}.`,
     );
   }
   if (isSoldOut(product, line.colour, line.size)) {
@@ -197,6 +204,7 @@ export function priceItems(input: ItemsInput): ItemsResult {
       colour: line.colour,
       size: line.size,
       variant: variantLabel(line.colour, line.size),
+      variantSku: variantSku(product.sku, line.colour, line.size),
       quantity: line.quantity,
       unitPrice,
       ...(product.compareAtCad === undefined

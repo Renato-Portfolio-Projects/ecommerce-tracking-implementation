@@ -3,6 +3,7 @@ import { PRODUCTS, isSoldOut } from '../../src/shop/catalog';
 import { COUNTRIES, PROVINCES } from '../../src/shop/destinations';
 import { CURRENCIES, convertFromCad } from '../../src/shop/money';
 import {
+  checkLine,
   priceItems,
   priceOrder,
   type ItemsInput,
@@ -52,6 +53,7 @@ describe('priceItems', () => {
         colour: 'Ink',
         size: 'M',
         variant: 'Ink / M',
+        variantSku: 'SI-TEE-002-INK-M',
         quantity: 2,
         unitPrice: 3800,
         unitDiscount: 0,
@@ -157,6 +159,38 @@ describe('priceItems', () => {
     const result = priceItems({ lines: [logoTee], currency: 'JPY' });
     if (result.ok) throw new Error('Expected a problem');
     expect(result.problems.map((problem) => problem.code)).toEqual(['unknown_currency']);
+  });
+});
+
+describe('checkLine', () => {
+  it('returns the product for a line that can be sold', () => {
+    const result = checkLine(logoTee);
+    expect('product' in result && result.product.name).toBe('Logo Tee');
+  });
+
+  it('names the product in a problem, so a shopper can tell what is wrong', () => {
+    const cases: [Parameters<typeof checkLine>[0], string, string][] = [
+      [{ sku: 'SI-XXX-000', colour: 'Ink', size: 'M', quantity: 1 }, 'unknown_product', 'SI-XXX-000 is not a product we sell.'],
+      [{ ...logoTee, colour: 'Red' }, 'unknown_variant', 'Logo Tee does not come in Red / M.'],
+      [{ ...logoTee, quantity: 11 }, 'bad_quantity', 'Logo Tee: the quantity must be a whole number from 1 to 10.'],
+      [{ sku: 'SI-TEE-003', colour: 'Red', size: 'XL', quantity: 1 }, 'sold_out', 'Misprint Tee in Red / XL is sold out.'],
+    ];
+    for (const [line, code, message] of cases) {
+      const result = checkLine(line);
+      if (!('problem' in result)) throw new Error(`Expected a problem for ${code}`);
+      expect(result.problem, code).toEqual({ code, message });
+      expect('line' in result.problem, code).toBe(false);
+    }
+  });
+
+  it('passes the position of the line along as a number, separate from the words', () => {
+    const result = checkLine({ ...logoTee, colour: 'Red' }, 2);
+    if (!('problem' in result)) throw new Error('Expected a problem');
+    expect(result.problem).toEqual({
+      code: 'unknown_variant',
+      line: 2,
+      message: 'Logo Tee does not come in Red / M.',
+    });
   });
 });
 
@@ -275,7 +309,8 @@ describe('priceOrder: problems', () => {
 
   it('describes each problem in plain words', () => {
     const [problem] = problemsFor(order({ lines: [{ ...logoTee, colour: 'Red' }] }));
-    expect(problem.message).toBe('Line 1: Logo Tee does not come in Red / M.');
+    expect(problem.message).toBe('Logo Tee does not come in Red / M.');
+    expect(problem.line).toBe(0);
   });
 });
 
