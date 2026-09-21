@@ -5,10 +5,10 @@ import {
   isSoldOut,
   listContextFor,
   variantsOf,
-} from '../../src/shop/catalog';
+} from '../../src/engine/catalog';
 import { MAX_CART_LINES, CART_LIFETIME_DAYS } from '../../src/store/policy';
-import { addToCart, emptyCart, type Cart } from '../../src/shop/cart';
-import { parseStoredCart, serializeCart } from '../../src/shop/cart-storage';
+import { addToCart, emptyCart, type Cart } from '../../src/engine/cart';
+import { parseStoredCart, serializeCart } from '../../src/engine/cart-storage';
 
 const DAY = 24 * 60 * 60 * 1000;
 const now = Date.UTC(2026, 8, 20, 12, 0, 0);

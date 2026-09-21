@@ -7,13 +7,6 @@ import type { FieldProblem } from './checkout-form';
 // and passed in, so all of this can be tested without a network.
 
 /**
- * Reserved for examples, so they can never belong to anyone and never receive mail. The demo people
- * use example.com. These domains are accepted without any mail check, so the demo works. Every other
- * domain has to pass the real checks.
- */
-export const DEMO_EMAIL_DOMAINS = ['example.com', 'example.org', 'example.net'];
-
-/**
  * What a look at the domain's mail service found.
  * - `accepts-mail`: it has a mail server, or, with none named, an address a mail server could be at.
  * - `no-mail`: the domain does not exist, or says it takes no mail.
@@ -26,6 +19,12 @@ export interface EmailDomainOptions {
   /** The temporary domains, from `parseDomainList`. */
   disposableDomains: ReadonlySet<string>;
   mailService: MailService;
+  /**
+   * Domains that are accepted without any check. A real store has none. The demo passes
+   * DEMO_EMAIL_DOMAINS from src/demo, so that the demo people can use example.com, which never
+   * receives mail.
+   */
+  exemptDomains?: readonly string[];
 }
 
 export type EmailDomainCheck = { ok: true } | { ok: false; problem: FieldProblem };
@@ -66,14 +65,14 @@ export function isDisposableDomain(domain: string, list: ReadonlySet<string>): b
 }
 
 /**
- * Checks the domain of an email that has already passed the shape check. The demo domains come
+ * Checks the domain of an email that has already passed the shape check. Exempt domains come
  * first, then temporary domains, then domains that cannot receive email. An address with no domain
  * cannot receive email either.
  */
 export function checkEmailDomain(email: unknown, options: EmailDomainOptions): EmailDomainCheck {
   const domain = emailDomainOf(email);
   if (domain === '') return problem(NO_MAIL);
-  if (DEMO_EMAIL_DOMAINS.includes(domain)) return { ok: true };
+  if (options.exemptDomains?.includes(domain)) return { ok: true };
   if (isDisposableDomain(domain, options.disposableDomains)) return problem(TEMPORARY);
   if (options.mailService === 'no-mail') return problem(NO_MAIL);
   return { ok: true };

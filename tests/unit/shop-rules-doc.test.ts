@@ -7,11 +7,11 @@ import {
   variantLabel,
   variantSku,
   variantsOf,
-} from '../../src/shop/catalog';
+} from '../../src/engine/catalog';
 import { COUPONS } from '../../src/store/coupon-codes';
 import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
 import { CURRENCIES, EURO_AREA_COUNTRIES, defaultCurrencyFor } from '../../src/store/currencies';
-import { formatMoney } from '../../src/shop/money';
+import { formatMoney } from '../../src/engine/money';
 import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 import {
   checkAddress,
@@ -19,21 +19,17 @@ import {
   checkLead,
   type FormCheck,
   type FormField,
-} from '../../src/shop/checkout-form';
-import {
-  DEMO_EMAIL_DOMAINS,
-  checkEmailDomain,
-  parseDomainList,
-  type MailService,
-} from '../../src/shop/email-domain';
-import { PERSONAS } from '../../src/shop/personas';
-import { POSTAL_CODE_FORMATS } from '../../src/shop/postal-codes';
+} from '../../src/engine/checkout-form';
+import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
+import { checkEmailDomain, parseDomainList, type MailService } from '../../src/engine/email-domain';
+import { PERSONAS } from '../../src/demo/personas';
+import { POSTAL_CODE_FORMATS } from '../../src/engine/postal-codes';
 import {
   DEFAULT_TEST_CARD,
   TEST_CARDS,
   checkPayment,
   formatCardNumber,
-} from '../../src/shop/test-cards';
+} from '../../src/demo/test-cards';
 import { tableUnderHeading } from '../helpers/markdown';
 
 const rules = readFileSync(new URL('../../docs/shop-rules.md', import.meta.url), 'utf8');
@@ -219,7 +215,7 @@ describe('docs/shop-rules.md', () => {
   });
 
   it('says how many temporary email domains the list holds, when it was copied, and which domains are the demo ones, the way the code does', () => {
-    const file = readFileSync(new URL('../../src/data/disposable-email-domains.txt', import.meta.url), 'utf8');
+    const file = readFileSync(new URL('../../src/engine/disposable-email-domains.txt', import.meta.url), 'utf8');
     const copied = file.match(/Copied on (\d{4}-\d{2}-\d{2})/)?.[1];
     expect(copied).toBeDefined();
     expect(rules).toContain(`copied on ${copied} and holds ${parseDomainList(file).size} domains`);

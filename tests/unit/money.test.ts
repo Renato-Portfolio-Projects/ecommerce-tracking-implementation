@@ -11,7 +11,7 @@ import {
   formatMoney,
   isCurrencyCode,
   scaleToInteger,
-} from '../../src/shop/money';
+} from '../../src/engine/money';
 
 describe('CURRENCIES', () => {
   it('offers the four currencies from the design, with CAD as the base', () => {

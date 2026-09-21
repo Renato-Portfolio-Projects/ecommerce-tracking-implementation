@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
-import { taxPercentFor } from '../../src/shop/tax';
-import { scaleToInteger } from '../../src/shop/money';
+import { taxPercentFor } from '../../src/engine/tax';
+import { scaleToInteger } from '../../src/engine/money';
 
 describe('COUNTRIES', () => {
   it('ships to Canada, the United States, the United Kingdom and six EU countries', () => {

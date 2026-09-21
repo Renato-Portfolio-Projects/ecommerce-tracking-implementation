@@ -6,7 +6,7 @@ import {
   isSoldOut,
   listContextFor,
   variantsOf,
-} from '../../src/shop/catalog';
+} from '../../src/engine/catalog';
 import {
   addToCart,
   cartLineKey,
@@ -18,8 +18,8 @@ import {
   removeFromCart,
   setQuantity,
   type Cart,
-} from '../../src/shop/cart';
-import { checkLine, priceItems } from '../../src/shop/pricing';
+} from '../../src/engine/cart';
+import { checkLine, priceItems } from '../../src/engine/pricing';
 
 const logoTeeInk = { sku: 'SI-TEE-002', colour: 'Ink', size: 'M' };
 const plainChinoInk = { sku: 'SI-PNT-001', colour: 'Ink', size: '32' };

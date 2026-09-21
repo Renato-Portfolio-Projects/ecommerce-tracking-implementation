@@ -2,7 +2,7 @@
 
 Second Impression is a fictional store, so every price, rate and code on this page is a made-up demo value. Nothing here is tax advice, and no real money moves.
 
-This page is the store's price list and rulebook in words. The tables are checked against the code by tests, so this page cannot disagree with what the store actually charges. All the arithmetic lives in one place, `src/shop/pricing.ts`, and both the pages and the server use it, so a price can never differ between what a shopper sees and what is charged.
+This page is the store's price list and rulebook in words. The tables are checked against the code by tests, so this page cannot disagree with what the store actually charges. All the arithmetic lives in one place, `src/engine/pricing.ts`, and both the pages and the server use it, so a price can never differ between what a shopper sees and what is charged.
 
 ## How an order is priced
 
@@ -204,7 +204,7 @@ An email is checked twice. Its shape is checked in the browser and again on the 
 | Temporary address | The domain, or a domain it sits under, is on the list of temporary email services | That looks like a temporary email address. Please use one you check regularly. |
 | Domain cannot receive email | The server looks at the domain's mail service and finds none | It looks like that address can't receive email. Please check the part after the @ for typos. |
 
-- **The list of temporary domains** is a copy of a public-domain list (CC0) kept in the repo at `src/data/disposable-email-domains.txt`. It was copied on 2026-09-21 and holds 8915 domains, including Mailinator, 10 Minute Mail, YOPmail and Guerrilla Mail. It does not list the big mail providers or the privacy relays real customers use (Apple Hide My Email, DuckDuckGo and Firefox Relay). No list is complete, so it catches the well-known services and never the newest ones. It is refreshed by hand, and its header says how. It is used on the server only, so it never slows a page.
+- **The list of temporary domains** is a copy of a public-domain list (CC0) kept in the repo at `src/engine/disposable-email-domains.txt`. It was copied on 2026-09-21 and holds 8915 domains, including Mailinator, 10 Minute Mail, YOPmail and Guerrilla Mail. It does not list the big mail providers or the privacy relays real customers use (Apple Hide My Email, DuckDuckGo and Firefox Relay). No list is complete, so it catches the well-known services and never the newest ones. It is refreshed by hand, and its header says how. It is used on the server only, so it never slows a page.
 - **The look at the mail service** is done by the server and passed to this code as one of three answers: it takes mail, it does not, or the look failed. A failed look lets the address through, so a hiccup never blocks a real customer.
 - **The demo domains.** `example.com`, `example.org` and `example.net` are reserved for examples and can never receive mail. They are accepted without any mail check, so the demo people work. Every other domain has to pass the real checks.
 - **What is deliberately not done.** The store does not prove that an address belongs to the shopper, because that means emailing whatever a stranger types. It needs a sending service, and it lets someone email a victim through the site. It does not use an email verification service, which would receive every visitor's full address and be one more company to disclose. It does not probe mail servers to test whether a mailbox exists, which is unreliable and can get the server blocked. These limits are written up in the case study.
@@ -279,7 +279,7 @@ Every number and list above is defined in one place in the code. To change one, 
 | Rule | Why it is this way | Where to change it |
 |---|---|---|
 | Products, prices, colours and sizes | The catalog is the one place products are defined | `CATALOG` in `src/store/products.ts` |
-| The shape of a variant SKU | The product SKU, the colour in capitals and the size | `variantSku` in `src/shop/catalog.ts` |
+| The shape of a variant SKU | The product SKU, the colour in capitals and the size | `variantSku` in `src/engine/catalog.ts` |
 | Most units of one item on a line | A sensible cap for a demo store | `MAX_QUANTITY_PER_LINE` in `src/store/policy.ts` |
 | Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/store/policy.ts` |
 | How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/store/policy.ts` |
@@ -290,13 +290,13 @@ Every number and list above is defined in one place in the code. To change one, 
 | Tax rates by country | Simplified demo rates. The United States is 0% on purpose | `COUNTRIES` in `src/store/destinations.ts` |
 | Tax rates by province | Simplified demo rates | `PROVINCES` in `src/store/destinations.ts` |
 | Coupon codes and discounts | Codes are stored in capitals, and a typed code matches in any case | `COUPONS` in `src/store/coupon-codes.ts` |
-| The characters a name, a city or a street line may use | Letters from any language and the marks names use, so real names are not turned away | `NAME_PATTERN` in `src/shop/checkout-form.ts` and `STREET_PATTERN` in `src/shop/checkout-form.ts` |
-| The length limits on names, cities, street lines and emails | Long enough for real names, short enough to keep records tidy. The email limits are the email standard's | `NAME_LENGTH`, `CITY_LENGTH` and `ADDRESS_LENGTH` in `src/shop/checkout-form.ts`, and `EMAIL_LENGTH`, `LOCAL_PART_LENGTH` and `DOMAIN_PART_LENGTH` in `src/shop/checkout-form.ts` |
-| How many digits a phone number has | Seven keeps out obvious typos, and 15 is the most an international number can have | `PHONE_DIGITS` in `src/shop/checkout-form.ts` |
-| What an email may look like | The email standard's rules for the part before the @, letters from any language, a domain of two or more parts, and no endings set aside for tests | `LOCAL_PART_PATTERN` in `src/shop/checkout-form.ts`, `DOMAIN_PART_PATTERN` in `src/shop/checkout-form.ts` and `RESERVED_EMAIL_ENDINGS` in `src/shop/checkout-form.ts` |
-| The postal code formats | Shape only, one for each country the store ships to | `POSTAL_CODE_FORMATS` in `src/shop/postal-codes.ts` |
-| Which card numbers are accepted, and which one declines | Well-known test numbers only, so a real card can never work | `TEST_CARDS` in `src/shop/test-cards.ts` |
-| The people the demo buttons fill in | Fictional, on example.com, with phone numbers in each country's reserved fiction range | `PERSONAS` in `src/shop/personas.ts` |
-| Which email domains are turned down as temporary | A public-domain list, copied on a date and refreshed by hand. Sub-domains of a listed domain count too | `isDisposableDomain` in `src/shop/email-domain.ts` and `Copied on` in `src/data/disposable-email-domains.txt` |
-| Which email domains are accepted without a mail check | Reserved for examples, so the demo people work | `DEMO_EMAIL_DOMAINS` in `src/shop/email-domain.ts` |
-| What the server does with the look at a domain's mail service | Refuse when there is none, and let the address through when the look failed | `checkEmailDomain` in `src/shop/email-domain.ts` |
+| The characters a name, a city or a street line may use | Letters from any language and the marks names use, so real names are not turned away | `NAME_PATTERN` in `src/engine/checkout-form.ts` and `STREET_PATTERN` in `src/engine/checkout-form.ts` |
+| The length limits on names, cities, street lines and emails | Long enough for real names, short enough to keep records tidy. The email limits are the email standard's | `NAME_LENGTH`, `CITY_LENGTH` and `ADDRESS_LENGTH` in `src/engine/checkout-form.ts`, and `EMAIL_LENGTH`, `LOCAL_PART_LENGTH` and `DOMAIN_PART_LENGTH` in `src/engine/checkout-form.ts` |
+| How many digits a phone number has | Seven keeps out obvious typos, and 15 is the most an international number can have | `PHONE_DIGITS` in `src/engine/checkout-form.ts` |
+| What an email may look like | The email standard's rules for the part before the @, letters from any language, a domain of two or more parts, and no endings set aside for tests | `LOCAL_PART_PATTERN` in `src/engine/checkout-form.ts`, `DOMAIN_PART_PATTERN` in `src/engine/checkout-form.ts` and `RESERVED_EMAIL_ENDINGS` in `src/engine/checkout-form.ts` |
+| The postal code formats | Shape only, one for each country the store ships to | `POSTAL_CODE_FORMATS` in `src/engine/postal-codes.ts` |
+| Which card numbers are accepted, and which one declines | Well-known test numbers only, so a real card can never work | `TEST_CARDS` in `src/demo/test-cards.ts` |
+| The people the demo buttons fill in | Fictional, on example.com, with phone numbers in each country's reserved fiction range | `PERSONAS` in `src/demo/personas.ts` |
+| Which email domains are turned down as temporary | A public-domain list, copied on a date and refreshed by hand. Sub-domains of a listed domain count too | `isDisposableDomain` in `src/engine/email-domain.ts` and `Copied on` in `src/engine/disposable-email-domains.txt` |
+| Which email domains are accepted without a mail check | Reserved for examples, so the demo people work | `DEMO_EMAIL_DOMAINS` in `src/demo/email-domains.ts` |
+| What the server does with the look at a domain's mail service | Refuse when there is none, and let the address through when the look failed | `checkEmailDomain` in `src/engine/email-domain.ts` |

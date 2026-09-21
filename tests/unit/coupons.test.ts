@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COUPONS } from '../../src/store/coupon-codes';
-import { checkCoupon } from '../../src/shop/coupons';
+import { checkCoupon } from '../../src/engine/coupons';
 
 describe('COUPONS', () => {
   it('has WELCOME10, which is valid, and SPRING20, which is recognised but expired', () => {

@@ -1,20 +1,25 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
 import {
-  DEMO_EMAIL_DOMAINS,
   checkEmailDomain,
   emailDomainOf,
   isDisposableDomain,
   parseDomainList,
   type MailService,
-} from '../../src/shop/email-domain';
+} from '../../src/engine/email-domain';
 
 const TEMPORARY = 'That looks like a temporary email address. Please use one you check regularly.';
 const NO_MAIL = "It looks like that address can't receive email. Please check the part after the @ for typos.";
 
 const list = new Set(['mailinator.com', 'yopmail.com', 'temp.example.org', 'burner.co.uk']);
-const check = (email: unknown, mailService: MailService = 'accepts-mail', disposableDomains = list) =>
-  checkEmailDomain(email, { disposableDomains, mailService });
+// The demo passes its domains in as exempt, so most tests do the same. The engine has none of its own.
+const check = (
+  email: unknown,
+  mailService: MailService = 'accepts-mail',
+  disposableDomains = list,
+  exemptDomains: readonly string[] = DEMO_EMAIL_DOMAINS,
+) => checkEmailDomain(email, { disposableDomains, mailService, exemptDomains });
 
 describe('emailDomainOf', () => {
   it('gives the part after the @, in lowercase', () => {
@@ -99,6 +104,13 @@ describe('checkEmailDomain', () => {
     }
   });
 
+  it('has no exemption of its own: a domain is exempt only when the caller says so', () => {
+    const withNone = { disposableDomains: list, mailService: 'no-mail' as const };
+    expect(checkEmailDomain('maya@example.com', withNone).ok).toBe(false);
+    expect(checkEmailDomain('maya@example.com', { ...withNone, exemptDomains: [] }).ok).toBe(false);
+    expect(checkEmailDomain('maya@internal.test', { ...withNone, exemptDomains: ['internal.test'] })).toEqual({ ok: true });
+  });
+
   it('gives the demo exemption to those domains only, not to their sub-domains or to names that end the same way', () => {
     expect(check('maya@mail.example.com', 'no-mail').ok).toBe(false);
     expect(check('maya@notexample.com', 'no-mail').ok).toBe(false);
@@ -113,7 +125,7 @@ describe('checkEmailDomain', () => {
 });
 
 describe('the list of temporary email domains kept in the repo', () => {
-  const text = readFileSync(new URL('../../src/data/disposable-email-domains.txt', import.meta.url), 'utf8');
+  const text = readFileSync(new URL('../../src/engine/disposable-email-domains.txt', import.meta.url), 'utf8');
   const lines = text.split(/\r?\n/);
   const comments = lines.filter((line) => line.startsWith('#'));
   const domains = lines.filter((line) => line !== '' && !line.startsWith('#'));
@@ -198,7 +210,11 @@ describe('email domain checks that hold for any domain', () => {
     for (let i = 0; i < 2000; i += 1) {
       const domain = random() < 0.15 ? DEMO_EMAIL_DOMAINS[Math.floor(random() * 3)] : randomDomain(random);
       const service = services[Math.floor(random() * 3)];
-      const result = checkEmailDomain(`maya@${domain}`, { disposableDomains: set, mailService: service });
+      const result = checkEmailDomain(`maya@${domain}`, {
+        disposableDomains: set,
+        mailService: service,
+        exemptDomains: DEMO_EMAIL_DOMAINS,
+      });
 
       const demo = DEMO_EMAIL_DOMAINS.includes(domain);
       const temporary = smallList.some((entry) => domain === entry || domain.endsWith(`.${entry}`));

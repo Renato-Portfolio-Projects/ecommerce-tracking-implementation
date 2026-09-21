@@ -13,7 +13,7 @@ import {
   variantLabel,
   variantSku,
   variantsOf,
-} from '../../src/shop/catalog';
+} from '../../src/engine/catalog';
 
 const valid: ProductEntry = {
   sku: 'SI-TEE-999',

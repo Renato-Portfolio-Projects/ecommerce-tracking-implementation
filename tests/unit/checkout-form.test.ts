@@ -6,7 +6,7 @@ import {
   checkLead,
   type FieldProblem,
   type FormField,
-} from '../../src/shop/checkout-form';
+} from '../../src/engine/checkout-form';
 
 /** Every field of a check that fails, as "field: message", so a test can see it all at once. */
 function problemsOf(result: { ok: boolean; problems?: FieldProblem[] }): string[] {
