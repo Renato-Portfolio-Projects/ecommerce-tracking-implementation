@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES, CART_LIFETIME_DAYS } from '../../src/store/policy';
 import {
@@ -284,6 +284,20 @@ describe('docs/shop-rules.md', () => {
         COUNTRIES.find((country) => country.code === persona.country)!.name,
       ]),
     );
+  });
+
+  it('lists the files in each folder of the code the way the disk does', () => {
+    const files = (folder: string) =>
+      readdirSync(new URL(`../../src/${folder}/`, import.meta.url))
+        .sort()
+        .map((name) => `\`${name}\``)
+        .join(', ');
+    const rows = tableUnderHeading(rules, '## Where the code lives').map(([folder, , listed]) => [folder, listed]);
+    expect(rows).toEqual([
+      ['`src/engine`', files('engine')],
+      ['`src/store`', files('store')],
+      ['`src/demo`', files('demo')],
+    ]);
   });
 
   it('points every rule to a name that really exists in the file it names', () => {

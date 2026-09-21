@@ -272,6 +272,23 @@ Every "Use demo data" button fills in one of eight fictional people, so no visit
 | Camille Laurent | Lyon | France |
 | Jonas Weber | Berlin | Germany |
 
+## Where the code lives
+
+The code is kept in three folders, so that the reusable part can be told apart from one store's own data and from what exists only for the demo.
+
+| Folder | What it holds | Files |
+|---|---|---|
+| `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, and the email domain checks. It knows nothing about one particular store | `cart-storage.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
+| `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes and cart limits | `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts` |
+| `src/demo` | What exists only for the demo: the test cards, the eight demo people and the demo email domains. A real store deletes this folder | `email-domains.ts`, `personas.ts`, `test-cards.ts` |
+
+Two rules keep the folders apart, and a test checks them on every run:
+
+- The store folder imports nothing from the other two, so a store's folder can be swapped whole.
+- The engine never imports from the demo folder, so deleting the demo folder leaves the engine working.
+
+To reuse the engine for another store, write a new `src/store` folder with the same file names and the same exports, and delete `src/demo`. The engine reads everything it needs about a store from what those files export. A few things in the engine still carry this store's choices, and would need attention first: the field names that end in `Cad` (such as `priceCad`), the Canadian English formatting of money, the example SKU in one error message, and the postal code formats, which cover only the nine countries this store ships to.
+
 ## Changing a rule
 
 Every number and list above is defined in one place in the code. To change one, edit the value named here. The tests will then show which other places need to follow, including the tables on this page.
@@ -300,3 +317,4 @@ Every number and list above is defined in one place in the code. To change one, 
 | Which email domains are turned down as temporary | A public-domain list, copied on a date and refreshed by hand. Sub-domains of a listed domain count too | `isDisposableDomain` in `src/engine/email-domain.ts` and `Copied on` in `src/engine/disposable-email-domains.txt` |
 | Which email domains are accepted without a mail check | Reserved for examples, so the demo people work | `DEMO_EMAIL_DOMAINS` in `src/demo/email-domains.ts` |
 | What the server does with the look at a domain's mail service | Refuse when there is none, and let the address through when the look failed | `checkEmailDomain` in `src/engine/email-domain.ts` |
+| Which code is reusable, which is one store's, and which is only the demo | The store's folder can be swapped whole, and the demo folder deleted, without breaking the engine | `offenders` in `tests/unit/architecture.test.ts` |
