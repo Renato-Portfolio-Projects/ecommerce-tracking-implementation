@@ -62,3 +62,10 @@ describe('docs/production-guide.md', () => {
     expect(guide).not.toContain('http://');
   });
 });
+
+describe('README.md', () => {
+  it('links to the production guide, so a reader can find it', () => {
+    const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8');
+    expect(readme).toContain('](docs/production-guide.md)');
+  });
+});
