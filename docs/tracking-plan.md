@@ -56,11 +56,12 @@ The first column is the platform-neutral dataLayer name. The three platform colu
 
 ## Data contract
 
-- **Items** follow the GA4 item schema. `item_id` is the SKU that will later appear in the product feed. `item_category` is the product's collection. `item_list_id`, `item_list_name` and `index` are set when a product card is clicked and remembered on the cart line, so they carry through `add_to_cart`, `begin_checkout` and `purchase`.
+- **Items** follow the GA4 item schema. `item_id` is the product's SKU. It stays the same from the first list view to the purchase, because a shopper has not chosen a colour and size until add to cart. `item_category` is the product's collection. `item_name` is the product name, and `item_variant` is the colour and size, for example `Ink / M`. `price` is the price of one unit in the charged currency, which is the sale price on a sale item, and `discount` is the coupon's discount on one unit. `item_list_id`, `item_list_name` and `index` are set when a product card is clicked and remembered on the cart line, so they carry through `add_to_cart`, `begin_checkout` and `purchase`. The prices and rules behind these values are in [the shop rules](shop-rules.md).
 - **Meta events** carry `content_ids`, `contents`, `content_type`, `value` and `currency`, built from the same items. The Meta Pixel and the Conversions API use the same event name and the same `event_id`, which is how Meta deduplicates them.
 - **`value`** is the net item total after discount. It excludes tax and shipping, following Google's ecommerce guide. Tax and shipping are separate fields. Meta receives the same `value`, so revenue matches across platforms.
 - **`currency`** is the currency actually charged. Once checkout starts it cannot change.
 - **Discounts.** `coupon` is on `begin_checkout` and `purchase`, `discount` is set per item, and `value` is net of discount. The server validates the code, so `purchase.coupon` is confirmed. The chain to watch is `generate_lead` (code issued), then `apply_coupon`, then `purchase`.
+- **`shipping_tier`** is the name of the shipping method the shopper picked: `Standard` or `Express`.
 - **`cta_click`** uses one listener and a `data-cta` attribute. It fires only where no ecommerce event exists: navigation and footer links, "Continue shopping", the size guide, the demo data buttons, and the demo bar links to the case study and proof page.
 
 ## GTM naming conventions

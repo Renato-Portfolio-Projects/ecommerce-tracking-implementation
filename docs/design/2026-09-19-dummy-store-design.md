@@ -92,7 +92,7 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 
 ### Data contract
 
-- Items follow the GA4 item schema. `item_id` is the SKU that will later appear in the catalog feed. `item_category` is the product's collection. `item_list_id`, `item_list_name` and `index` are set on `select_item` and remembered on the cart line at add time, so they carry through `add_to_cart`, `begin_checkout` and `purchase`.
+- Items follow the GA4 item schema. `item_id` is the product's SKU. It stays the same from the first list view to the purchase, because a shopper has not chosen a colour and size until add to cart. Each colour and size also has its own variant SKU, used on orders and in the catalog feed. `item_category` is the product's collection. `item_list_id`, `item_list_name` and `index` are set on `select_item` and remembered on the cart line at add time, so they carry through `add_to_cart`, `begin_checkout` and `purchase`.
 - Meta events carry `content_ids`, `contents`, `content_type`, `value` and `currency`.
 - `value` is the net item total after discount, excluding tax and shipping (per Google's ecommerce guide). Tax and shipping are separate fields. Meta receives the same `value`, so revenue matches across platforms.
 - `currency` is the currency actually charged.
@@ -146,7 +146,7 @@ CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU 
 
 ### Checkout
 
-Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`.
+Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`. The order summary has a coupon field. Submitting a code shows the result in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised. The same result is what `apply_coupon` records.
 
 ### Lead popup
 
