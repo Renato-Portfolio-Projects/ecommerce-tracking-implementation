@@ -92,7 +92,7 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 
 ### Data contract
 
-- Items follow the GA4 item schema. `item_id` is the SKU that will later appear in the catalog feed. `item_category` is the product's collection. `item_list_id`, `item_list_name` and `index` are set on `select_item` and remembered on the cart line at add time, so they carry through `add_to_cart`, `begin_checkout` and `purchase`.
+- Items follow the GA4 item schema. `item_id` is the product's SKU. It stays the same from the first list view to the purchase, because a shopper has not chosen a colour and size until add to cart. Each colour and size also has its own variant SKU, used on orders and in the catalog feed. `item_category` is the product's collection. `item_list_id`, `item_list_name` and `index` are set on `select_item` and remembered on the cart line at add time, so they carry through `add_to_cart`, `begin_checkout` and `purchase`.
 - Meta events carry `content_ids`, `contents`, `content_type`, `value` and `currency`.
 - `value` is the net item total after discount, excluding tax and shipping (per Google's ecommerce guide). Tax and shipping are separate fields. Meta receives the same `value`, so revenue matches across platforms.
 - `currency` is the currency actually charged.
@@ -142,11 +142,11 @@ One data file (SKU, slug, collection, variants, price, sale price, stock, images
 
 ### Money
 
-CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU demo rates). Flat shipping with a free-shipping threshold and a cart progress bar. `WELCOME10` works and is recorded on the order. Currency selector in the header, persistent, locked once checkout starts.
+CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU demo rates). Two shipping methods, Standard and Express, at flat prices that are the same for every destination, so `shipping_tier` on `add_shipping_info` carries a real choice. Standard is free when the discounted items reach a threshold, and a cart progress bar shows how close the shopper is. `WELCOME10` works and is recorded on the order. Currency selector in the header, persistent, locked once checkout starts.
 
 ### Checkout
 
-Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`.
+Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`. The order summary has a coupon field. Submitting a code shows the result in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised. The same result is what `apply_coupon` records.
 
 ### Lead popup
 
@@ -176,9 +176,9 @@ Mobile-first, WCAG AA, `prefers-reduced-motion`, and an LCP and layout-shift bud
 
 ### `/proof` (tracking inspector, your session only, keyed by a random token, no IP)
 
-1. Consent state, timestamp, whether GPC was seen, marketing-email consent.
-2. Live event log: every dataLayer push with `event_id` and expandable payload.
-3. Server receipts paired with their browser twin by `event_id`: "deduplicated" or "recovered by server (browser blocked)".
+1. Consent state, timestamp, whether GPC was seen, marketing-email consent. If tracking consent is denied or not yet given, this panel says so in plain words: nothing was sent because of the visitor's choice, that is by design and not a fault, and "Cookie settings" turns tracking on.
+2. Live event log: every dataLayer push with `event_id` and expandable payload. With tracking denied it shows the same explanation instead of an empty list.
+3. Server receipts paired with their browser twin by `event_id`: "deduplicated" or "recovered by server (browser blocked)". With marketing consent denied it explains that no server event was sent.
 4. Your lead, order, and first/last-touch attribution.
 5. Simulated outbox: welcome and order-confirmation emails, rendered but never sent.
 6. Recent activity: a masked, anonymised feed of the last 20 events.
@@ -224,7 +224,7 @@ Later entries (v1.x): TikTok Pixel and Events API, LinkedIn Insight Tag and Conv
 | v0.5 Proof and case study | `/proof`, `/case-study`, stack section, outbox | A stranger completes the tour |
 | v1.0 Release | CI complete, Lighthouse budgets met, README, walkthrough video, container exports, decision records, security review, link audit, redacted screenshots | Release checklist signed off by Renato |
 
-v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
+v1.x backlog: product feed and Meta catalog, Microsoft Clarity, Looker Studio dashboard, TikTok and LinkedIn tags with their server-side APIs (TikTok first as a reference, LinkedIn next on Renato's list), labelled synthetic-traffic script (`traffic_type=synthetic`), server-side `refund` event, related-items list, collection pages reached from cards on the home page (a `select_promotion` click on the card, then a `view_item_list` on the collection page), a Shopify dev-store companion, a real CMP comparison, an Astro single-page-mode experiment.
 
 ## 10. Verification strategy
 
@@ -254,7 +254,7 @@ Target: $0 beyond the domain.
 
 | Item | Cost | Catch |
 |---|---|---|
-| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. Confirm the renewal price on the order page | It must stay registered while the portfolio is in use. Decline registrar upsells |
+| Domain (Namecheap) | The one real cost: `secondimpression.ca` at USD 11.98 a year on 2026-09-19 (CAD 16.78 charged to Renato's card after conversion). Costs are recorded at the vendor's price, so the number can be checked. The renewal price is the same, and auto-renew is on | It must stay registered while the portfolio is in use. Decline registrar upsells |
 | Stape Free | $0, no card | Disabled at 10K requests a month per container. Never charged automatically |
 | Vercel Hobby | $0 | Hard caps, no overage billing. Non-commercial use only, which fits |
 | Redis (Upstash Free) | $0, no card | 500K commands a month, 256 MB (verify at signup). Choose the Free plan when the Vercel Marketplace asks |

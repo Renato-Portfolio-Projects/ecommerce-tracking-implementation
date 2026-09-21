@@ -45,10 +45,10 @@ This is a due-diligence check, not legal clearance. Trademark registers do not l
 The domain is the one planned cost.
 
 - [x] Chosen and bought: `secondimpression.ca`, on 2026-09-19. A registry check that day showed it unregistered.
-- [ ] Check availability and price again at the Namecheap checkout. Write down the year-one price and the renewal price.
-- [ ] Keep any free privacy option offered. Decline the paid extras.
-- [ ] Decide whether auto-renew is on. The domain has to stay registered for as long as the portfolio is in use.
-- [x] The price is recorded in `src/data/stack.ts`: USD 11.98 a year, which is Namecheap's price. Your card was charged CAD 16.78 after conversion. Confirm on the Namecheap order page that the renewal price is the same, because the renewal price is what the domain costs over time.
+- [x] Check availability and price again at the Namecheap checkout. Write down the year-one price and the renewal price. Done, confirmed by Renato on 2026-09-20: the renewal price is the same as the first-year price.
+- [x] Keep any free privacy option offered. Decline the paid extras. Done, confirmed by Renato on 2026-09-20: no paid privacy extras are on.
+- [x] Decide whether auto-renew is on. The domain has to stay registered for as long as the portfolio is in use. Done, confirmed by Renato on 2026-09-20: auto-renew is on, at the same price.
+- [x] The price is recorded in `src/data/stack.ts`: USD 11.98 a year, which is Namecheap's price. Your card was charged CAD 16.78 after conversion. The renewal price is the same, so USD 11.98 is what the domain costs over time.
 
 ## 3. GitHub repository
 
@@ -64,7 +64,7 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 - [x] Deploy, and confirm the `*.vercel.app` address loads the placeholder page. Done: the project is `second-impression`.
 - [x] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project. Done for `secondimpression.ca`, and for `www.secondimpression.ca`, which redirects permanently to it.
 - [x] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works. Done: an A record for `@` and a CNAME record for `www`. The live site passed every check on 2026-09-19.
-- [ ] Confirm the account is on the Hobby plan and no card is on file.
+- [x] Confirm the account is on the Hobby plan and no card is on file. Done, confirmed by Renato on 2026-09-20.
 
 ## 5. Google Tag Manager (needed for 0.2)
 
