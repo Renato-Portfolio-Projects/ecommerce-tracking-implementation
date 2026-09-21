@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   BASE_CURRENCY,
   CURRENCIES,
+  EURO_AREA_COUNTRIES,
   convertFromCad,
+  defaultCurrencyFor,
   divideRounded,
   formatMoney,
   isCurrencyCode,
@@ -99,5 +101,61 @@ describe('formatMoney', () => {
   it('shows thousands separators and zero', () => {
     expect(formatMoney(123450, 'CAD')).toBe('$1,234.50');
     expect(formatMoney(0, 'CAD')).toBe('$0.00');
+  });
+});
+
+describe('EURO_AREA_COUNTRIES', () => {
+  it('lists the 21 euro-area countries, each once, with a two-letter code and a name', () => {
+    expect(EURO_AREA_COUNTRIES).toHaveLength(21);
+    expect(new Set(EURO_AREA_COUNTRIES.map((country) => country.code)).size).toBe(21);
+    for (const country of EURO_AREA_COUNTRIES) {
+      expect(country.code, country.name).toMatch(/^[A-Z]{2}$/);
+      expect(country.name.trim(), country.code).not.toBe('');
+    }
+  });
+
+  it('is exactly the euro area, which Bulgaria joined on 1 January 2026', () => {
+    expect(EURO_AREA_COUNTRIES.map((country) => country.code)).toEqual([
+      'AT', 'BE', 'BG', 'HR', 'CY', 'EE', 'FI', 'FR', 'DE', 'GR', 'IE',
+      'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PT', 'SK', 'SI', 'ES',
+    ]);
+  });
+
+  it('includes the six euro countries the store ships to, and not Canada, the US or the UK', () => {
+    const codes = EURO_AREA_COUNTRIES.map((country) => country.code);
+    for (const shipsTo of ['FR', 'DE', 'IE', 'IT', 'NL', 'ES']) expect(codes).toContain(shipsTo);
+    for (const other of ['CA', 'US', 'GB']) expect(codes).not.toContain(other);
+  });
+});
+
+describe('defaultCurrencyFor', () => {
+  it('starts Canadian visitors in CAD, US visitors in USD and UK visitors in GBP', () => {
+    expect(defaultCurrencyFor('CA')).toBe('CAD');
+    expect(defaultCurrencyFor('US')).toBe('USD');
+    expect(defaultCurrencyFor('GB')).toBe('GBP');
+  });
+
+  it('starts every euro-area visitor in EUR', () => {
+    for (const country of EURO_AREA_COUNTRIES) {
+      expect(defaultCurrencyFor(country.code), country.name).toBe('EUR');
+    }
+  });
+
+  it('starts everyone else in USD, including countries next to the euro area that use their own money', () => {
+    for (const code of ['JP', 'AU', 'BR', 'MX', 'CH', 'SE', 'DK', 'PL', 'NO']) {
+      expect(defaultCurrencyFor(code), code).toBe('USD');
+    }
+  });
+
+  it('ignores capitalisation and stray spaces in the header', () => {
+    expect(defaultCurrencyFor('ca')).toBe('CAD');
+    expect(defaultCurrencyFor(' gb ')).toBe('GBP');
+    expect(defaultCurrencyFor(' de')).toBe('EUR');
+  });
+
+  it('falls back to USD when the header is missing or does not look like a country code', () => {
+    for (const header of [null, undefined, '', '   ', 'Canada', 'C', 'CAN', '12', 'ZZ']) {
+      expect(defaultCurrencyFor(header), String(header)).toBe('USD');
+    }
   });
 });
