@@ -45,6 +45,19 @@ export interface Collection {
   products: ProductEntry[];
 }
 
+/**
+ * Where a product sits on a page: which list it was shown in, and its place in that list.
+ * The list is one collection's row on the page, and the place counts from 1.
+ */
+export interface ListContext {
+  /** Also the GA4 `item_list_id`. */
+  listId: string;
+  /** Also the GA4 `item_list_name`. */
+  listName: string;
+  /** Also the GA4 `index`: the item's place in the list, counting from 1. */
+  index: number;
+}
+
 /** The most units of one product, colour and size that a cart line may hold. */
 export const MAX_QUANTITY_PER_LINE = 10;
 
@@ -158,6 +171,30 @@ export function variantLabel(colour: string, size: string): string {
   return `${colour} / ${size}`;
 }
 
+/**
+ * The SKU of one exact colour and size: the product SKU, the colour in capitals and the size,
+ * for example SI-TEE-002-INK-M. It names the item on cart lines and orders. Tracking's
+ * `item_id` stays the product SKU.
+ */
+export function variantSku(sku: string, colour: string, size: string): string {
+  return `${sku}-${colour.toUpperCase()}-${size}`;
+}
+
+/** Every colour and size a product comes in, colour by colour, sold out or not. */
+export function variantsOf(product: { colours: Colour[]; sizes: string[] }): Variant[] {
+  return product.colours.flatMap((colour) => product.sizes.map((size) => ({ colour, size })));
+}
+
+/**
+ * The list context of a product shown in its own collection's row: the list is the collection,
+ * and the index is the product's place in it, counting from 1.
+ */
+export function listContextFor(product: Product): ListContext {
+  const collection = findCollection(product.collection)!;
+  const place = collection.products.findIndex((entry) => entry.sku === product.sku);
+  return { listId: collection.id, listName: collection.name, index: place + 1 };
+}
+
 const SKU_PATTERN = /^SI-[A-Z]{3}-\d{3}$/;
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -211,9 +248,7 @@ export function validateCatalog(collections: Collection[]): string[] {
         }
       }
 
-      const offered = product.colours.flatMap((colour) =>
-        product.sizes.map((size) => ({ colour, size })),
-      );
+      const offered = variantsOf(product);
       if (offered.length > 0 && offered.every((v) => isSoldOut(product, v.colour, v.size))) {
         errors.push(`${id}: every variant is sold out`);
       }
