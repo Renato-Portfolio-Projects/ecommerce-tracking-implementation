@@ -7,9 +7,12 @@ import {
   findProduct,
   findProductBySlug,
   isSoldOut,
+  listContextFor,
   productsIn,
   validateCatalog,
   variantLabel,
+  variantSku,
+  variantsOf,
   type Collection,
   type ProductEntry,
 } from '../../src/shop/catalog';
@@ -243,5 +246,59 @@ describe('variantLabel', () => {
 describe('MAX_QUANTITY_PER_LINE', () => {
   it('is ten', () => {
     expect(MAX_QUANTITY_PER_LINE).toBe(10);
+  });
+});
+
+describe('variantSku', () => {
+  it('joins the product SKU, the colour in capitals and the size', () => {
+    expect(variantSku('SI-TEE-002', 'Ink', 'M')).toBe('SI-TEE-002-INK-M');
+    expect(variantSku('SI-PNT-001', 'Sand', '32')).toBe('SI-PNT-001-SAND-32');
+  });
+});
+
+describe('variantsOf', () => {
+  it('lists every colour and size a product comes in, colour by colour', () => {
+    const logoTee = findProduct('SI-TEE-002')!;
+    expect(variantsOf(logoTee)).toHaveLength(10);
+    expect(variantsOf(logoTee).slice(0, 3)).toEqual([
+      { colour: 'Paper', size: 'XS' },
+      { colour: 'Paper', size: 'S' },
+      { colour: 'Paper', size: 'M' },
+    ]);
+  });
+
+  it('gives 65 variants across the six products, each with its own SKU', () => {
+    const skus = PRODUCTS.flatMap((product) =>
+      variantsOf(product).map((variant) => variantSku(product.sku, variant.colour, variant.size)),
+    );
+    expect(skus).toHaveLength(65);
+    expect(new Set(skus).size).toBe(65);
+  });
+});
+
+describe('listContextFor', () => {
+  it("is the product's collection, with its place in it counting from 1", () => {
+    expect(listContextFor(findProduct('SI-TEE-001')!)).toEqual({
+      listId: 'tees',
+      listName: 'Tees',
+      index: 1,
+    });
+    expect(listContextFor(findProduct('SI-TEE-003')!)).toEqual({
+      listId: 'tees',
+      listName: 'Tees',
+      index: 3,
+    });
+    expect(listContextFor(findProduct('SI-PNT-002')!)).toEqual({
+      listId: 'pants',
+      listName: 'Pants',
+      index: 2,
+    });
+  });
+
+  it('gives the products of a collection the places 1, 2 and 3, in page order', () => {
+    for (const collection of CATALOG) {
+      const places = productsIn(collection.id).map((product) => listContextFor(product).index);
+      expect(places, collection.name).toEqual([1, 2, 3]);
+    }
   });
 });
