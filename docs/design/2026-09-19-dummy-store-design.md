@@ -150,18 +150,18 @@ The cart lives in the browser for 7 days from its last change. It holds only eac
 
 ### Checkout
 
-Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`. The order summary has a coupon field. Submitting a code shows the result in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised. The same result is what `apply_coupon` records.
+Guest only, realistic validation: each field is checked for its shape (names, email, phone, address, and a postal code in the format of the country), with the same code in the browser and on the server. Nothing is looked up, except that the server also checks an email's domain (see the lead popup below). The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. The card number is checked in the browser and never sent, so only the brand, the last four digits and whether it was accepted or declined go any further. A designated test decline card shows an error and fires no `purchase`. The order summary has a coupon field. Submitting a code shows the result in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised. The same result is what `apply_coupon` records.
 
 ### Lead popup
 
-Shows after 5 seconds or 40% scroll, never on checkout or thank-you, once per 7 days. Esc closes it and focus is trapped. Fields: first name, email, unticked marketing consent. Success state shows the code.
+Shows after 5 seconds or 40% scroll, never on checkout or thank-you, once per 7 days. Esc closes it and focus is trapped. Fields: first name, email, unticked marketing consent. Success state shows the code. The server checks the email before it saves the lead and before `generate_lead` fires: its shape, that its domain is not a temporary-email service, and that the domain can receive mail. So junk addresses never become conversions. Only the domain is looked up, and no email address is sent to any other service. The demo domains (`example.com`, `example.org` and `example.net`) are accepted without a mail check, so the demo people work. See `docs/shop-rules.md`.
 
 ### Demo data button
 
 Every form has a small "Use demo data" button (lead popup, checkout information, shipping address, payment), so no visitor has to type personal details.
 
-- One fictional persona per session, picked at random on first use and reused everywhere. The lead and the order then share an identity, so `/proof` can link the lead to the sale. A "new persona" link re-rolls it.
-- Everything it fills is fictional and safe: emails on the reserved `example.com` domain, phone numbers in the reserved fiction range (555-01xx), invented street addresses with correctly formatted postal or ZIP codes, and only the accepted test card numbers.
+- One fictional persona per session, picked at random on first use and reused everywhere. The lead and the order then share an identity, so `/proof` can link the lead to the sale. A "new persona" link re-rolls it, always to a different one. There are eight, and none of them has a consent setting.
+- Everything it fills is fictional and safe: emails on the reserved `example.com` domain, phone numbers in each country's own reserved fiction range (555-0100 to 0199 for Canada and the United States, and the ranges the regulators set aside for the United Kingdom, France and Germany), invented street addresses with correctly formatted postal or ZIP codes, and only the accepted test card numbers.
 - It never ticks a consent checkbox and never touches the cookie banner. Consent stays a deliberate action by the visitor.
 - It fills fields the way a person would (input and change events fire), so validation and form-start tracking behave the same. It is a real, labelled, keyboard-operable button, and it announces "Form filled with demo data" to screen readers.
 - Fields stay editable, and a note says real details are optional and deleted after 7 days.

@@ -12,6 +12,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The cart: lines that hold what was picked, how many and the list each item was picked from, with merging, limits, and a saved form that lasts seven days and holds no prices.
 - A SKU for every colour and size, and the starting currency for each visitor's country.
 - The rules page now covers the cart, the variant SKUs and the default currency, with a reason for each rule and a "Changing a rule" table that says where each one lives in the code.
+- The checkout form checks: names, email, phone, address and the postal codes of the nine countries the store ships to. Each is checked for its shape, with the message a shopper would read. An email follows the email standard, so accented and non-English addresses work and typos such as doubled dots are refused.
+- Email domain checks for the server: a dated copy of a public-domain list of temporary email domains, and the decision about a domain that cannot receive mail. Only the domain is looked up. The demo domains (example.com, example.org and example.net) are accepted so the demo people work.
+- The test cards: three well-known test numbers, one of which always declines, and a check that keeps only the brand and last four digits of a card.
+- Eight fictional people for the "Use demo data" buttons, with emails on example.com and phone numbers in each country's own reserved fiction range.
+- The rules page now covers the checkout forms, postal codes, test cards and demo people, with the message for each mistake.
 
 ### Changed
 
@@ -19,6 +24,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The domain and hosting items in the setup checklist are ticked: the renewal price is the same as the first year, auto-renew is on, and the Vercel account is on the Hobby plan.
 - The pricing code's problem messages now name the product ("Logo Tee does not come in Red / M.") instead of saying "Line 1:", because a shopper never sees a line.
 - The tracking plan says an item's `index` counts from 1 and that the colour-and-size SKU is not the `item_id`. The design spec has a short Cart section.
+- The design spec now says each country has its own reserved fiction phone range for the demo data (555-01xx is North American only), that a card number never leaves the browser, what the checkout's validation covers, and that the server checks an email's domain before a lead is saved.
 
 ## [0.1.0] - 2026-09-19
 
