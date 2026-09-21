@@ -1,3 +1,6 @@
+// The places Second Impression ships to and the demo tax rate for each. This is the store's own
+// data. The lookup that uses it is in src/engine/tax.ts.
+
 export type CountryCode = 'CA' | 'US' | 'GB' | 'FR' | 'DE' | 'IE' | 'IT' | 'NL' | 'ES';
 
 export interface Country {
@@ -45,16 +48,3 @@ export const PROVINCES: Province[] = [
   { code: 'SK', name: 'Saskatchewan', taxPercent: 13 },
   { code: 'YT', name: 'Yukon', taxPercent: 13 },
 ];
-
-/**
- * The tax rate for a destination, in percent, or undefined when the store cannot ship there.
- * Canada needs a known province. Anywhere else, the province is ignored.
- */
-export function taxPercentFor(country: string, province?: string): number | undefined {
-  const match = COUNTRIES.find((candidate) => candidate.code === country);
-  if (!match) return undefined;
-  if (match.code === 'CA') {
-    return PROVINCES.find((candidate) => candidate.code === province)?.taxPercent;
-  }
-  return match.taxPercent;
-}

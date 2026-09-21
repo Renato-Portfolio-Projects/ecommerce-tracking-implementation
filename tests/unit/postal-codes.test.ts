@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, type CountryCode } from '../../src/shop/destinations';
+import { COUNTRIES, type CountryCode } from '../../src/store/destinations';
 import { POSTAL_CODE_FORMATS, checkPostalCode, postalCodeHelp } from '../../src/shop/postal-codes';
 
 /** Each row: what is typed, then how it is kept. */

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { CATALOG, type Collection, type ProductEntry } from '../../src/store/products';
+import { MAX_QUANTITY_PER_LINE } from '../../src/store/policy';
 import {
-  CATALOG,
-  MAX_QUANTITY_PER_LINE,
   PRODUCTS,
   findCollection,
   findProduct,
@@ -13,8 +13,6 @@ import {
   variantLabel,
   variantSku,
   variantsOf,
-  type Collection,
-  type ProductEntry,
 } from '../../src/shop/catalog';
 
 const valid: ProductEntry = {

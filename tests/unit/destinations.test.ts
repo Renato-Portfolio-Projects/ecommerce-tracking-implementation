@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, PROVINCES, taxPercentFor } from '../../src/shop/destinations';
+import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { taxPercentFor } from '../../src/shop/tax';
 import { scaleToInteger } from '../../src/shop/money';
 
 describe('COUNTRIES', () => {

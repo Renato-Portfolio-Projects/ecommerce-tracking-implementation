@@ -1,27 +1,12 @@
-import {
-  MAX_QUANTITY_PER_LINE,
-  findCollection,
-  findProduct,
-  isSoldOut,
-  variantLabel,
-  variantSku,
-  type Product,
-} from './catalog';
+import { MAX_QUANTITY_PER_LINE } from '../store/policy';
+import { findCollection, findProduct, isSoldOut, variantLabel, variantSku } from './catalog';
+import type { Product } from '../store/products';
 import { checkCoupon, type CouponCheck } from './coupons';
-import { taxPercentFor } from './destinations';
-import {
-  convertFromCad,
-  divideRounded,
-  isCurrencyCode,
-  scaleToInteger,
-  type CurrencyCode,
-} from './money';
-import {
-  findShippingMethod,
-  freeShippingRemaining,
-  shippingCost,
-  type ShippingMethodId,
-} from './shipping';
+import { taxPercentFor } from './tax';
+import { convertFromCad, divideRounded, isCurrencyCode, scaleToInteger } from './money';
+import type { CurrencyCode } from '../store/currencies';
+import { findShippingMethod, freeShippingRemaining, shippingCost } from './shipping';
+import type { ShippingMethodId } from '../store/shipping-methods';
 
 /**
  * Everything the store charges is worked out here, by one function, so the pages and the

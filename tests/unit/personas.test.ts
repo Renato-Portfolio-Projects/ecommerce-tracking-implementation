@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, taxPercentFor } from '../../src/shop/destinations';
+import { COUNTRIES } from '../../src/store/destinations';
+import { taxPercentFor } from '../../src/shop/tax';
 import { checkAddress, checkContact, checkLead } from '../../src/shop/checkout-form';
 import {
   PERSONAS,

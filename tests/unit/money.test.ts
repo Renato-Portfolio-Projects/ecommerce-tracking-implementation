@@ -3,8 +3,10 @@ import {
   BASE_CURRENCY,
   CURRENCIES,
   EURO_AREA_COUNTRIES,
-  convertFromCad,
   defaultCurrencyFor,
+} from '../../src/store/currencies';
+import {
+  convertFromCad,
   divideRounded,
   formatMoney,
   isCurrencyCode,

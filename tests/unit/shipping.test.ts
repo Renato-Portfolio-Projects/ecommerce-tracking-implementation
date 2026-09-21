@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  FREE_SHIPPING_FROM_CAD,
-  SHIPPING_METHODS,
-  findShippingMethod,
-  freeShippingRemaining,
-  shippingCost,
-} from '../../src/shop/shipping';
+import { FREE_SHIPPING_FROM_CAD, SHIPPING_METHODS } from '../../src/store/shipping-methods';
+import { findShippingMethod, freeShippingRemaining, shippingCost } from '../../src/shop/shipping';
 
 const standard = findShippingMethod('standard')!;
 const express = findShippingMethod('express')!;

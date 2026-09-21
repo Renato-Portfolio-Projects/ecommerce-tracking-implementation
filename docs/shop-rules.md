@@ -278,18 +278,18 @@ Every number and list above is defined in one place in the code. To change one, 
 
 | Rule | Why it is this way | Where to change it |
 |---|---|---|
-| Products, prices, colours and sizes | The catalog is the one place products are defined | `CATALOG` in `src/shop/catalog.ts` |
+| Products, prices, colours and sizes | The catalog is the one place products are defined | `CATALOG` in `src/store/products.ts` |
 | The shape of a variant SKU | The product SKU, the colour in capitals and the size | `variantSku` in `src/shop/catalog.ts` |
-| Most units of one item on a line | A sensible cap for a demo store | `MAX_QUANTITY_PER_LINE` in `src/shop/catalog.ts` |
-| Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/shop/cart.ts` |
-| How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/shop/cart-storage.ts` |
-| Exchange rates | Fixed demo rates, not live ones | `CURRENCIES` in `src/shop/money.ts` |
-| The starting currency by country | CAD, USD, GBP and EUR by country, and USD for everywhere else | `defaultCurrencyFor` in `src/shop/money.ts` |
-| The euro-area countries | The 21 members of the euro area | `EURO_AREA_COUNTRIES` in `src/shop/money.ts` |
-| Shipping prices and the free-shipping line | Two flat methods, and only Standard is ever free | `SHIPPING_METHODS` in `src/shop/shipping.ts` |
-| Tax rates by country | Simplified demo rates. The United States is 0% on purpose | `COUNTRIES` in `src/shop/destinations.ts` |
-| Tax rates by province | Simplified demo rates | `PROVINCES` in `src/shop/destinations.ts` |
-| Coupon codes and discounts | Codes are stored in capitals, and a typed code matches in any case | `COUPONS` in `src/shop/coupons.ts` |
+| Most units of one item on a line | A sensible cap for a demo store | `MAX_QUANTITY_PER_LINE` in `src/store/policy.ts` |
+| Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/store/policy.ts` |
+| How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/store/policy.ts` |
+| Exchange rates | Fixed demo rates, not live ones | `CURRENCIES` in `src/store/currencies.ts` |
+| The starting currency by country | CAD, USD, GBP and EUR by country, and USD for everywhere else | `defaultCurrencyFor` in `src/store/currencies.ts` |
+| The euro-area countries | The 21 members of the euro area | `EURO_AREA_COUNTRIES` in `src/store/currencies.ts` |
+| Shipping prices and the free-shipping line | Two flat methods, and only Standard is ever free | `SHIPPING_METHODS` in `src/store/shipping-methods.ts` |
+| Tax rates by country | Simplified demo rates. The United States is 0% on purpose | `COUNTRIES` in `src/store/destinations.ts` |
+| Tax rates by province | Simplified demo rates | `PROVINCES` in `src/store/destinations.ts` |
+| Coupon codes and discounts | Codes are stored in capitals, and a typed code matches in any case | `COUPONS` in `src/store/coupon-codes.ts` |
 | The characters a name, a city or a street line may use | Letters from any language and the marks names use, so real names are not turned away | `NAME_PATTERN` in `src/shop/checkout-form.ts` and `STREET_PATTERN` in `src/shop/checkout-form.ts` |
 | The length limits on names, cities, street lines and emails | Long enough for real names, short enough to keep records tidy. The email limits are the email standard's | `NAME_LENGTH`, `CITY_LENGTH` and `ADDRESS_LENGTH` in `src/shop/checkout-form.ts`, and `EMAIL_LENGTH`, `LOCAL_PART_LENGTH` and `DOMAIN_PART_LENGTH` in `src/shop/checkout-form.ts` |
 | How many digits a phone number has | Seven keeps out obvious typos, and 15 is the most an international number can have | `PHONE_DIGITS` in `src/shop/checkout-form.ts` |

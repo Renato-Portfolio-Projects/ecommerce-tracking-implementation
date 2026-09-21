@@ -1,4 +1,4 @@
-import type { CountryCode } from './destinations';
+import type { CountryCode } from '../store/destinations';
 
 export interface PostalCodeFormat {
   country: CountryCode;

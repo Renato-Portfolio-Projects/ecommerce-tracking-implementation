@@ -1,29 +1,39 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES, CART_LIFETIME_DAYS } from '../../src/store/policy';
 import {
-  MAX_QUANTITY_PER_LINE,
   PRODUCTS,
   findCollection,
   variantLabel,
   variantSku,
   variantsOf,
 } from '../../src/shop/catalog';
-import { MAX_CART_LINES } from '../../src/shop/cart';
-import { CART_LIFETIME_DAYS } from '../../src/shop/cart-storage';
-import { COUPONS } from '../../src/shop/coupons';
-import { COUNTRIES, PROVINCES } from '../../src/shop/destinations';
+import { COUPONS } from '../../src/store/coupon-codes';
+import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { CURRENCIES, EURO_AREA_COUNTRIES, defaultCurrencyFor } from '../../src/store/currencies';
+import { formatMoney } from '../../src/shop/money';
+import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 import {
-  CURRENCIES,
-  EURO_AREA_COUNTRIES,
-  defaultCurrencyFor,
-  formatMoney,
-} from '../../src/shop/money';
-import { SHIPPING_METHODS } from '../../src/shop/shipping';
-import { checkAddress, checkContact, checkLead, type FormCheck, type FormField } from '../../src/shop/checkout-form';
-import { DEMO_EMAIL_DOMAINS, checkEmailDomain, parseDomainList, type MailService } from '../../src/shop/email-domain';
+  checkAddress,
+  checkContact,
+  checkLead,
+  type FormCheck,
+  type FormField,
+} from '../../src/shop/checkout-form';
+import {
+  DEMO_EMAIL_DOMAINS,
+  checkEmailDomain,
+  parseDomainList,
+  type MailService,
+} from '../../src/shop/email-domain';
 import { PERSONAS } from '../../src/shop/personas';
 import { POSTAL_CODE_FORMATS } from '../../src/shop/postal-codes';
-import { DEFAULT_TEST_CARD, TEST_CARDS, checkPayment, formatCardNumber } from '../../src/shop/test-cards';
+import {
+  DEFAULT_TEST_CARD,
+  TEST_CARDS,
+  checkPayment,
+  formatCardNumber,
+} from '../../src/shop/test-cards';
 import { tableUnderHeading } from '../helpers/markdown';
 
 const rules = readFileSync(new URL('../../docs/shop-rules.md', import.meta.url), 'utf8');

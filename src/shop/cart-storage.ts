@@ -1,10 +1,5 @@
-import {
-  addToCart,
-  emptyCart,
-  isValidListContext,
-  type Cart,
-  type CartProblem,
-} from './cart';
+import { CART_LIFETIME_DAYS } from '../store/policy';
+import { addToCart, emptyCart, isValidListContext, type Cart, type CartProblem } from './cart';
 import type { LineInput } from './pricing';
 
 /**
@@ -13,9 +8,6 @@ import type { LineInput } from './pricing';
  * saved cart is opened, every line is checked against the catalog again and priced fresh, so a
  * product that has changed or sold out is dropped instead of being trusted.
  */
-
-/** How long a saved cart is kept, counted from the last time it was saved. */
-export const CART_LIFETIME_DAYS = 7;
 
 const CART_LIFETIME_MS = CART_LIFETIME_DAYS * 24 * 60 * 60 * 1000;
 const STORED_CART_VERSION = 1;

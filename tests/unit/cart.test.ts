@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES } from '../../src/store/policy';
 import {
-  MAX_QUANTITY_PER_LINE,
   PRODUCTS,
   findProduct,
   isSoldOut,
@@ -8,7 +8,6 @@ import {
   variantsOf,
 } from '../../src/shop/catalog';
 import {
-  MAX_CART_LINES,
   addToCart,
   cartLineKey,
   cartQuantity,
