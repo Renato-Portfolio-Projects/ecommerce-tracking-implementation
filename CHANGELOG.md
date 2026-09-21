@@ -17,6 +17,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The test cards: three well-known test numbers, one of which always declines, and a check that keeps only the brand and last four digits of a card.
 - Eight fictional people for the "Use demo data" buttons, with emails on example.com and phone numbers in each country's own reserved fiction range.
 - The rules page now covers the checkout forms, postal codes, test cards and demo people, with the message for each mistake.
+- A test that keeps the code's three folders apart: the engine, one store's data, and the demo-only parts. It fails if the store folder imports from the other two, or if the engine imports from the demo folder.
+- The rules page now says where the code lives, and what would need attention before the engine could be reused for another store.
 
 ### Changed
 
@@ -25,6 +27,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The pricing code's problem messages now name the product ("Logo Tee does not come in Red / M.") instead of saying "Line 1:", because a shopper never sees a line.
 - The tracking plan says an item's `index` counts from 1 and that the colour-and-size SKU is not the `item_id`. The design spec has a short Cart section.
 - The design spec now says each country has its own reserved fiction phone range for the demo data (555-01xx is North American only), that a card number never leaves the browser, what the checkout's validation covers, and that the server checks an email's domain before a lead is saved.
+- The shop code is reorganised into three folders, with no change in behaviour: `src/engine` (the reusable code), `src/store` (Second Impression's own data) and `src/demo` (what exists only for the demo). The email domain check no longer has the demo's example.com, example.org and example.net built in: the demo now passes them in as the names to let through without a mail check.
 
 ## [0.1.0] - 2026-09-19
 

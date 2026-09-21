@@ -8,7 +8,7 @@ import {
   testCardExpiry,
   type CardProblem,
   type PaymentCheck,
-} from '../../src/shop/test-cards';
+} from '../../src/demo/test-cards';
 
 /** A moment in the middle of a month, so a test does not depend on the day it runs. */
 const now = Date.UTC(2026, 8, 21, 12, 0, 0);

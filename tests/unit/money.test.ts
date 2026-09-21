@@ -3,13 +3,15 @@ import {
   BASE_CURRENCY,
   CURRENCIES,
   EURO_AREA_COUNTRIES,
-  convertFromCad,
   defaultCurrencyFor,
+} from '../../src/store/currencies';
+import {
+  convertFromCad,
   divideRounded,
   formatMoney,
   isCurrencyCode,
   scaleToInteger,
-} from '../../src/shop/money';
+} from '../../src/engine/money';
 
 describe('CURRENCIES', () => {
   it('offers the four currencies from the design, with CAD as the base', () => {

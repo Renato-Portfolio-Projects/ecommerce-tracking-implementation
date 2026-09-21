@@ -1,29 +1,35 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES, CART_LIFETIME_DAYS } from '../../src/store/policy';
 import {
-  MAX_QUANTITY_PER_LINE,
   PRODUCTS,
   findCollection,
   variantLabel,
   variantSku,
   variantsOf,
-} from '../../src/shop/catalog';
-import { MAX_CART_LINES } from '../../src/shop/cart';
-import { CART_LIFETIME_DAYS } from '../../src/shop/cart-storage';
-import { COUPONS } from '../../src/shop/coupons';
-import { COUNTRIES, PROVINCES } from '../../src/shop/destinations';
+} from '../../src/engine/catalog';
+import { COUPONS } from '../../src/store/coupon-codes';
+import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { CURRENCIES, EURO_AREA_COUNTRIES, defaultCurrencyFor } from '../../src/store/currencies';
+import { formatMoney } from '../../src/engine/money';
+import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 import {
-  CURRENCIES,
-  EURO_AREA_COUNTRIES,
-  defaultCurrencyFor,
-  formatMoney,
-} from '../../src/shop/money';
-import { SHIPPING_METHODS } from '../../src/shop/shipping';
-import { checkAddress, checkContact, checkLead, type FormCheck, type FormField } from '../../src/shop/checkout-form';
-import { DEMO_EMAIL_DOMAINS, checkEmailDomain, parseDomainList, type MailService } from '../../src/shop/email-domain';
-import { PERSONAS } from '../../src/shop/personas';
-import { POSTAL_CODE_FORMATS } from '../../src/shop/postal-codes';
-import { DEFAULT_TEST_CARD, TEST_CARDS, checkPayment, formatCardNumber } from '../../src/shop/test-cards';
+  checkAddress,
+  checkContact,
+  checkLead,
+  type FormCheck,
+  type FormField,
+} from '../../src/engine/checkout-form';
+import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
+import { checkEmailDomain, parseDomainList, type MailService } from '../../src/engine/email-domain';
+import { PERSONAS } from '../../src/demo/personas';
+import { POSTAL_CODE_FORMATS } from '../../src/engine/postal-codes';
+import {
+  DEFAULT_TEST_CARD,
+  TEST_CARDS,
+  checkPayment,
+  formatCardNumber,
+} from '../../src/demo/test-cards';
 import { tableUnderHeading } from '../helpers/markdown';
 
 const rules = readFileSync(new URL('../../docs/shop-rules.md', import.meta.url), 'utf8');
@@ -209,7 +215,7 @@ describe('docs/shop-rules.md', () => {
   });
 
   it('says how many temporary email domains the list holds, when it was copied, and which domains are the demo ones, the way the code does', () => {
-    const file = readFileSync(new URL('../../src/data/disposable-email-domains.txt', import.meta.url), 'utf8');
+    const file = readFileSync(new URL('../../src/engine/disposable-email-domains.txt', import.meta.url), 'utf8');
     const copied = file.match(/Copied on (\d{4}-\d{2}-\d{2})/)?.[1];
     expect(copied).toBeDefined();
     expect(rules).toContain(`copied on ${copied} and holds ${parseDomainList(file).size} domains`);
@@ -278,6 +284,20 @@ describe('docs/shop-rules.md', () => {
         COUNTRIES.find((country) => country.code === persona.country)!.name,
       ]),
     );
+  });
+
+  it('lists the files in each folder of the code the way the disk does', () => {
+    const files = (folder: string) =>
+      readdirSync(new URL(`../../src/${folder}/`, import.meta.url))
+        .sort()
+        .map((name) => `\`${name}\``)
+        .join(', ');
+    const rows = tableUnderHeading(rules, '## Where the code lives').map(([folder, , listed]) => [folder, listed]);
+    expect(rows).toEqual([
+      ['`src/engine`', files('engine')],
+      ['`src/store`', files('store')],
+      ['`src/demo`', files('demo')],
+    ]);
   });
 
   it('points every rule to a name that really exists in the file it names', () => {

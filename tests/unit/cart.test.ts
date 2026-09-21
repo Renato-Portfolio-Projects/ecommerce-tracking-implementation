@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES } from '../../src/store/policy';
 import {
-  MAX_QUANTITY_PER_LINE,
   PRODUCTS,
   findProduct,
   isSoldOut,
   listContextFor,
   variantsOf,
-} from '../../src/shop/catalog';
+} from '../../src/engine/catalog';
 import {
-  MAX_CART_LINES,
   addToCart,
   cartLineKey,
   cartQuantity,
@@ -19,8 +18,8 @@ import {
   removeFromCart,
   setQuantity,
   type Cart,
-} from '../../src/shop/cart';
-import { checkLine, priceItems } from '../../src/shop/pricing';
+} from '../../src/engine/cart';
+import { checkLine, priceItems } from '../../src/engine/pricing';
 
 const logoTeeInk = { sku: 'SI-TEE-002', colour: 'Ink', size: 'M' };
 const plainChinoInk = { sku: 'SI-PNT-001', colour: 'Ink', size: '32' };

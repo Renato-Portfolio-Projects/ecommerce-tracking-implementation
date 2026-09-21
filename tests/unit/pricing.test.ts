@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PRODUCTS, isSoldOut } from '../../src/shop/catalog';
-import { COUNTRIES, PROVINCES } from '../../src/shop/destinations';
-import { CURRENCIES, convertFromCad } from '../../src/shop/money';
+import { PRODUCTS, isSoldOut } from '../../src/engine/catalog';
+import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { CURRENCIES } from '../../src/store/currencies';
+import { convertFromCad } from '../../src/engine/money';
 import {
   checkLine,
   priceItems,
@@ -9,8 +10,8 @@ import {
   type ItemsInput,
   type OrderInput,
   type PricingProblem,
-} from '../../src/shop/pricing';
-import { SHIPPING_METHODS } from '../../src/shop/shipping';
+} from '../../src/engine/pricing';
+import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 
 const logoTee = { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 1 };
 const plainChino = { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 };

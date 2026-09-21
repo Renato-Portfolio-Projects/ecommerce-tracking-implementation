@@ -1,4 +1,4 @@
-import { COUNTRIES, PROVINCES, type CountryCode } from './destinations';
+import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations';
 import { checkPostalCode, postalCodeHelp } from './postal-codes';
 
 // These checks look at the shape of what was typed and nothing else. Nothing is looked up, and a

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, type CountryCode } from '../../src/shop/destinations';
-import { POSTAL_CODE_FORMATS, checkPostalCode, postalCodeHelp } from '../../src/shop/postal-codes';
+import { COUNTRIES, type CountryCode } from '../../src/store/destinations';
+import {
+  POSTAL_CODE_FORMATS,
+  checkPostalCode,
+  postalCodeHelp,
+} from '../../src/engine/postal-codes';
 
 /** Each row: what is typed, then how it is kept. */
 const accepted: Record<CountryCode, [typed: string, kept: string][]> = {

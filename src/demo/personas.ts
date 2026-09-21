@@ -1,4 +1,4 @@
-import type { CountryCode } from './destinations';
+import type { CountryCode } from '../store/destinations';
 
 /**
  * A fictional person for the "Use demo data" buttons, so no visitor has to type personal details.

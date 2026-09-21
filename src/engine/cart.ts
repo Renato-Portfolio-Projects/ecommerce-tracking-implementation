@@ -1,4 +1,5 @@
-import { MAX_QUANTITY_PER_LINE, variantSku, type ListContext } from './catalog';
+import { MAX_CART_LINES, MAX_QUANTITY_PER_LINE } from '../store/policy';
+import { variantSku, type ListContext } from './catalog';
 import { checkLine, type ItemsInput, type LineInput, type PricingProblemCode } from './pricing';
 
 /**
@@ -6,12 +7,6 @@ import { checkLine, type ItemsInput, type LineInput, type PricingProblemCode } f
  * the one they are given. It holds what and how many, and where in the store each item was
  * picked from. It never holds a price: prices are worked out from the catalog every time.
  */
-
-/**
- * The most different lines one cart may hold. This is a safety guard, not a business rule, so it
- * can be raised freely. The most units of one line is MAX_QUANTITY_PER_LINE.
- */
-export const MAX_CART_LINES = 20;
 
 // Guards on the list a line was picked from, because it can arrive from stored or edited data.
 const MAX_LIST_ID_LENGTH = 40;

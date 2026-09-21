@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, taxPercentFor } from '../../src/shop/destinations';
-import { checkAddress, checkContact, checkLead } from '../../src/shop/checkout-form';
+import { COUNTRIES } from '../../src/store/destinations';
+import { taxPercentFor } from '../../src/engine/tax';
+import { checkAddress, checkContact, checkLead } from '../../src/engine/checkout-form';
 import {
   PERSONAS,
   demoAddress,
@@ -9,7 +10,7 @@ import {
   personaById,
   pickPersona,
   type Persona,
-} from '../../src/shop/personas';
+} from '../../src/demo/personas';
 
 // The phone numbers each country sets aside for fiction, so a demo number can never ring a real person.
 //   Canada and the United States: 555-0100 to 555-0199 in any area code (North American Numbering Plan).

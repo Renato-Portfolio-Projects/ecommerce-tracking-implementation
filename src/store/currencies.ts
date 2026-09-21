@@ -1,12 +1,8 @@
-/**
- * Money is stored as a whole number of cents, never as a decimal: a price of $38.00 is stored
- * as 3800. Computers cannot hold decimals like 0.1 exactly (0.1 + 0.2 comes out as
- * 0.30000000000000004), but adding and multiplying whole numbers is always exact, so a total
- * can never drift by a cent.
- *
- * Every price is stored in Canadian dollars (CAD). Every conversion starts from CAD, and the
- * store never converts between two other currencies.
- */
+// The currencies Second Impression shows prices in, and which one a visitor starts in. This is the
+// store's own data. The arithmetic that uses it is in src/engine/money.ts.
+//
+// Every price is stored in Canadian dollars (CAD). Every conversion starts from CAD, and the
+// store never converts between two other currencies.
 
 export type CurrencyCode = 'CAD' | 'USD' | 'EUR' | 'GBP';
 
@@ -25,10 +21,6 @@ export const CURRENCIES: Currency[] = [
   { code: 'EUR', name: 'Euro', rate: 0.66 },
   { code: 'GBP', name: 'British pound', rate: 0.56 },
 ];
-
-export function isCurrencyCode(value: string): value is CurrencyCode {
-  return CURRENCIES.some((currency) => currency.code === value);
-}
 
 /** The countries that use the euro: the euro area, 21 countries since Bulgaria joined on 1 January 2026. */
 export const EURO_AREA_COUNTRIES: { code: string; name: string }[] = [
@@ -68,38 +60,4 @@ export function defaultCurrencyFor(visitorCountry: string | null | undefined): C
   if (country === 'GB') return 'GBP';
   if (EURO_AREA_COUNTRIES.some((candidate) => candidate.code === country)) return 'EUR';
   return 'USD';
-}
-
-/**
- * Turns a short decimal such as 0.73 or 14.975 into a whole number (7300 or 14975).
- * Throws if the value has more decimal places than allowed, so nothing is silently lost.
- */
-export function scaleToInteger(value: number, decimals: number): number {
-  const scaled = Math.round(value * 10 ** decimals);
-  if (Math.abs(value * 10 ** decimals - scaled) > 1e-6) {
-    throw new Error(`${value} has more than ${decimals} decimal places`);
-  }
-  return scaled;
-}
-
-/** Divides two whole numbers and rounds to the nearest whole number, with halves rounding up. */
-export function divideRounded(numerator: number, denominator: number): number {
-  if (!Number.isSafeInteger(numerator) || numerator < 0) {
-    throw new Error(`${numerator} is not a non-negative whole number`);
-  }
-  if (!Number.isSafeInteger(denominator) || denominator <= 0) {
-    throw new Error(`${denominator} is not a positive whole number`);
-  }
-  return Math.floor((2 * numerator + denominator) / (2 * denominator));
-}
-
-/** Converts CAD cents into another currency's cents, rounded to the nearest cent. */
-export function convertFromCad(cents: number, currency: CurrencyCode): number {
-  if (!Number.isSafeInteger(cents)) throw new Error(`${cents} is not a whole number of cents`);
-  const { rate } = CURRENCIES.find((candidate) => candidate.code === currency)!;
-  return divideRounded(cents * scaleToInteger(rate, 4), 10_000);
-}
-
-export function formatMoney(cents: number, currency: CurrencyCode): string {
-  return new Intl.NumberFormat('en-CA', { style: 'currency', currency }).format(cents / 100);
 }

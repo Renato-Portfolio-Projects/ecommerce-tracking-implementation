@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, PROVINCES } from '../../src/shop/destinations';
-import { checkAddress, checkContact, checkLead, type FieldProblem, type FormField } from '../../src/shop/checkout-form';
+import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import {
+  checkAddress,
+  checkContact,
+  checkLead,
+  type FieldProblem,
+  type FormField,
+} from '../../src/engine/checkout-form';
 
 /** Every field of a check that fails, as "field: message", so a test can see it all at once. */
 function problemsOf(result: { ok: boolean; problems?: FieldProblem[] }): string[] {
