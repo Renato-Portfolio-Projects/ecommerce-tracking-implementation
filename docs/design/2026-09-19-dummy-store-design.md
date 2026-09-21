@@ -144,6 +144,10 @@ One data file (SKU, slug, collection, variants, price, sale price, stock, images
 
 CAD base. Tax from a small region table (Canadian provinces, flat US, UK and EU demo rates). Two shipping methods, Standard and Express, at flat prices that are the same for every destination, so `shipping_tier` on `add_shipping_info` carries a real choice. Standard is free when the discounted items reach a threshold, and a cart progress bar shows how close the shopper is. `WELCOME10` works and is recorded on the order. Currency selector in the header, persistent, locked once checkout starts.
 
+### Cart
+
+The cart lives in the browser for 7 days from its last change. It holds only each line's SKU, colour, size, quantity and the list the item was picked from, never a price or personal data, and it is checked and re-priced from the catalog whenever it is opened, so a line that is no longer valid is dropped. It holds up to 20 lines and up to 10 units of one product, colour and size. The same product, colour and size merges into one line, which keeps the list it first had. The rules, with the reasons, are in `docs/shop-rules.md`.
+
 ### Checkout
 
 Guest only, realistic validation. The payment panel is clearly labelled test mode with a "Use test card" button. It accepts only well-known test card numbers, rejects real ones with a friendly message, and stores nothing except brand and last four digits. A designated test decline card shows an error and fires no `purchase`. The order summary has a coupon field. Submitting a code shows the result in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised. The same result is what `apply_coupon` records.
