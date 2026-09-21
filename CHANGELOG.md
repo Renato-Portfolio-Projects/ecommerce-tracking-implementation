@@ -19,6 +19,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The rules page now covers the checkout forms, postal codes, test cards and demo people, with the message for each mistake.
 - A test that keeps the code's three folders apart: the engine, one store's data, and the demo-only parts. It fails if the store folder imports from the other two, or if the engine imports from the demo folder.
 - The rules page now says where the code lives, and what would need attention before the engine could be reused for another store.
+- A production guide: what in the demo is demo-grade and what a real launch would need, in nine areas, with a source for each statement about a vendor, a law or a standard, and the day the sources were checked. A test keeps its file names, links and source columns honest.
 
 ### Changed
 

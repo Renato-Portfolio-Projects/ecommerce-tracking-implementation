@@ -26,6 +26,7 @@ A fictional online store, Second Impression, built to demonstrate production-sty
 ## Read this first
 
 - It is a demo. There are no real products, no real payments, no real customers and no ad spend. All data is test data.
+- What in it is demo-grade, and what a real launch of a store like it would need, is in [Taking this to production](docs/production-guide.md).
 - The domain is the only cost. Everything else runs on free plans. The full tool list, with plans and costs, is in `src/data/stack.ts`.
 - **How this was built.** I designed the project and I review every commit. Claude Code, an AI assistant, helped draft the plans and write the code, and every commit carries a co-author line saying so. The reasoning behind each decision is in the design spec.
 
@@ -34,6 +35,7 @@ A fictional online store, Second Impression, built to demonstrate production-sty
 - [Design spec](docs/design/2026-09-19-dummy-store-design.md)
 - [Tracking plan](docs/tracking-plan.md)
 - [Shop rules](docs/shop-rules.md)
+- [Taking this to production](docs/production-guide.md)
 - [Brand notes](docs/brand.md)
 - [Accounts and domain checklist](docs/setup/accounts-and-domain.md)
 - [Changelog](CHANGELOG.md)
