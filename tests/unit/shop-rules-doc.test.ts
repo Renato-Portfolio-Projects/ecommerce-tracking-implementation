@@ -19,11 +19,24 @@ import {
   formatMoney,
 } from '../../src/shop/money';
 import { SHIPPING_METHODS } from '../../src/shop/shipping';
+import { checkAddress, checkContact, checkLead, type FormCheck, type FormField } from '../../src/shop/checkout-form';
+import { DEMO_EMAIL_DOMAINS, checkEmailDomain, parseDomainList, type MailService } from '../../src/shop/email-domain';
+import { PERSONAS } from '../../src/shop/personas';
+import { POSTAL_CODE_FORMATS } from '../../src/shop/postal-codes';
+import { DEFAULT_TEST_CARD, TEST_CARDS, checkPayment, formatCardNumber } from '../../src/shop/test-cards';
 import { tableUnderHeading } from '../helpers/markdown';
 
 const rules = readFileSync(new URL('../../docs/shop-rules.md', import.meta.url), 'utf8');
 const trackingPlan = readFileSync(new URL('../../docs/tracking-plan.md', import.meta.url), 'utf8');
 const cad = (cents: number) => formatMoney(cents, 'CAD');
+
+/** The message a form check gives for one field, so the page can be compared with what the code says. */
+function problemMessage(result: FormCheck<unknown>, field: FormField): string {
+  if (result.ok) throw new Error(`Expected a problem with ${field}`);
+  const found = result.problems.find((problem) => problem.field === field);
+  if (!found) throw new Error(`No problem was reported for ${field}`);
+  return found.message;
+}
 
 describe('docs/shop-rules.md', () => {
   it('lists the currencies and demo rates the way the code does', () => {
@@ -116,6 +129,154 @@ describe('docs/shop-rules.md', () => {
   it('lists the euro-area countries the way the code does', () => {
     expect(tableUnderHeading(rules, '## Euro area countries')).toEqual(
       EURO_AREA_COUNTRIES.map((country) => [country.code, country.name]),
+    );
+  });
+
+  it('lists what each checkout form field accepts, and the message for each mistake, the way the code does', () => {
+    const email = 'maya@example.com';
+    const address = {
+      country: 'CA',
+      firstName: 'Maya',
+      lastName: 'Tremblay',
+      address1: '47 Rue des Lilas',
+      city: 'Montréal',
+      province: 'QC',
+      postalCode: 'H2J 3K4',
+    };
+    // A field that is optional says so on the page, and a test checks that leaving it empty really is fine.
+    const optional = 'Nothing, it is optional';
+    expect(checkContact({ email, phone: '' }).ok).toBe(true);
+    expect(checkAddress({ ...address, address2: '' }).ok).toBe(true);
+
+    const rows = tableUnderHeading(rules, '## Checkout forms').map(([field, , empty, wrong]) => [field, empty, wrong]);
+    expect(rows).toEqual([
+      [
+        'First name',
+        problemMessage(checkLead({ firstName: '', email }), 'firstName'),
+        problemMessage(checkLead({ firstName: '<b>', email }), 'firstName'),
+      ],
+      [
+        'Last name',
+        problemMessage(checkAddress({ ...address, lastName: '' }), 'lastName'),
+        problemMessage(checkAddress({ ...address, lastName: '<b>' }), 'lastName'),
+      ],
+      [
+        'Email',
+        problemMessage(checkContact({ email: '' }), 'email'),
+        problemMessage(checkContact({ email: 'not an email' }), 'email'),
+      ],
+      ['Phone', optional, problemMessage(checkContact({ email, phone: '12' }), 'phone')],
+      [
+        'Country',
+        problemMessage(checkAddress({ ...address, country: '' }), 'country'),
+        problemMessage(checkAddress({ ...address, country: 'JP' }), 'country'),
+      ],
+      [
+        'Street address',
+        problemMessage(checkAddress({ ...address, address1: '' }), 'address1'),
+        problemMessage(checkAddress({ ...address, address1: '<b>' }), 'address1'),
+      ],
+      ['Second address line', optional, problemMessage(checkAddress({ ...address, address2: '<b>' }), 'address2')],
+      [
+        'City',
+        problemMessage(checkAddress({ ...address, city: '' }), 'city'),
+        problemMessage(checkAddress({ ...address, city: '<b>' }), 'city'),
+      ],
+      [
+        'Province',
+        problemMessage(checkAddress({ ...address, province: '' }), 'province'),
+        problemMessage(checkAddress({ ...address, province: 'XX' }), 'province'),
+      ],
+      [
+        'Postal code',
+        problemMessage(checkAddress({ ...address, postalCode: '' }), 'postalCode'),
+        problemMessage(checkAddress({ ...address, postalCode: 'nonsense' }), 'postalCode'),
+      ],
+    ]);
+  });
+
+  it('lists the email domain checks, and what the shopper reads for each, the way the code does', () => {
+    const said = (email: string, mailService: MailService): string => {
+      const result = checkEmailDomain(email, { disposableDomains: new Set(['mailinator.com']), mailService });
+      if (result.ok) throw new Error('Expected a problem');
+      return result.problem.message;
+    };
+    const rows = tableUnderHeading(rules, '## Email addresses').map(([check, , shopper]) => [check, shopper]);
+    expect(rows).toEqual([
+      ['Temporary address', said('maya@mailinator.com', 'accepts-mail')],
+      ['Domain cannot receive email', said('maya@some-typo.com', 'no-mail')],
+    ]);
+  });
+
+  it('says how many temporary email domains the list holds, when it was copied, and which domains are the demo ones, the way the code does', () => {
+    const file = readFileSync(new URL('../../src/data/disposable-email-domains.txt', import.meta.url), 'utf8');
+    const copied = file.match(/Copied on (\d{4}-\d{2}-\d{2})/)?.[1];
+    expect(copied).toBeDefined();
+    expect(rules).toContain(`copied on ${copied} and holds ${parseDomainList(file).size} domains`);
+    for (const domain of DEMO_EMAIL_DOMAINS) expect(rules).toContain(`\`${domain}\``);
+  });
+
+  it('lists the postal code formats the way the code does', () => {
+    expect(tableUnderHeading(rules, '## Postal codes')).toEqual(
+      POSTAL_CODE_FORMATS.map((format) => [
+        COUNTRIES.find((country) => country.code === format.country)!.name,
+        format.name,
+        format.format,
+        format.example,
+      ]),
+    );
+  });
+
+  it('lists the test cards the way the code does', () => {
+    expect(tableUnderHeading(rules, '## Test cards')).toEqual(
+      TEST_CARDS.map((card) => [
+        formatCardNumber(card.number),
+        card.brand,
+        card.result === 'declined'
+          ? 'Declined, and no purchase is recorded'
+          : card === DEFAULT_TEST_CARD
+            ? 'Accepted. The "Use test card" button fills this one'
+            : 'Accepted',
+      ]),
+    );
+  });
+
+  it('lists what the payment form checks, and what it says, the way the code does', () => {
+    const now = Date.UTC(2026, 8, 21);
+    const card = { number: '4242 4242 4242 4242', expiry: '12/30', securityCode: '123' };
+    const said = (change: object, field: string): string => {
+      const result = checkPayment({ ...card, ...change }, now);
+      if (result.status !== 'invalid') throw new Error('Expected a problem');
+      const found = result.problems.find((problem) => problem.field === field);
+      if (!found) throw new Error(`No problem was reported for ${field}`);
+      return found.message;
+    };
+    const declined = checkPayment({ ...card, number: '4000 0000 0000 0002' }, now);
+    if (declined.status !== 'declined') throw new Error('Expected the decline card to be declined');
+
+    const rows = tableUnderHeading(rules, '### What the payment form checks').map(([field, , empty, wrong]) => [
+      field,
+      empty,
+      wrong,
+    ]);
+    expect(rows).toEqual([
+      ['Card number', said({ number: '' }, 'number'), said({ number: '4111 1111 1111 1111' }, 'number')],
+      ['Expiry date', said({ expiry: '' }, 'expiry'), said({ expiry: '99/99' }, 'expiry')],
+      ['Security code', said({ securityCode: '' }, 'securityCode'), said({ securityCode: '12' }, 'securityCode')],
+      ['Expiry date, month already over', '-', said({ expiry: '01/20' }, 'expiry')],
+      ['The decline card', '-', declined.message],
+    ]);
+  });
+
+  it('lists the demo people the way the code does', () => {
+    expect(PERSONAS).toHaveLength(8);
+    expect(rules).toContain('one of eight fictional people');
+    expect(tableUnderHeading(rules, '## Demo people')).toEqual(
+      PERSONAS.map((persona) => [
+        `${persona.firstName} ${persona.lastName}`,
+        persona.city,
+        COUNTRIES.find((country) => country.code === persona.country)!.name,
+      ]),
     );
   });
 

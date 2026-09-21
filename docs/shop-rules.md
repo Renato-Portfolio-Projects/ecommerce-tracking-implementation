@@ -172,6 +172,106 @@ The cart is plain code that holds what and how many, and where in the store each
 
 The limit of 20 lines is a safety guard, not a business rule, so it can be raised freely.
 
+## Checkout forms
+
+The checkout asks for a few details, and the lead popup asks for two of them. Each is checked for its shape only, so an address is not confirmed to exist and a postal code is not compared with a city. The one exception is the email, which the server looks into further (see "Email addresses" below). The same code runs in the shopper's browser, for quick and friendly messages, and on the server, so a request made by hand cannot skip a check. What a shopper types is tidied first: spaces at the ends are removed, and any run of spaces becomes one space.
+
+| Field | Rule | If left empty | If it is wrong |
+|---|---|---|---|
+| First name | Letters and numbers from any language, spaces, apostrophes, hyphens and periods, up to 50 characters | Enter your first name. | Your first name can only use letters, numbers, spaces, apostrophes, hyphens and periods, up to 50 characters. |
+| Last name | The same as the first name | Enter your last name. | Your last name can only use letters, numbers, spaces, apostrophes, hyphens and periods, up to 50 characters. |
+| Email | The shape of a real address, see "Email addresses" below | Enter your email address. | That email address doesn't look right. It should look like name@example.com. |
+| Phone | Optional. 7 to 15 digits, with spaces, dashes, dots, brackets and a leading + allowed | Nothing, it is optional | That phone number doesn't look right. Use 7 to 15 digits, or leave it empty. |
+| Country | One of the nine countries the store ships to | Choose a country we ship to. | Choose a country we ship to. |
+| Street address | Letters, numbers and basic punctuation, up to 80 characters. May start with a # | Enter your street address. | Check your street address. It can use letters, numbers and basic punctuation, up to 80 characters. |
+| Second address line | Optional. The same as the street address | Nothing, it is optional | Check your second address line. It can use letters, numbers and basic punctuation, up to 80 characters. |
+| City | Letters and numbers, spaces, apostrophes, hyphens and periods, up to 60 characters | Enter your city. | Check your city. It can only use letters, numbers, spaces, apostrophes, hyphens and periods, up to 60 characters. |
+| Province | Canada only: one of the 13 provinces and territories, because the tax depends on it. Ignored in other countries | Choose your province or territory. | Choose your province or territory. |
+| Postal code | The format of the country, see below | Enter a valid postal code, like K1A 0B1. | Enter a valid postal code, like K1A 0B1. |
+
+The postal code message uses the country's own word for it, and an example. For the United States it reads "Enter a valid ZIP code, like 95014." The table shows Canada's.
+
+## Email addresses
+
+An email is checked twice. Its shape is checked in the browser and again on the server, like every other field. The server then goes further, so that trash and mistyped addresses never become leads. Only the domain (the part after the @) is ever looked up, and no email address is sent to any other service.
+
+**The shape** (in the browser and on the server). Up to 254 characters, with exactly one @. Before it, up to 64 characters: letters and digits from any language, and the marks email allows (`. _ - + '` and a few rarer ones), with a dot only between characters. After it, a domain of at least two parts separated by dots, each part up to 63 characters of letters, digits and hyphens that neither starts nor ends with a hyphen. The last part has at least two characters, is not all digits, and is not one of the endings set aside for tests and examples (`.test`, `.example`, `.invalid` and `.localhost`). Quoted names, addresses in square brackets and single-word domains such as `localhost` are refused, because nobody at a shop has one and a typo is far more likely. The message for a mistake is in the "Checkout forms" table.
+
+**The domain checks** (on the server only, after the shape is accepted):
+
+| Check | Refused when | What the shopper reads |
+|---|---|---|
+| Temporary address | The domain, or a domain it sits under, is on the list of temporary email services | That looks like a temporary email address. Please use one you check regularly. |
+| Domain cannot receive email | The server looks at the domain's mail service and finds none | It looks like that address can't receive email. Please check the part after the @ for typos. |
+
+- **The list of temporary domains** is a copy of a public-domain list (CC0) kept in the repo at `src/data/disposable-email-domains.txt`. It was copied on 2026-09-21 and holds 8915 domains, including Mailinator, 10 Minute Mail, YOPmail and Guerrilla Mail. It does not list the big mail providers or the privacy relays real customers use (Apple Hide My Email, DuckDuckGo and Firefox Relay). No list is complete, so it catches the well-known services and never the newest ones. It is refreshed by hand, and its header says how. It is used on the server only, so it never slows a page.
+- **The look at the mail service** is done by the server and passed to this code as one of three answers: it takes mail, it does not, or the look failed. A failed look lets the address through, so a hiccup never blocks a real customer.
+- **The demo domains.** `example.com`, `example.org` and `example.net` are reserved for examples and can never receive mail. They are accepted without any mail check, so the demo people work. Every other domain has to pass the real checks.
+- **What is deliberately not done.** The store does not prove that an address belongs to the shopper, because that means emailing whatever a stranger types. It needs a sending service, and it lets someone email a victim through the site. It does not use an email verification service, which would receive every visitor's full address and be one more company to disclose. It does not probe mail servers to test whether a mailbox exists, which is unreliable and can get the server blocked. These limits are written up in the case study.
+
+## Postal codes
+
+Only the shape of a postal code is checked. Capitals and spaces do not matter: a code is kept in capitals with its usual space, so `k1a0b1` becomes `K1A 0B1`. The shapes follow the address data Google publishes for its own address forms.
+
+| Country | Called | Format | Example |
+|---|---|---|---|
+| Canada | postal code | Letter, digit, letter, a space, then digit, letter, digit | K1A 0B1 |
+| United States | ZIP code | 5 digits, and optionally a dash and 4 more digits | 95014 |
+| United Kingdom | postcode | A code such as EC1A or M2, a space, then a digit and two letters | EC1A 1HQ |
+| France | postal code | 5 digits | 33380 |
+| Germany | postal code | 5 digits | 26133 |
+| Ireland | Eircode | A letter and two digits, a space, then 4 letters or digits | A65 F4E2 |
+| Italy | postal code | 5 digits | 00144 |
+| Netherlands | postal code | 4 digits, a space, then 2 letters | 1234 AB |
+| Spain | postal code | 5 digits | 28039 |
+
+## Test cards
+
+This is a demo store, so the payment form takes only well-known test card numbers. Any other number is turned down with a friendly message, however real it looks. The card number is checked in the shopper's browser and goes no further. Only the brand and the last four digits are kept, so a card number never reaches the server.
+
+| Number | Brand | What happens |
+|---|---|---|
+| 4242 4242 4242 4242 | Visa | Accepted. The "Use test card" button fills this one |
+| 5555 5555 5555 4444 | Mastercard | Accepted |
+| 4000 0000 0000 0002 | Visa | Declined, and no purchase is recorded |
+
+The numbers are the ones Stripe publishes for testing. Other rules:
+
+- The expiry date is any month from this one on, written MM/YY. A card is good to the end of its month. The "Use test card" button fills December three years from today, so it never goes out of date.
+- The security code is any 3 digits.
+- No name on the card is asked for.
+- The decline card is only declined once the other fields are good. With a bad expiry date, the store asks for a good one first.
+
+### What the payment form checks
+
+| Field | Rule | If left empty | If it is wrong |
+|---|---|---|---|
+| Card number | One of the test cards above, with or without spaces or dashes | Enter the card number. | This is a demo store, so only test cards work. Please don't enter a real card number. Use the "Use test card" button. |
+| Expiry date | MM/YY | Enter the expiry date as MM/YY. | Enter the expiry date as MM/YY. |
+| Security code | Any 3 digits | Enter the 3-digit security code. | Enter the 3-digit security code. |
+| Expiry date, month already over | A month before this one | - | That card has expired. Enter a date in the future. |
+| The decline card | The decline card, when everything else is good | - | Your card was declined. This is the test card that always declines. Use the "Use test card" button to try one that works. |
+
+## Demo people
+
+Every "Use demo data" button fills in one of eight fictional people, so no visitor has to type personal details. One is picked at random the first time a visitor uses a button, and the same person is used everywhere after that, so a visitor's lead and order share one identity. A "new persona" link picks a different one.
+
+- Emails are on `example.com`, which is reserved for examples and never delivers mail.
+- Phone numbers are in each country's own reserved fiction range, so a demo number can never ring a real person. Canada and the United States use 555-0100 to 555-0199. The United Kingdom, France and Germany use the ranges their regulators (Ofcom, ARCEP and the Bundesnetzagentur) set aside for films and television.
+- Streets are invented, and each postal code is in the right format for its country.
+- The buttons never tick a consent box and never touch the cookie banner. A person in the code has no consent setting at all.
+
+| Name | City | Country |
+|---|---|---|
+| Maya Tremblay | Montréal | Canada |
+| Liam Okafor | Toronto | Canada |
+| Priya Sandhu | Vancouver | Canada |
+| Jordan Ellis | Portland | United States |
+| Sam Rivera | Austin | United States |
+| Eleanor Hughes | London | United Kingdom |
+| Camille Laurent | Lyon | France |
+| Jonas Weber | Berlin | Germany |
+
 ## Changing a rule
 
 Every number and list above is defined in one place in the code. To change one, edit the value named here. The tests will then show which other places need to follow, including the tables on this page.
@@ -190,3 +290,13 @@ Every number and list above is defined in one place in the code. To change one, 
 | Tax rates by country | Simplified demo rates. The United States is 0% on purpose | `COUNTRIES` in `src/shop/destinations.ts` |
 | Tax rates by province | Simplified demo rates | `PROVINCES` in `src/shop/destinations.ts` |
 | Coupon codes and discounts | Codes are stored in capitals, and a typed code matches in any case | `COUPONS` in `src/shop/coupons.ts` |
+| The characters a name, a city or a street line may use | Letters from any language and the marks names use, so real names are not turned away | `NAME_PATTERN` in `src/shop/checkout-form.ts` and `STREET_PATTERN` in `src/shop/checkout-form.ts` |
+| The length limits on names, cities, street lines and emails | Long enough for real names, short enough to keep records tidy. The email limits are the email standard's | `NAME_LENGTH`, `CITY_LENGTH` and `ADDRESS_LENGTH` in `src/shop/checkout-form.ts`, and `EMAIL_LENGTH`, `LOCAL_PART_LENGTH` and `DOMAIN_PART_LENGTH` in `src/shop/checkout-form.ts` |
+| How many digits a phone number has | Seven keeps out obvious typos, and 15 is the most an international number can have | `PHONE_DIGITS` in `src/shop/checkout-form.ts` |
+| What an email may look like | The email standard's rules for the part before the @, letters from any language, a domain of two or more parts, and no endings set aside for tests | `LOCAL_PART_PATTERN` in `src/shop/checkout-form.ts`, `DOMAIN_PART_PATTERN` in `src/shop/checkout-form.ts` and `RESERVED_EMAIL_ENDINGS` in `src/shop/checkout-form.ts` |
+| The postal code formats | Shape only, one for each country the store ships to | `POSTAL_CODE_FORMATS` in `src/shop/postal-codes.ts` |
+| Which card numbers are accepted, and which one declines | Well-known test numbers only, so a real card can never work | `TEST_CARDS` in `src/shop/test-cards.ts` |
+| The people the demo buttons fill in | Fictional, on example.com, with phone numbers in each country's reserved fiction range | `PERSONAS` in `src/shop/personas.ts` |
+| Which email domains are turned down as temporary | A public-domain list, copied on a date and refreshed by hand. Sub-domains of a listed domain count too | `isDisposableDomain` in `src/shop/email-domain.ts` and `Copied on` in `src/data/disposable-email-domains.txt` |
+| Which email domains are accepted without a mail check | Reserved for examples, so the demo people work | `DEMO_EMAIL_DOMAINS` in `src/shop/email-domain.ts` |
+| What the server does with the look at a domain's mail service | Refuse when there is none, and let the address through when the look failed | `checkEmailDomain` in `src/shop/email-domain.ts` |
