@@ -1,0 +1,212 @@
+// Every word a shopper reads on the store's own pages, in one place. This is the store's voice, so it is store
+// data. The list with where each word appears is docs/site-words.md, and a test keeps the two equal.
+// A word in braces, like {product}, is filled in by the page with fill() from src/engine/fill.ts.
+// The messages about a field that was filled in wrongly are in docs/shop-rules.md, and the messages that the
+// cart and pricing code already produce are listed in docs/site-words.md and stay in that code.
+
+export const WORDS = {
+  // Everywhere
+  'site.name': 'Second Impression',
+  'site.tagline': 'Worth a second look.',
+  'site.description': 'Second Impression is a fictional clothing store, built to demonstrate production-style tracking.',
+  'demo.bar': 'Portfolio demo store: fictional products, no real payments.',
+  'demo.link': "How it's tracked →",
+  'nav.skip': 'Skip to content',
+  'nav.label': 'Main',
+  'nav.tees': 'Tees',
+  'nav.pants': 'Pants',
+  'nav.about': 'About',
+  'header.currency': 'Currency',
+  'header.cart': 'Cart',
+  'header.cartCount': 'Cart ({count})',
+  'header.cartLabelOne': 'Cart, 1 item',
+  'header.cartLabelMany': 'Cart, {count} items',
+  'footer.demoHeading': 'About this demo',
+  'footer.github': 'The project on GitHub',
+  'footer.guide': 'Taking this to production',
+  'footer.helpHeading': 'Help',
+  'footer.shipping': 'Shipping',
+  'footer.returns': 'Returns',
+  'footer.terms': 'Terms',
+  'footer.contact': 'Contact',
+  'footer.small': 'Second Impression is a fictional store made for a portfolio. Nothing here can be bought.',
+
+  // Home page
+  'home.eyebrow': 'New in',
+  'home.heroTitle': 'One print. One slightly off.',
+  'home.heroBody': 'Plain tees and honest chinos, printed the way a second look should be: a little out of register, on purpose.',
+  'home.heroButton': 'Shop the tees',
+  'home.heroAlt': 'Logo Tee in paper, with a two-circle mark on the chest',
+  'home.styles': '{count} styles',
+  'home.stripLabel': 'About the name',
+  'home.stripText': 'A second impression is a second pass of ink, laid a little off the first.',
+
+  // Product pages
+  'product.colour': 'Colour',
+  'product.size': 'Size',
+  'product.quantity': 'Quantity',
+  'product.add': 'Add to cart',
+  'product.chooseSize': 'Choose a size.',
+  'product.soldOut': 'Sold out',
+  'product.sizeSoldOut': '{size} is sold out in {colour}.',
+  'product.sale': 'Sale',
+  'product.was': 'was {price}',
+  'product.freeShipping': 'Free standard shipping on orders over {freeFrom}.',
+  'product.details': 'Details',
+  'product.added': 'Added {product} ({variant}) to your cart.',
+  'product.back': 'Back to {collection}',
+
+  // The six products
+  'product.SI-TEE-001.blurb': 'The one you wear until it is soft. A straight, midweight tee that sits under everything.',
+  'product.SI-TEE-001.detail1': 'Midweight cotton jersey.',
+  'product.SI-TEE-001.detail2': 'Regular fit, true to size.',
+  'product.SI-TEE-001.detail3': 'Machine wash cold, tumble dry low.',
+  'product.SI-TEE-002.blurb': 'Our two-circle mark on the chest, printed twice: once in red, once in blue, a little off. That is the second impression.',
+  'product.SI-TEE-002.detail1': 'Midweight cotton jersey, screen printed.',
+  'product.SI-TEE-002.detail2': 'Regular fit, true to size.',
+  'product.SI-TEE-002.detail3': 'Machine wash cold, inside out.',
+  'product.SI-TEE-003.blurb': 'The same tee, and this time the print landed well off register. Every one is a first draft, so it is priced down.',
+  'product.SI-TEE-003.detail1': 'Midweight cotton jersey, screen printed.',
+  'product.SI-TEE-003.detail2': 'Regular fit, true to size.',
+  'product.SI-TEE-003.detail3': 'The off-register print is intentional and is not a fault.',
+  'product.SI-PNT-001.blurb': 'A straight, mid-rise chino in cotton twill. Two pockets in front, two behind, and nothing else.',
+  'product.SI-PNT-001.detail1': 'Cotton twill.',
+  'product.SI-PNT-001.detail2': 'Straight leg, mid rise.',
+  'product.SI-PNT-001.detail3': 'Machine wash cold, hang to dry.',
+  'product.SI-PNT-002.blurb': 'Cut wider through the leg, in the same twill. Room to move, priced down for the season.',
+  'product.SI-PNT-002.detail1': 'Cotton twill.',
+  'product.SI-PNT-002.detail2': 'Relaxed leg, mid rise.',
+  'product.SI-PNT-002.detail3': 'Machine wash cold, hang to dry.',
+  'product.SI-PNT-003.blurb': 'Double pleats at the waist and a tapered leg. The dressed-up one.',
+  'product.SI-PNT-003.detail1': 'Cotton twill.',
+  'product.SI-PNT-003.detail2': 'Pleated front, tapered leg.',
+  'product.SI-PNT-003.detail3': 'Machine wash cold, hang to dry.',
+
+  // Pictures
+  'garment.alt': '{product} in {colour}',
+  'garment.altLogo': '{product} in {colour}, with a two-circle mark on the chest',
+  'garment.altMisprint': '{product} in {colour}, with a two-circle mark printed well off register',
+
+  // Cart
+  'cart.title': 'Your cart',
+  'cart.close': 'Close cart',
+  'cart.empty': 'Your cart is empty.',
+  'cart.keepShopping': 'Keep shopping',
+  'cart.remove': 'Remove',
+  'cart.removeLabel': 'Remove {product} ({variant}) from your cart',
+  'cart.decrease': 'Decrease quantity of {product} ({variant})',
+  'cart.increase': 'Increase quantity of {product} ({variant})',
+  'cart.quantity': 'Quantity',
+  'cart.subtotal': 'Subtotal',
+  'cart.laterNote': 'Shipping and tax are added at checkout.',
+  'cart.checkout': 'Checkout',
+  'cart.freeAway': 'You are {amount} away from free standard shipping.',
+  'cart.freeReached': 'You have free standard shipping.',
+  'cart.limitReached': 'You can have up to {max} of one item, so we stopped at {max}.',
+  'cart.droppedOne': 'One item in your cart is no longer available, so we removed it.',
+  'cart.droppedMany': '{count} items in your cart are no longer available, so we removed them.',
+  'cart.saved': 'Your cart is saved on this device for {days} days.',
+
+  // Discount code
+  'coupon.label': 'Discount code',
+  'coupon.apply': 'Apply',
+  'coupon.valid': '{code} applied: {percent}% off.',
+  'coupon.invalid': 'That code is not valid.',
+  'coupon.expired': 'That code has expired.',
+
+  // Currency
+  'currency.label': 'Currency',
+  'currency.note': 'Prices are converted from Canadian dollars at fixed demo rates.',
+  'currency.locked': 'The currency is locked once checkout starts.',
+  'currency.CAD': 'Canadian dollar (CAD)',
+  'currency.USD': 'US dollar (USD)',
+  'currency.EUR': 'Euro (EUR)',
+  'currency.GBP': 'British pound (GBP)',
+
+  // Lead popup
+  'popup.title': 'Get {percent}% off your first order',
+  'popup.body': 'Add your name and email and we will show you the code. This is a demo, so demo details work fine.',
+  'popup.firstName': 'First name',
+  'popup.email': 'Email',
+  'popup.marketing': 'Email me offers and news. I can unsubscribe at any time.',
+  'popup.submit': 'Show my code',
+  'popup.demoButton': 'Use demo data',
+  'popup.demoAnnounce': 'Form filled with demo data.',
+  'popup.demoNote': 'Demo details are made up. Anything you type yourself is deleted after {days} days.',
+  'popup.newPerson': 'Try another person',
+  'popup.success': 'Your code is {code}. Use it at checkout for {percent}% off.',
+  'popup.close': 'Close',
+  'popup.noThanks': 'No thanks',
+
+  // About
+  'about.title': 'About',
+  'about.description': 'What Second Impression is, and why it exists.',
+  'about.heading': 'About Second Impression',
+  'about.p1': 'Second Impression is a clothing store that does not exist. It was built as a portfolio project, to show how a shop can be tracked properly: what is measured, why, and how a visitor can check it.',
+  'about.p2': 'The name comes from screen printing. A second impression is a second pass of ink, laid over the first. In advertising it is the second time someone sees an ad, which is what retargeting is. The store is a wink at both.',
+  'about.p3': 'Everything here is fictional: the products, the prices and the orders. Nothing is shipped and nothing is charged. Only test card numbers work.',
+  'about.readMore': 'Read more',
+
+  // Contact
+  'contact.title': 'Contact',
+  'contact.description': 'How to reach the people behind this demo.',
+  'contact.heading': 'Contact',
+  'contact.p1': 'Second Impression is a demo, so there is no shop to write to and no inbox is read. Nothing you type on this site is sent to a person.',
+  'contact.p2': 'To ask about the project, or to point out a mistake, open an issue on GitHub.',
+  'contact.link': 'Open an issue on GitHub',
+
+  // Shipping
+  'shipping.title': 'Shipping',
+  'shipping.description': 'How shipping would work if Second Impression were real.',
+  'shipping.heading': 'Shipping',
+  'shipping.intro': 'This is a demo store, so nothing is shipped. This page says how shipping would work if it were real.',
+  'shipping.methodsHeading': 'Methods and prices',
+  'shipping.standard': 'Standard: {standard} (Canadian dollars), 5 to 8 business days. It is free when your items, after any discount, come to {freeFrom} or more.',
+  'shipping.express': 'Express: {express} (Canadian dollars), 2 to 3 business days.',
+  'shipping.whereHeading': 'Where we would ship',
+  'shipping.where': 'Nine countries: Canada, the United States, the United Kingdom, France, Germany, Ireland, Italy, the Netherlands and Spain.',
+  'shipping.taxHeading': 'Tax and duties',
+  'shipping.tax': 'Tax is added at checkout, at the rate for the address you ship to. Duties and import fees are not charged in this demo. A real store would have to say who pays them.',
+
+  // Returns
+  'returns.title': 'Returns',
+  'returns.description': 'How returns would work if Second Impression were real.',
+  'returns.heading': 'Returns',
+  'returns.intro': 'This is a demo store, so nothing can be returned. This page says how returns would work if it were real.',
+  'returns.windowHeading': 'Thirty days',
+  'returns.window': 'You can return anything unworn, with its tags, within 30 days of delivery. We refund the original payment method within 5 business days of the parcel arriving.',
+  'returns.costHeading': 'Who pays',
+  'returns.cost': 'A faulty item is returned at our cost. Any other return is at yours.',
+  'returns.misprintHeading': 'The Misprint Tee',
+  'returns.misprint': 'The off-register print on the Misprint Tee is on purpose, so it is not a fault.',
+
+  // Terms
+  'terms.title': 'Terms',
+  'terms.description': 'The terms of use for this demo store.',
+  'terms.heading': 'Terms of use',
+  'terms.intro': 'These terms are for a demo. They are short on purpose.',
+  'terms.p1': 'Second Impression is a fictional store made for a portfolio. You cannot buy anything, and no contract is made when you use it.',
+  'terms.p2': 'The products, prices, shipping and returns are made up. They show how a real store would work.',
+  'terms.p3': 'Payment forms accept only the test card numbers shown at checkout. Do not enter a real card number.',
+  'terms.p4': 'Details you enter are kept for {days} days and then deleted.',
+  'terms.p5': 'The site is offered as it is, with no promise that it will stay online.',
+
+  // Page not found
+  'notFound.title': 'Page not found',
+  'notFound.description': 'That page does not exist.',
+  'notFound.heading': 'Page not found',
+  'notFound.body': 'That page does not exist. It may have moved, or the address may have a typo.',
+  'notFound.home': 'Back to the home page',
+
+  // Style page
+  'style.title': 'Style guide',
+  'style.description': 'The colours, type and drawings used across the store.',
+  'style.heading': 'Style guide',
+  'style.intro': 'The colours, type and drawings used across Second Impression.',
+  'style.colour': 'Colour',
+  'style.type': 'Type',
+  'style.buttons': 'Buttons',
+  'style.garments': 'Garments',
+} as const;
+
+export type WordKey = keyof typeof WORDS;

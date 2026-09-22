@@ -1,14 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import { WORDS } from '../store/words';
 ---
 
-<Base
-  title="Second Impression"
-  description="Second Impression is a fictional clothing store, built to demonstrate production-style tracking."
->
+<Base title={WORDS['site.name']} description={WORDS['site.description']}>
   <main class="placeholder">
     <p class="eyebrow">Opening soon</p>
-    <h1>Second Impression</h1>
-    <p class="tagline">Worth a second look.</p>
+    <h1>{WORDS['site.name']}</h1>
+    <p class="tagline">{WORDS['site.tagline']}</p>
   </main>
 </Base>
