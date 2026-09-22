@@ -1,6 +1,9 @@
 ---
 import '../styles/tokens.css';
+import '../styles/fonts.css';
 import '../styles/global.css';
+import displayFont from '../assets/fonts/fraunces-latin-700-normal.woff2?url';
+import bodyFont from '../assets/fonts/public-sans-latin-400-normal.woff2?url';
 
 interface Props {
   title: string;
@@ -19,6 +22,8 @@ const { title, description } = Astro.props;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={bodyFont} as="font" type="font/woff2" crossorigin />
   </head>
   <body>
     <div class="demo-bar" role="note">

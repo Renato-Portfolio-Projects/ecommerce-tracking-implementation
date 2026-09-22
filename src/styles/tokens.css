@@ -7,11 +7,16 @@
 
   /* Two spot inks. Printed one over the other, slightly off, they make the "second impression". */
   --spot-red: oklch(60% 0.19 32);
+  /* The same red, darker, so that small text in it passes WCAG AA. The bright red is for big things. */
+  --spot-red-text: oklch(52% 0.19 32);
   --spot-blue: oklch(45% 0.13 255);
 
-  /* Type. System fonts until the brand pass in v0.2 picks self-hosted ones. */
-  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-display: ui-serif, Georgia, 'Times New Roman', serif;
+  /* A garment colour for the drawings. Never used for text. */
+  --sand: oklch(78% 0.06 80);
+
+  /* Type. The fonts are self-hosted, see fonts.css. The fallbacks are what shows before they load. */
+  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
 
   /* Space scale. */
   --space-1: 0.25rem;
