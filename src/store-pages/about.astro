@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import { WORDS } from '../store/words';
+---
+
+<Base title={`${WORDS['about.title']} | ${WORDS['site.name']}`} description={WORDS['about.description']}>
+  <main class="page">
+    <h1>{WORDS['about.heading']}</h1>
+    <p>{WORDS['about.p1']}</p>
+    <p>{WORDS['about.p2']}</p>
+    <p>{WORDS['about.p3']}</p>
+  </main>
+</Base>

@@ -61,6 +61,7 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 - [x] Sign in with GitHub.
 - [x] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
 - [x] Add the environment variable `PUBLIC_SITE_URL` with the final `https://` address of the domain.
+- [ ] Add the environment variable `PUBLIC_STORE_OPEN` with the value `true`, for the **Preview** environment only. Leave Production and Development unticked. Preview builds then show the whole store, and production keeps building only the placeholder page until v0.3 (consent) is merged and you decide to open it. Nothing about the switch is secret, and it costs nothing.
 - [x] Deploy, and confirm the `*.vercel.app` address loads the placeholder page. Done: the project is `second-impression`.
 - [x] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project. Done for `secondimpression.ca`, and for `www.secondimpression.ca`, which redirects permanently to it.
 - [x] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works. Done: an A record for `@` and a CNAME record for `www`. The live site passed every check on 2026-09-19.
