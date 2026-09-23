@@ -16,15 +16,16 @@ const shape = SHAPES[kind];
 const marks = print === 'none' ? null : { circles: MARKS[print], colours: markColours(print, colour) };
 ---
 
-<svg class="garment" viewBox="0 0 200 200" role="img" aria-label={label} style={garmentStyle(colour)}>
+<svg class="garment" data-garment viewBox="0 0 200 200" role="img" aria-label={label} style={garmentStyle(colour)}>
   <path class="second" d={shape} transform={`translate(${OFFSET.x} ${OFFSET.y})`}></path>
   <path class="body" d={shape}></path>
   {kind === 'tee' ? <path class="collar" d={COLLAR}></path> : <path class="detail" d={DETAILS[kind]}></path>}
   {
     marks && (
       <>
-        <circle cx={marks.circles[0].x} cy={marks.circles[0].y} r={marks.circles[0].r} style={`fill: ${marks.colours.first}`}></circle>
+        <circle data-mark="first" cx={marks.circles[0].x} cy={marks.circles[0].y} r={marks.circles[0].r} style={`fill: ${marks.colours.first}`}></circle>
         <circle
+          data-mark="second"
           cx={marks.circles[1].x}
           cy={marks.circles[1].y}
           r={marks.circles[1].r}

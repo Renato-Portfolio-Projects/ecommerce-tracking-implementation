@@ -8,15 +8,17 @@ interface Props {
   /** The page's own title. The store's name is added after it. */
   title: string;
   description: string;
+  /** True for a page that lays itself out full width, such as the home page. Narrow otherwise. */
+  wide?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, wide = false } = Astro.props;
 ---
 
 <Base title={`${title} | ${WORDS['site.name']}`} description={description} store>
   <a slot="top" class="skip-link" href="#content">{WORDS['nav.skip']}</a>
   <Header />
-  <main id="content" class="page">
+  <main id="content" class={wide ? 'page-wide' : 'page'}>
     <slot />
   </main>
   <Footer />

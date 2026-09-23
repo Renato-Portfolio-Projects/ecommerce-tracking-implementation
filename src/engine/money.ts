@@ -47,3 +47,37 @@ export function convertFromCad(cents: number, currency: CurrencyCode): number {
 export function formatMoney(cents: number, currency: CurrencyCode): string {
   return new Intl.NumberFormat('en-CA', { style: 'currency', currency }).format(cents / 100);
 }
+
+/**
+ * Every offered currency's formatted price for one CAD amount, keyed by currency code. Calls the
+ * two functions above once per currency and does no arithmetic of its own, for example:
+ *
+ *   pricesInAllCurrencies(3800) // { CAD: '$38.00', USD: 'US$27.74', EUR: '€25.08', GBP: '£21.28' }
+ *
+ * A page calls this once, when it is built, for every price it shows, and puts the whole result
+ * in the page as data (see the `data-prices` attribute in src/components/Header.astro and the
+ * pages that show a price). The currency selector's own script then never converts a price
+ * itself: switching currency only ever picks which of these already-formatted strings to display.
+ */
+export function pricesInAllCurrencies(cents: number): Record<CurrencyCode, string> {
+  return Object.fromEntries(
+    CURRENCIES.map((currency) => [currency.code, formatMoney(convertFromCad(cents, currency.code), currency.code)]),
+  ) as Record<CurrencyCode, string>;
+}
+
+/**
+ * Decides which currency to show, from whatever the browser handed back for what a visitor last
+ * chose. `raw` is untrusted: on a first visit it is `null`, and at any other visit it could in
+ * principle be missing, blank, or left over from a version of the store that offered different
+ * currencies. This is the one place that decision is made, so nothing downstream has to re-check
+ * it. `isCurrencyCode` (above) is what actually knows the four codes the store offers; this
+ * function only adds the null/undefined check and the fallback. For example:
+ *
+ *   storedCurrencyOr('USD', 'CAD') // 'USD', a currency the store offers, is kept
+ *   storedCurrencyOr(null, 'CAD')  // 'CAD', nothing was saved yet
+ *   storedCurrencyOr('JPY', 'CAD') // 'CAD', not one of the four the store offers
+ *   storedCurrencyOr('usd', 'CAD') // 'CAD', codes are matched case-sensitively
+ */
+export function storedCurrencyOr(raw: string | null | undefined, fallback: CurrencyCode): CurrencyCode {
+  return raw !== null && raw !== undefined && isCurrencyCode(raw) ? raw : fallback;
+}

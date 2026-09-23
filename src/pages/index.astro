@@ -1,12 +1,106 @@
 ---
 import Base from '../layouts/Base.astro';
+import StorePage from '../layouts/StorePage.astro';
+import Garment from '../components/Garment.astro';
+import { garmentLabel } from '../components/garments';
+import { listContextFor, productsIn, variantsOf, type ListContext } from '../engine/catalog';
+import { fill } from '../engine/fill';
+import { pricesInAllCurrencies } from '../engine/money';
+import { ART } from '../store/art';
+import type { Product } from '../store/products';
 import { WORDS } from '../store/words';
+
+const open = import.meta.env.PUBLIC_STORE_OPEN === 'true';
+
+interface Card {
+  product: Product;
+  art: (typeof ART)[string];
+  context: ListContext;
+  styles: string;
+  prices: Record<string, string>;
+  comparePrices: Record<string, string> | undefined;
+}
+
+function cardFor(product: Product): Card {
+  return {
+    product,
+    art: ART[product.sku],
+    context: listContextFor(product),
+    styles: fill(WORDS['home.styles'], { count: variantsOf(product).length }),
+    prices: pricesInAllCurrencies(product.priceCad),
+    comparePrices: product.compareAtCad === undefined ? undefined : pricesInAllCurrencies(product.compareAtCad),
+  };
+}
+
+const teeCards = open ? productsIn('tees').map(cardFor) : [];
+const pantCards = open ? productsIn('pants').map(cardFor) : [];
+const heroArt = ART['SI-TEE-002'];
 ---
 
-<Base title={WORDS['site.name']} description={WORDS['site.description']}>
-  <main class="placeholder">
-    <p class="eyebrow">Opening soon</p>
-    <h1>{WORDS['site.name']}</h1>
-    <p class="tagline">{WORDS['site.tagline']}</p>
-  </main>
-</Base>
+{
+  open ? (
+    <StorePage title={WORDS['site.tagline']} description={WORDS['site.description']} wide>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">{WORDS['home.eyebrow']}</p>
+          <h1>{WORDS['home.heroTitle']}</h1>
+          <p>{WORDS['home.heroBody']}</p>
+          <a class="btn" href="#tees">{WORDS['home.heroButton']}</a>
+        </div>
+        <Garment kind={heroArt.kind} colour="Paper" print={heroArt.print} label={WORDS['home.heroAlt']} />
+      </section>
+
+      {[
+        { id: 'tees', heading: WORDS['nav.tees'], cards: teeCards },
+        { id: 'pants', heading: WORDS['nav.pants'], cards: pantCards },
+      ].map((section) => (
+        <section id={section.id} class="collection">
+          <h2>{section.heading}</h2>
+          <ul class="product-grid">
+            {section.cards.map((card) => (
+              <li>
+                <a
+                  href={`/products/${card.product.slug}`}
+                  data-list-handoff-sku={card.product.sku}
+                  data-list-handoff-context={JSON.stringify(card.context)}
+                >
+                  <Garment
+                    kind={card.art.kind}
+                    colour={card.product.colours[0]}
+                    print={card.art.print}
+                    label={garmentLabel(card.product.name, card.product.colours[0], card.art.print)}
+                  />
+                  <p class="product-name">{card.product.name}</p>
+                  <p class="product-price">
+                    {card.comparePrices && (
+                      <span class="was" data-prices={JSON.stringify(card.comparePrices)}>
+                        {card.comparePrices.CAD}
+                      </span>
+                    )}
+                    <span class={card.comparePrices ? 'sale' : undefined} data-prices={JSON.stringify(card.prices)}>
+                      {card.prices.CAD}
+                    </span>
+                  </p>
+                  <p class="product-styles">{card.styles}</p>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+
+      <section class="brand-strip">
+        <p class="label">{WORDS['home.stripLabel']}</p>
+        <p>{WORDS['home.stripText']}</p>
+      </section>
+    </StorePage>
+  ) : (
+    <Base title={WORDS['site.name']} description={WORDS['site.description']}>
+      <main class="placeholder">
+        <p class="eyebrow">{WORDS['site.openingSoon']}</p>
+        <h1>{WORDS['site.name']}</h1>
+        <p class="tagline">{WORDS['site.tagline']}</p>
+      </main>
+    </Base>
+  )
+}
