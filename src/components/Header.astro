@@ -1,8 +1,12 @@
 ---
+import { CURRENCIES } from '../store/currencies';
 import { WORDS } from '../store/words';
 
-/** The links in the header. Later parts of the store add the Tees and Pants sections. */
-const links = [{ href: '/about', label: WORDS['nav.about'] }];
+const links = [
+  { href: '/#tees', label: WORDS['nav.tees'] },
+  { href: '/#pants', label: WORDS['nav.pants'] },
+  { href: '/about', label: WORDS['nav.about'] },
+];
 ---
 
 <header class="header">
@@ -10,5 +14,19 @@ const links = [{ href: '/about', label: WORDS['nav.about'] }];
   <nav class="nav" aria-label={WORDS['nav.label']}>
     {links.map((link) => <a href={link.href}>{link.label}</a>)}
   </nav>
-  <div class="tools"></div>
+  <div class="tools">
+    <label class="currency-picker">
+      <span class="label">{WORDS['header.currency']}</span>
+      <select id="currency-select">
+        {CURRENCIES.map((currency) => <option value={currency.code}>{WORDS[`currency.${currency.code}`]}</option>)}
+      </select>
+    </label>
+    {/* The cart itself is built in a later part of the store. Until then it always holds nothing. */}
+    <span class="cart-indicator">{WORDS['header.cart']}</span>
+  </div>
 </header>
+
+<script>
+  import { initCurrencySwitcher } from './currency-switcher';
+  initCurrencySwitcher();
+</script>
