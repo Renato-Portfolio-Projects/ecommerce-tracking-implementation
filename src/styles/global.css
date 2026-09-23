@@ -199,6 +199,116 @@ a {
   padding: var(--space-5) var(--space-3) var(--space-6);
 }
 
+.page-wide {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-3) var(--space-6);
+}
+
+/* ---- The home page ---- */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 16rem;
+  align-items: center;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.hero .eyebrow {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.hero p:not(.eyebrow) {
+  margin: 0 0 var(--space-4);
+  max-width: 34rem;
+}
+
+.hero .garment {
+  width: 100%;
+}
+
+.collection {
+  margin-bottom: var(--space-6);
+  scroll-margin-top: var(--space-4);
+}
+
+.collection h2 {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-3);
+}
+
+.product-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-4);
+}
+
+.product-grid a {
+  display: block;
+  text-decoration: none;
+}
+
+.product-grid .garment {
+  width: 100%;
+  background: var(--paper-shade);
+  border-radius: 3px;
+  padding: 8%;
+}
+
+.product-name {
+  margin: var(--space-2) 0 0;
+  font-weight: 600;
+}
+
+.product-price {
+  margin: 0;
+}
+
+.product-price .was {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  margin-right: var(--space-2);
+}
+
+.product-price .sale {
+  color: var(--spot-red-text);
+}
+
+.product-styles {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.brand-strip {
+  border-top: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+  padding-top: var(--space-5);
+}
+
+.brand-strip p:last-child {
+  margin: 0;
+  max-width: 40rem;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+}
+
 .page h1 {
   font-size: clamp(2rem, 5vw, 3rem);
   margin-bottom: var(--space-4);
@@ -340,7 +450,8 @@ a {
   text-align: center;
 }
 
-.style-guide .btn {
+.btn {
+  display: inline-block;
   font: inherit;
   font-weight: 600;
   background: var(--spot-blue);
@@ -348,5 +459,6 @@ a {
   border: 0;
   border-radius: 2px;
   padding: 0.75rem 1.4rem;
+  text-decoration: none;
   cursor: pointer;
 }

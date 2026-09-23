@@ -8,6 +8,7 @@ export const WORDS = {
   // Everywhere
   'site.name': 'Second Impression',
   'site.tagline': 'Worth a second look.',
+  'site.openingSoon': 'Opening soon',
   'site.description': 'Second Impression is a fictional clothing store, built to demonstrate production-style tracking.',
   'demo.bar': 'Portfolio demo store: fictional products, no real payments.',
   'demo.link': "How it's tracked →",

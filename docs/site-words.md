@@ -18,6 +18,7 @@ The demo bar, the header and the footer appear on every store page.
 |---|---|---|
 | `site.name` | Second Impression | The wordmark in the header and footer, and in every page title |
 | `site.tagline` | Worth a second look. | The footer, and the placeholder page |
+| `site.openingSoon` | Opening soon | The placeholder page, before the store opens |
 | `site.description` | Second Impression is a fictional clothing store, built to demonstrate production-style tracking. | The description search engines and link previews would show for the home page |
 | `demo.bar` | Portfolio demo store: fictional products, no real payments. | The slim dark bar above the header, on every page |
 | `demo.link` | How it's tracked → | The link at the end of the demo bar. It goes to the project on GitHub until the case study exists |
