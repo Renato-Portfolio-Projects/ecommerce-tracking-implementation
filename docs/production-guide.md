@@ -25,6 +25,7 @@ Sources checked on 2026-09-21.
 | Orders and data | Needs adding | Records last 7 days. A store needs a durable database, order numbers, an admin, stock counts and backups. |
 | Tax | Needs replacing | The rates are fixed demo rates. A store looks rates up and registers where the law says it must. |
 | Currency | Needs replacing | The exchange rates are fixed demo rates. A store uses real ones and saves the rate on each order. |
+| Product content | Needs adding | Every product is a flat, line-drawn illustration. A store needs real photography, which Google requires for a product's structured data to be eligible for its richer search results at all. |
 | Shipping and fulfillment | Needs replacing | There are two flat methods and nothing is shipped. A store needs real rates, duties, packing and returns. |
 | Email | Needs adding | The emails are simulated. A store needs a sending service, sender authentication and consent it can prove. |
 | Legal and privacy | Needs adding | There is only a demo notice, and a draft policy is planned. A store needs terms, policies and a review by a professional. |
@@ -87,6 +88,16 @@ The free plans used here have terms that suit a portfolio piece and not a store.
 | **Locking the rate.** The rates never change, so every step shows the same total. | With moving rates, the rate is saved on each order, so that a refund or a report uses the same amount the shopper paid. | Nothing yet | Not verified: general practice |
 | **Currencies with no cents.** Every currency the demo supports has two decimal places, and the code keeps money in whole cents. | Some currencies have no minor unit, and Stripe lists the Japanese yen as one. Supporting one means changing how money is stored and shown. | `src/engine/money.ts` | [Stripe: currencies and conversions](https://docs.stripe.com/currencies/conversions) |
 | **Reports.** Planned (v0.2d): events carry the currency the shopper was charged, and the GA4 properties are set to Canadian dollars. | Google Analytics converts other currencies into the property's currency using the previous day's exchange rate, so its totals may not match the store's own to the cent. | Nothing yet | [Google Analytics Help: currency reference](https://support.google.com/analytics/answer/9796179) |
+| **Showing every currency's price at once.** Every product's price is computed in all four currencies when the site is built, and a small script in the browser only ever picks which one to show; the whole site is one static build. | This is cheap at six products and four currencies. A store offering many more currencies makes every price heavier, since each one still carries every currency's string, and a store with many more products, where prices or rates change often, would need to rebuild its whole site on every change. Real stores at that scale more often render the price server-side once the visitor's currency is known, or fetch it from a pricing service. | `src/engine/money.ts`, `src/components/currency-switcher.ts` | Not verified: general practice |
+
+## Product content
+
+Every product a shopper can look at is a flat, line-drawn illustration. This is a deliberate part of the store's look, not a stand-in for photography that never arrived, but a real store selling physical garments needs real photography, and search engines expect it too.
+
+| What the demo does | What a real launch needs | Where in this repo | Source |
+|---|---|---|---|
+| **Product images.** None. Every product page shows an SVG illustration, recoloured per colour, and its schema.org Product script has no `image` property. | `image` is a required property of Google's Product structured data for merchant listings (pages a shopper can buy from, which is this project's case), alongside only `name` and `offers`; without it the markup is not eligible for Google's richer shopping results at all, not merely missing an optional enhancement. Google recommends multiple high-resolution photos in three aspect ratios: 16x9, 4x3 and 1x1. | `src/store-pages/products/[slug].astro` | [Google Search Central: how to add merchant listing structured data](https://developers.google.com/search/docs/appearance/structured-data/merchant-listing) (updated 2026-09-08) |
+| **Zoom, multiple angles and video.** None; one fixed illustration per colour. | Shoppers buying clothing without trying it on typically expect multiple angles, a zoom view, and increasingly a short video or a 360-degree view, to stand in for what an in-store fitting room would answer. | `src/components/Garment.astro` | Not verified: general practice |
 
 ## Shipping and fulfillment
 
