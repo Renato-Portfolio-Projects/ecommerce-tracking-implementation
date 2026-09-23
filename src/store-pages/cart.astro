@@ -4,6 +4,6 @@ import StorePage from '../layouts/StorePage.astro';
 import { WORDS } from '../store/words';
 ---
 
-<StorePage title={WORDS['cart.title']} description={WORDS['site.description']}>
+<StorePage title={WORDS['cart.title']} description={WORDS['site.description']} cartDrawer={false}>
   <CartPanel variant="page" />
 </StorePage>

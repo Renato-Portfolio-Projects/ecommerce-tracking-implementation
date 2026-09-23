@@ -7,6 +7,15 @@ const links = [
   { href: '/#pants', label: WORDS['nav.pants'] },
   { href: '/about', label: WORDS['nav.about'] },
 ];
+
+// The cart link says "Cart" when the cart is empty and "Cart (3)" once it holds something. The cart's own
+// script fills in the number, so the words for both are written into the page for it to use.
+const cartWords = {
+  empty: WORDS['header.cart'],
+  count: WORDS['header.cartCount'],
+  one: WORDS['header.cartLabelOne'],
+  many: WORDS['header.cartLabelMany'],
+};
 ---
 
 <header class="header">
@@ -21,8 +30,7 @@ const links = [
         {CURRENCIES.map((currency) => <option value={currency.code}>{WORDS[`currency.${currency.code}`]}</option>)}
       </select>
     </label>
-    {/* The cart itself is built in a later part of the store. Until then it always holds nothing. */}
-    <span class="cart-indicator">{WORDS['header.cart']}</span>
+    <a class="cart-indicator" href="/cart" data-cart-link data-words={JSON.stringify(cartWords)}>{WORDS['header.cart']}</a>
   </div>
 </header>
 

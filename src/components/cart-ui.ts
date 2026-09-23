@@ -9,11 +9,12 @@ import { currentCurrency } from './currency-switcher';
 import { garmentSvg } from './garments';
 
 /**
- * Draws the cart into every cart panel on the page, and does what its buttons ask. The drawer and the
- * cart page are the same panel, so this finds each one, gives it the cart in the shopper's currency
- * (worked out by cartView in src/engine, which does the arithmetic), and redraws it whenever the cart
- * or the currency changes. A line that is already on the page is updated where it stands, not
- * rebuilt, so a button that was just pressed keeps the keyboard focus.
+ * Draws the cart into every cart panel on the page and into the count in the header, and does what
+ * its buttons ask, including opening and closing the drawer. The drawer and the cart page are the
+ * same panel, so this finds each one, gives it the cart in the shopper's currency (worked out by
+ * cartView in src/engine, which does the arithmetic), and redraws it whenever the cart or the
+ * currency changes. A line that is already on the page is updated where it stands, not rebuilt, so a
+ * button that was just pressed keeps the keyboard focus.
  */
 
 /**
@@ -135,16 +136,45 @@ function renderPanel(panel: HTMLElement, view: CartView, notice: string, announc
   setText(panel, '[data-cart-announce]', announcement);
 }
 
+/** The sentences for the header's cart link, written into the link by Header.astro as `data-words`. */
+interface HeaderWords {
+  empty: string;
+  count: string;
+  one: string;
+  many: string;
+}
+
 /**
- * Reads the saved cart and draws it into every panel on the page. The prices are worked out here, in
- * the browser, in the currency the page is showing now (`currentCurrency`, the same value the
- * currency selector uses), which is why a currency change has to trigger a redraw. `change` says
- * what just happened, if anything, and decides the two messages; a redraw with no change (the page
- * opening, another tab, a new currency) shows only the warning about lines that were dropped.
+ * The cart link in the header: "Cart" while the cart is empty, and "Cart (3)" once it holds something.
+ * The number is the quantity of everything in the cart, not the number of lines. The visible text is
+ * kept short, so a screen reader is given its own label, "Cart, 3 items", which reads better than
+ * "Cart, open parenthesis, 3". With an empty cart there is no label, and the link's own text is read.
+ */
+function renderHeaderLinks(view: CartView): void {
+  for (const link of document.querySelectorAll<HTMLElement>('[data-cart-link]')) {
+    const words = JSON.parse(link.dataset.words ?? '{}') as HeaderWords;
+    if (view.quantity === 0) {
+      link.textContent = words.empty;
+      link.removeAttribute('aria-label');
+    } else {
+      link.textContent = fill(words.count, { count: view.quantity });
+      link.setAttribute('aria-label', view.quantity === 1 ? words.one : fill(words.many, { count: view.quantity }));
+    }
+  }
+}
+
+/**
+ * Reads the saved cart and draws it into the header's cart link and every panel on the page. The
+ * prices are worked out here, in the browser, in the currency the page is showing now
+ * (`currentCurrency`, the same value the currency selector uses), which is why a currency change has
+ * to trigger a redraw. `change` says what just happened, if anything, and decides the two messages; a
+ * redraw with no change (the page opening, another tab, a new currency) shows only the warning about
+ * lines that were dropped.
  */
 function renderAll(change: CartChange = {}): void {
   const { cart, dropped } = loadCart();
   const view = cartView(cart, currentCurrency());
+  renderHeaderLinks(view);
 
   for (const panel of document.querySelectorAll<HTMLElement>('[data-cart-panel]')) {
     const words = JSON.parse(panel.dataset.words ?? '{}') as PanelWords;
@@ -161,13 +191,52 @@ function renderAll(change: CartChange = {}): void {
 }
 
 /**
- * Does what a line's plus, minus and Remove buttons ask. One listener on the whole document handles
- * every button, including those on lines that were added later. The quantity is set from what the
- * line currently shows (`data-quantity`) plus or minus one, and the change comes back as a
- * `cart:changed` event that redraws the panel; this function draws nothing itself.
+ * The drawer is a native dialog, so the browser already moves the focus into it when it opens, keeps
+ * the page behind it out of reach, closes it on Escape and puts the focus back where it was. Only
+ * the ways of opening and closing it are written here. Where there is no drawer, as on the cart page
+ * itself, the cart link in the header simply goes to the cart page.
+ */
+function drawer(): HTMLDialogElement | null {
+  return document.querySelector<HTMLDialogElement>('[data-cart-drawer]');
+}
+
+function openDrawer(): void {
+  const dialog = drawer();
+  if (dialog && !dialog.open) dialog.showModal();
+}
+
+/**
+ * Does what the cart's buttons ask. One listener on the whole document handles every button,
+ * including those on lines that were added later, in this order:
+ * - a click on the dimmed page around the drawer, or on a close button, closes the drawer;
+ * - a plain click on the header's cart link opens the drawer instead of going to the cart page. The
+ *   link is still a real link: a middle click, a click with a modifier key held (to open it in a new
+ *   tab or window), and any click on a page with no drawer, all go to /cart;
+ * - a plus, minus or Remove button changes the cart. The quantity is set from what the line
+ *   currently shows (`data-quantity`) plus or minus one, and the change comes back as a
+ *   `cart:changed` event that redraws the panel; this function draws nothing itself.
  */
 function handleClick(event: MouseEvent): void {
-  const button = (event.target as Element).closest<HTMLButtonElement>('[data-cart-increase], [data-cart-decrease], [data-cart-remove]');
+  const clicked = event.target as Element;
+  const dialog = drawer();
+
+  // A click on the dimmed page around the panel lands on the dialog itself, not on anything inside it.
+  if (dialog && clicked === dialog) {
+    dialog.close();
+    return;
+  }
+  if (clicked.closest('[data-cart-close]')) {
+    dialog?.close();
+    return;
+  }
+  const plainClick = event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
+  if (dialog && plainClick && clicked.closest('[data-cart-link]')) {
+    event.preventDefault();
+    openDrawer();
+    return;
+  }
+
+  const button = clicked.closest<HTMLButtonElement>('[data-cart-increase], [data-cart-decrease], [data-cart-remove]');
   if (!button) return;
 
   const item = button.closest<HTMLElement>('.cart-line')!;
@@ -189,11 +258,14 @@ function handleClick(event: MouseEvent): void {
  * when the currency is switched (`currency:changed`, from currency-switcher.ts), and when another tab
  * changes the saved cart. The browser sends that last one as a `storage` event to every other open tab
  * of the site whenever saved data changes, so a cart open in two tabs never shows a stale screen.
+ * It also listens for `cart:open`, so that code that has no business knowing how the drawer works,
+ * such as the Add to cart button, can open it by announcing that.
  */
 export function initCartUi(): void {
   document.addEventListener('click', handleClick);
   document.addEventListener('cart:changed', (event) => renderAll((event as CustomEvent<CartChange>).detail));
   document.addEventListener('currency:changed', () => renderAll());
+  document.addEventListener('cart:open', openDrawer);
   window.addEventListener('storage', (event) => {
     if (event.key === null || event.key === CART_STORAGE_KEY) renderAll();
   });

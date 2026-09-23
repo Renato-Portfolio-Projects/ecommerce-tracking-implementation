@@ -181,6 +181,7 @@ a {
 .cart-indicator {
   font-size: 0.9rem;
   font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -831,4 +832,73 @@ a {
 
 .cart-panel--page .cart-line {
   grid-template-columns: 6rem 1fr auto;
+}
+
+/* The drawer: the same panel in a native dialog, pinned to the right edge over a dimmed page. */
+
+.cart-drawer {
+  inset: 0 0 0 auto;
+  width: min(26rem, 100vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-3);
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  box-shadow: -8px 0 32px color-mix(in oklab, var(--ink) 25%, transparent);
+}
+
+.cart-drawer::backdrop {
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+/* While the drawer is open the page behind it does not scroll. */
+body:has(.cart-drawer[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cart-drawer[open] {
+    animation: cart-slide-in 0.2s ease-out;
+  }
+
+  @keyframes cart-slide-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+}
+
+.cart-panel--drawer {
+  height: 100%;
+}
+
+.cart-panel--drawer .cart-title {
+  font-size: 1.4rem;
+}
+
+/* Only the lines scroll, so the subtotal and the Checkout button stay in view. */
+.cart-panel--drawer .cart-lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cart-panel--drawer .cart-summary {
+  flex: none;
+}
+
+.cart-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  font: inherit;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
