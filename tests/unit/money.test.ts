@@ -10,7 +10,9 @@ import {
   divideRounded,
   formatMoney,
   isCurrencyCode,
+  pricesInAllCurrencies,
   scaleToInteger,
+  storedCurrencyOr,
 } from '../../src/engine/money';
 
 describe('CURRENCIES', () => {
@@ -103,6 +105,34 @@ describe('formatMoney', () => {
   it('shows thousands separators and zero', () => {
     expect(formatMoney(123450, 'CAD')).toBe('$1,234.50');
     expect(formatMoney(0, 'CAD')).toBe('$0.00');
+  });
+});
+
+describe('pricesInAllCurrencies', () => {
+  it('formats one price in every offered currency', () => {
+    expect(pricesInAllCurrencies(3800)).toEqual({
+      CAD: '$38.00',
+      USD: 'US$27.74',
+      EUR: '€25.08',
+      GBP: '£21.28',
+    });
+  });
+
+  it('formats zero the same way in every currency', () => {
+    expect(pricesInAllCurrencies(0)).toEqual({ CAD: '$0.00', USD: 'US$0.00', EUR: '€0.00', GBP: '£0.00' });
+  });
+});
+
+describe('storedCurrencyOr', () => {
+  it('accepts a saved currency the store offers', () => {
+    expect(storedCurrencyOr('USD', 'CAD')).toBe('USD');
+    expect(storedCurrencyOr('GBP', 'CAD')).toBe('GBP');
+  });
+
+  it('falls back for anything missing or not offered', () => {
+    for (const raw of [null, undefined, '', 'usd', 'JPY', 'CAD ']) {
+      expect(storedCurrencyOr(raw, 'CAD'), String(raw)).toBe('CAD');
+    }
   });
 });
 
