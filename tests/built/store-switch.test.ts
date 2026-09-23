@@ -1,51 +1,45 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { WORDS } from '../../src/store/words';
-
-/** The built site with the store closed, which is what production builds. */
-const closed = new URL('../../dist/', import.meta.url);
-/** The built site with the store open, which is what a preview builds (npm run build:store). */
-const open = new URL('../../dist-store/', import.meta.url);
-
-function htmlFiles(folder: URL, sub = ''): string[] {
-  const found: string[] = [];
-  for (const name of readdirSync(new URL(sub, folder))) {
-    const path = `${sub}${name}`;
-    if (statSync(new URL(path, folder)).isDirectory()) found.push(...htmlFiles(folder, `${path}/`));
-    else if (name.endsWith('.html')) found.push(path);
-  }
-  return found.sort();
-}
+import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, requestsToOtherSites } from '../helpers/built';
 
 describe('the site built with the store closed', () => {
-  it('holds the placeholder page and nothing else', () => {
-    expect(htmlFiles(closed)).toEqual(['index.html']);
+  it('holds the placeholder page and the 404 page, and nothing else', () => {
+    expect(htmlFiles(CLOSED)).toEqual(['404.html', 'index.html']);
   });
 
   it('has none of the store\'s pages', () => {
-    expect(existsSync(new URL('about/index.html', closed))).toBe(false);
+    for (const path of ['about', 'contact', 'policies/shipping', 'policies/returns', 'policies/terms']) {
+      expect(existsSync(new URL(`${path}/index.html`, CLOSED)), path).toBe(false);
+    }
   });
 });
 
 describe('the site built with the store open', () => {
-  const about = readFileSync(new URL('about/index.html', open), 'utf8');
-
-  it('holds the placeholder page and the store\'s pages', () => {
-    expect(htmlFiles(open)).toEqual(['about/index.html', 'index.html']);
+  it('holds the placeholder page, the 404 page and the store\'s pages', () => {
+    expect(htmlFiles(OPEN)).toEqual([
+      '404.html',
+      'about/index.html',
+      'contact/index.html',
+      'index.html',
+      'policies/returns/index.html',
+      'policies/shipping/index.html',
+      'policies/terms/index.html',
+    ]);
   });
 
   it('shows the words from src/store/words.ts on the About page', () => {
+    const about = decodeEntities(readPage(OPEN, 'about/index.html'));
     expect(about).toContain(WORDS['about.heading']);
     expect(about).toContain(WORDS['about.p1']);
     expect(about).toContain(`<title>${WORDS['about.title']} | ${WORDS['site.name']}</title>`);
   });
 
   it('keeps every page out of search engines and free of third-party requests', () => {
-    for (const path of htmlFiles(open)) {
-      const html = readFileSync(new URL(path, open), 'utf8');
+    for (const path of htmlFiles(OPEN)) {
+      const html = readPage(OPEN, path);
       expect(html, path).toMatch(/<meta name="robots" content="noindex, nofollow"\s*\/?>/);
-      const external = [...html.matchAll(/(?:src|href|action)="(https?:\/\/[^"]+)"/g)].map((match) => match[1]);
-      expect(external, path).toEqual([]);
+      expect(requestsToOtherSites(html), path).toEqual([]);
     }
   });
 });

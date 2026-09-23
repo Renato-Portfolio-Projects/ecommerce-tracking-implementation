@@ -4,13 +4,16 @@ import '../styles/fonts.css';
 import '../styles/global.css';
 import displayFont from '../assets/fonts/fraunces-latin-700-normal.woff2?url';
 import bodyFont from '../assets/fonts/public-sans-latin-400-normal.woff2?url';
+import DemoBar from '../components/DemoBar.astro';
 
 interface Props {
   title: string;
   description: string;
+  /** True for the store's own pages, which show the "How it's tracked" link and keep the footer at the bottom. */
+  store?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, store = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -25,10 +28,9 @@ const { title, description } = Astro.props;
     <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={bodyFont} as="font" type="font/woff2" crossorigin />
   </head>
-  <body>
-    <div class="demo-bar" role="note">
-      Portfolio demo store: fictional products, no real payments.
-    </div>
+  <body class={store ? 'store' : undefined}>
+    <slot name="top" />
+    <DemoBar link={store} />
     <slot />
   </body>
 </html>

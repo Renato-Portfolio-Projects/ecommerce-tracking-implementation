@@ -1,0 +1,18 @@
+---
+import StorePage from '../../layouts/StorePage.astro';
+import { fill } from '../../engine/fill';
+import { WORDS } from '../../store/words';
+import { CART_LIFETIME_DAYS } from '../../store/policy';
+---
+
+<StorePage title={WORDS['terms.title']} description={WORDS['terms.description']}>
+  <h1>{WORDS['terms.heading']}</h1>
+  <p>{WORDS['terms.intro']}</p>
+  <ol>
+    <li>{WORDS['terms.p1']}</li>
+    <li>{WORDS['terms.p2']}</li>
+    <li>{WORDS['terms.p3']}</li>
+    <li>{fill(WORDS['terms.p4'], { days: CART_LIFETIME_DAYS })}</li>
+    <li>{WORDS['terms.p5']}</li>
+  </ol>
+</StorePage>

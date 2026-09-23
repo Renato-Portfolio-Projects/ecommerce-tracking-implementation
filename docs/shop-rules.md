@@ -279,7 +279,7 @@ The code is kept in three folders, so that the reusable part can be told apart f
 | Folder | What it holds | Files |
 |---|---|---|
 | `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
-| `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes, cart limits and the words a shopper reads | `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts`, `words.ts` |
+| `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes, cart limits, the words a shopper reads and the places its pages link to outside the site | `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts`, `site.ts`, `words.ts` |
 | `src/demo` | What exists only for the demo: the test cards, the eight demo people and the demo email domains. A real store deletes this folder | `email-domains.ts`, `personas.ts`, `test-cards.ts` |
 
 Two rules keep the folders apart, and a test checks them on every run:

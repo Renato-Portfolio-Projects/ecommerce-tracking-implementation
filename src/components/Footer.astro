@@ -1,0 +1,30 @@
+---
+import { WORDS } from '../store/words';
+import { SITE_LINKS } from '../store/site';
+---
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <p class="wordmark plain">{WORDS['site.name']}</p>
+      <p>{WORDS['site.tagline']}</p>
+    </div>
+    <div>
+      <p class="label">{WORDS['footer.demoHeading']}</p>
+      <ul>
+        <li><a href={SITE_LINKS.project}>{WORDS['footer.github']}</a></li>
+        <li><a href={SITE_LINKS.guide}>{WORDS['footer.guide']}</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="label">{WORDS['footer.helpHeading']}</p>
+      <ul>
+        <li><a href="/policies/shipping">{WORDS['footer.shipping']}</a></li>
+        <li><a href="/policies/returns">{WORDS['footer.returns']}</a></li>
+        <li><a href="/policies/terms">{WORDS['footer.terms']}</a></li>
+        <li><a href="/contact">{WORDS['footer.contact']}</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="footer-small">{WORDS['footer.small']}</p>
+</footer>

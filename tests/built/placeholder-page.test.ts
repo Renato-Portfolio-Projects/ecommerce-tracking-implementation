@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { WORDS } from '../../src/store/words';
+import { CLOSED, readPage, requestsToOtherSites } from '../helpers/built';
 
-const html = readFileSync(new URL('../../dist/index.html', import.meta.url), 'utf8');
+const html = readPage(CLOSED, 'index.html');
 
 describe('the built placeholder page', () => {
   it('tells search engines to stay away', () => {
@@ -21,9 +21,6 @@ describe('the built placeholder page', () => {
   });
 
   it('makes no third-party requests', () => {
-    const external = [...html.matchAll(/(?:src|href|action)="(https?:\/\/[^"]+)"/g)].map(
-      (match) => match[1],
-    );
-    expect(external).toEqual([]);
+    expect(requestsToOtherSites(html)).toEqual([]);
   });
 });

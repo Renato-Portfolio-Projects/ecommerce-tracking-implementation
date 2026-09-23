@@ -1,0 +1,15 @@
+---
+import StorePage from '../../layouts/StorePage.astro';
+import { WORDS } from '../../store/words';
+---
+
+<StorePage title={WORDS['returns.title']} description={WORDS['returns.description']}>
+  <h1>{WORDS['returns.heading']}</h1>
+  <p>{WORDS['returns.intro']}</p>
+  <h2>{WORDS['returns.windowHeading']}</h2>
+  <p>{WORDS['returns.window']}</p>
+  <h2>{WORDS['returns.costHeading']}</h2>
+  <p>{WORDS['returns.cost']}</p>
+  <h2>{WORDS['returns.misprintHeading']}</h2>
+  <p>{WORDS['returns.misprint']}</p>
+</StorePage>

@@ -1,0 +1,16 @@
+---
+import { WORDS } from '../store/words';
+import { SITE_LINKS } from '../store/site';
+
+interface Props {
+  /** Show the "How it's tracked" link. The placeholder page has none. */
+  link?: boolean;
+}
+
+const { link = false } = Astro.props;
+---
+
+<div class="demo-bar" role="note">
+  {WORDS['demo.bar']}
+  {link && <a href={SITE_LINKS.project}>{WORDS['demo.link']}</a>}
+</div>
