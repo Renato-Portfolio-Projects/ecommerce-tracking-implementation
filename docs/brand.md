@@ -1,6 +1,6 @@
 # Brand notes: Second Impression
 
-Version 0.1. A starting point, refined during the storefront build in v0.2.
+Version 0.2. The look chosen for the storefront build in v0.2.
 
 ## The name
 
@@ -14,19 +14,51 @@ Two overlapping circles in two spot inks, the second printed slightly off the fi
 
 ## Colour
 
-The tokens live in `src/styles/tokens.css`, written in OKLCH.
+The tokens live in `src/styles/tokens.css`, written in OKLCH, and a test checks this table against them.
 
-| Token | Role |
-|---|---|
-| `--paper`, `--paper-shade` | Page and panel backgrounds. Warm off-white, never pure white. |
-| `--ink`, `--ink-soft` | Text and dark bars. Warm near-black, never pure black. |
-| `--spot-red`, `--spot-blue` | The two spot inks. Used for emphasis and illustration, not for large backgrounds. |
+| Token | Value | Role |
+|---|---|---|
+| `--paper` | `oklch(96% 0.014 85)` | The page background. Warm off-white, never pure white. |
+| `--paper-shade` | `oklch(92% 0.02 85)` | Panels, and the picture behind a product. |
+| `--ink` | `oklch(24% 0.02 60)` | Text and the dark bars. Warm near-black, never pure black. |
+| `--ink-soft` | `oklch(42% 0.02 60)` | Secondary text and small labels. |
+| `--spot-red` | `oklch(60% 0.19 32)` | The first spot ink. Large headlines, the wordmark, drawings and fills. Not for small text. |
+| `--spot-red-text` | `oklch(52% 0.19 32)` | The same red, darker, for small text such as a sale price. |
+| `--spot-blue` | `oklch(45% 0.13 255)` | The second spot ink. Buttons, links and the focus ring. |
+| `--sand` | `oklch(78% 0.06 80)` | A garment colour for the drawings. Never used for text. |
 
-Rule: every neutral leans warm. Text must meet WCAG AA. The spot red on paper is fine for large display text, but check it with a contrast tool before using it at small sizes.
+Rule: every neutral leans warm. Text must meet WCAG AA, and the next section says how that is checked.
+
+## Contrast
+
+Text has to reach 4.5 to 1 against its background under WCAG 2.x AA. Large text (from 24 px, or from about 19 px in bold) and the outlines of controls only need 3 to 1. A test works out every ratio below from the tokens, and checks that each pair meets what it needs.
+
+| Text | On | Used for | Ratio | Needs |
+|---|---|---|---|---|
+| `--ink` | `--paper` | Body text | 14.69 | 4.5 |
+| `--ink-soft` | `--paper` | Secondary text and labels | 7.57 | 4.5 |
+| `--ink` | `--paper-shade` | Text on a panel | 13.03 | 4.5 |
+| `--ink-soft` | `--paper-shade` | Secondary text on a panel | 6.71 | 4.5 |
+| `--paper` | `--ink` | Text on the demo bar and the footer | 14.69 | 4.5 |
+| `--paper` | `--spot-blue` | Button labels | 6.68 | 4.5 |
+| `--spot-blue` | `--paper` | Links and the focus ring | 6.68 | 4.5 |
+| `--spot-red-text` | `--paper` | Small red text, such as a sale price | 5.39 | 4.5 |
+| `--spot-red-text` | `--paper-shade` | Small red text on a panel | 4.78 | 4.5 |
+| `--spot-red` | `--paper` | The wordmark and large headlines | 3.84 | 3 |
+| `--spot-red` | `--paper-shade` | Large headlines on a panel | 3.41 | 3 |
+
+The bright red, `--spot-red`, is for large things only. Small red text uses `--spot-red-text`. Buttons are blue with paper text, not red.
 
 ## Type
 
-System fonts for now. The brand pass in v0.2 picks the real ones, and they will be self-hosted, so no request goes to a font server and nothing leaves the site before consent. Direction: a characterful serif for display, a plain sans for body text and labels.
+Two fonts, both under the SIL Open Font License, self-hosted as Latin subsets so that no request goes to a font server before a visitor has chosen anything. The files and their licences are in `src/assets/fonts`, the `@font-face` rules are in `src/styles/fonts.css`, and a test keeps this table, the rules and the files in step. Together they stay under 60 KB.
+
+| Role | Family | Weights | Licence |
+|---|---|---|---|
+| Display: the wordmark, headlines and product names | Fraunces | 700 | `src/assets/fonts/LICENSE-Fraunces.txt` |
+| Body: text, labels, buttons and prices | Public Sans | 400, 600 | `src/assets/fonts/LICENSE-Public-Sans.txt` |
+
+The display face is only used in bold, because that is the one weight that is loaded. Before the fonts arrive, the page shows the system fonts named after them in `src/styles/tokens.css`, and the first two files are preloaded so that the swap is short.
 
 ## Illustration
 
@@ -45,3 +77,16 @@ Avoid: cutting-edge, innovative, leverage, unlock, seamless, robust, holistic, e
 ## The demo notice
 
 The bar on every storefront page reads: "Portfolio demo store: fictional products, no real payments."
+
+## Speed and accessibility budgets
+
+`npm run lighthouse` runs Lighthouse against the built store on a phone-sized screen and checks these numbers. It is run by hand, not in CI, because Lighthouse needs a real browser and a quiet machine for a fair score, which the roadmap leaves for v1.0 to add to CI. The numbers below were confirmed by running it once the store's pages existed, on 2026-09-21.
+
+| Metric | Budget |
+|---|---|
+| Performance (mobile) | 95 or more |
+| Accessibility (mobile) | 100 |
+| Best Practices (mobile) | 95 or more |
+| JavaScript on a page | 30 KB or less |
+
+Every page also has to reach the Core Web Vitals "good" band: Largest Contentful Paint within 2.5 seconds, Interaction to Next Paint at 200 milliseconds or less, and Cumulative Layout Shift at 0.1 or less ([web.dev: Web Vitals](https://web.dev/articles/vitals), last updated 2024-10-31). Lighthouse's Performance score reflects these on the page it tests, but they are only truly measured from real visits, which this portfolio does not have yet.

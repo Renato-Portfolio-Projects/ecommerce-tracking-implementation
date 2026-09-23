@@ -1,0 +1,23 @@
+---
+import { WORDS } from '../store/words';
+import Base from './Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  /** The page's own title. The store's name is added after it. */
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<Base title={`${title} | ${WORDS['site.name']}`} description={description} store>
+  <a slot="top" class="skip-link" href="#content">{WORDS['nav.skip']}</a>
+  <Header />
+  <main id="content" class="page">
+    <slot />
+  </main>
+  <Footer />
+</Base>

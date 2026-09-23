@@ -1,0 +1,27 @@
+---
+import StorePage from '../../layouts/StorePage.astro';
+import { fill } from '../../engine/fill';
+import { formatMoney } from '../../engine/money';
+import { WORDS } from '../../store/words';
+import { FREE_SHIPPING_FROM_CAD, SHIPPING_METHODS } from '../../store/shipping-methods';
+
+const priceOf = (id: 'standard' | 'express') =>
+  formatMoney(SHIPPING_METHODS.find((method) => method.id === id)!.priceCad, 'CAD');
+---
+
+<StorePage title={WORDS['shipping.title']} description={WORDS['shipping.description']}>
+  <h1>{WORDS['shipping.heading']}</h1>
+  <p>{WORDS['shipping.intro']}</p>
+  <h2>{WORDS['shipping.methodsHeading']}</h2>
+  <p>
+    {fill(WORDS['shipping.standard'], {
+      standard: priceOf('standard'),
+      freeFrom: formatMoney(FREE_SHIPPING_FROM_CAD, 'CAD'),
+    })}
+  </p>
+  <p>{fill(WORDS['shipping.express'], { express: priceOf('express') })}</p>
+  <h2>{WORDS['shipping.whereHeading']}</h2>
+  <p>{WORDS['shipping.where']}</p>
+  <h2>{WORDS['shipping.taxHeading']}</h2>
+  <p>{WORDS['shipping.tax']}</p>
+</StorePage>

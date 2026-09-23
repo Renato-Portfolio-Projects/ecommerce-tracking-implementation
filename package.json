@@ -8,12 +8,15 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "dev:store": "node scripts/with-store-open.mjs astro dev",
     "build": "astro build",
+    "build:store": "node scripts/with-store-open.mjs astro build --outDir dist-store",
     "preview": "astro preview",
     "check": "astro check",
     "test": "vitest run tests/unit",
     "test:built": "vitest run tests/built",
-    "verify": "npm run check && npm test && npm run build && npm run test:built"
+    "verify": "npm run check && npm test && npm run build && npm run build:store && npm run test:built",
+    "lighthouse": "npm run build:store && node scripts/lighthouse.mjs"
   },
   "dependencies": {
     "astro": "^7.3.3"
@@ -21,6 +24,8 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.6.2",
+    "chrome-launcher": "^1.2.1",
+    "lighthouse": "^13.5.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
   }

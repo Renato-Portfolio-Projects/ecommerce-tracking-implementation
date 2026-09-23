@@ -8,6 +8,7 @@
 # Dependencies and build output
 node_modules/
 dist/
+dist-store/
 .astro/
 .vercel/
 

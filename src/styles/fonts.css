@@ -1,0 +1,32 @@
+/*
+ * The store's fonts. They are served from this site, so no request goes to a font server before a
+ * visitor has chosen anything. Each file is a Latin subset of a font under the SIL Open Font License,
+ * and the licences are next to the files in src/assets/fonts.
+ *
+ * Fraunces is the display face and is only used in bold. Public Sans is the body face in regular and
+ * semibold.
+ */
+
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../assets/fonts/fraunces-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/public-sans-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fonts/public-sans-latin-600-normal.woff2') format('woff2');
+}

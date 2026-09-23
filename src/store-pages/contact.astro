@@ -1,0 +1,12 @@
+---
+import StorePage from '../layouts/StorePage.astro';
+import { WORDS } from '../store/words';
+import { SITE_LINKS } from '../store/site';
+---
+
+<StorePage title={WORDS['contact.title']} description={WORDS['contact.description']}>
+  <h1>{WORDS['contact.heading']}</h1>
+  <p>{WORDS['contact.p1']}</p>
+  <p>{WORDS['contact.p2']}</p>
+  <p><a href={SITE_LINKS.issues}>{WORDS['contact.link']}</a></p>
+</StorePage>

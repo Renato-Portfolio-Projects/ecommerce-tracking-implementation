@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import StorePage from '../layouts/StorePage.astro';
+import NotFound from '../components/NotFound.astro';
+import { WORDS } from '../store/words';
+
+// With the store open, the 404 page wears the store's header and footer. With it closed, it is as bare
+// as the placeholder page.
+const open = import.meta.env.PUBLIC_STORE_OPEN === 'true';
+---
+
+{
+  open ? (
+    <StorePage title={WORDS['notFound.title']} description={WORDS['notFound.description']}>
+      <NotFound />
+    </StorePage>
+  ) : (
+    <Base title={`${WORDS['notFound.title']} | ${WORDS['site.name']}`} description={WORDS['notFound.description']}>
+      <main class="page">
+        <NotFound />
+      </main>
+    </Base>
+  )
+}

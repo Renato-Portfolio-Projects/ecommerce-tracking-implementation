@@ -1,0 +1,70 @@
+---
+// A page for people working on the store, not linked from anywhere in it. It shows the colours, the
+// type and the garment drawings together, so a change to any of them can be checked in one place.
+// It is built whether the store is open or closed, and it carries the noindex header like every page.
+import Base from '../layouts/Base.astro';
+import Garment from '../components/Garment.astro';
+import { ART } from '../store/art';
+import { PRODUCTS } from '../engine/catalog';
+import { garmentLabel } from '../components/garments';
+import { WORDS } from '../store/words';
+
+const swatches: [string, string][] = [
+  ['Paper', 'var(--paper)'],
+  ['Paper shade', 'var(--paper-shade)'],
+  ['Ink', 'var(--ink)'],
+  ['Ink, soft', 'var(--ink-soft)'],
+  ['Spot red', 'var(--spot-red)'],
+  ['Spot red, for small text', 'var(--spot-red-text)'],
+  ['Spot blue', 'var(--spot-blue)'],
+];
+---
+
+<Base title={`${WORDS['style.title']} | ${WORDS['site.name']}`} description={WORDS['style.description']}>
+  <main class="page style-guide">
+    <h1>{WORDS['style.heading']}</h1>
+    <p>{WORDS['style.intro']}</p>
+
+    <h2>{WORDS['style.colour']}</h2>
+    <ul class="swatches">
+      {
+        swatches.map(([name, value]) => (
+          <li>
+            <span class="swatch" style={`background: ${value}`}></span>
+            {name}
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2>{WORDS['style.type']}</h2>
+    <p class="sample" style="font-family: var(--font-display); font-size: 2.5rem;">Second Impression</p>
+    <p class="sample" style="font-family: var(--font-body);">The quick brown fox jumps over the lazy dog. 0123456789</p>
+
+    <h2>{WORDS['style.buttons']}</h2>
+    <button class="btn" type="button">{WORDS['product.add']}</button>
+
+    <h2>{WORDS['style.garments']}</h2>
+    <ul class="garments">
+      {
+        PRODUCTS.map((product) => (
+          <li>
+            {product.colours.map((colour) => (
+              <div class="garment-cell">
+                <Garment
+                  kind={ART[product.sku].kind}
+                  colour={colour}
+                  print={ART[product.sku].print}
+                  label={garmentLabel(product.name, colour, ART[product.sku].print)}
+                />
+                <p>
+                  {product.name}, {colour}
+                </p>
+              </div>
+            ))}
+          </li>
+        ))
+      }
+    </ul>
+  </main>
+</Base>

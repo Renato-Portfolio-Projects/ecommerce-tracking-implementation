@@ -1,0 +1,14 @@
+---
+import { WORDS } from '../store/words';
+
+/** The links in the header. Later parts of the store add the Tees and Pants sections. */
+const links = [{ href: '/about', label: WORDS['nav.about'] }];
+---
+
+<header class="header">
+  <a class="wordmark" href="/">{WORDS['site.name']}</a>
+  <nav class="nav" aria-label={WORDS['nav.label']}>
+    {links.map((link) => <a href={link.href}>{link.label}</a>)}
+  </nav>
+  <div class="tools"></div>
+</header>

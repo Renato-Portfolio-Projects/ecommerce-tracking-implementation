@@ -51,3 +51,16 @@ npm run dev
 ```
 
 `npm run verify` type-checks, runs the unit tests, builds the site and checks the built page.
+
+## Speed and accessibility
+
+Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen. The budgets are in `docs/brand.md`. Scores from 2026-09-21:
+
+| Page | Performance | Accessibility | Best Practices | JavaScript |
+|---|---|---|---|---|
+| Home | 100 | 100 | 100 | 0 KB |
+| About | 100 | 100 | 100 | 0 KB |
+| Shipping | 100 | 100 | 100 | 0 KB |
+| Style guide | 100 | 100 | 100 | 0 KB |
+
+Lighthouse runs by hand, not in CI: a real browser and a quiet machine give a fairer score than a CI runner does. Adding it to CI is on the v1.0 checklist.
