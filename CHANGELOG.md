@@ -20,6 +20,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A test that keeps the code's three folders apart: the engine, one store's data, and the demo-only parts. It fails if the store folder imports from the other two, or if the engine imports from the demo folder.
 - The rules page now says where the code lives, and what would need attention before the engine could be reused for another store.
 - A production guide: what in the demo is demo-grade and what a real launch would need, in nine areas, with a source for each statement about a vendor, a law or a standard, and the day the sources were checked. A test keeps its file names, links and source columns honest.
+- Every word a shopper can read, in one file (`src/store/words.ts`), reviewed on its own page (`docs/site-words.md`) before any page used it. Two self-hosted, open-licence fonts (Fraunces and Public Sans), and six flat-vector garment drawings, one per outline, recoloured per product colour rather than redrawn.
+- A build-time switch, `PUBLIC_STORE_OPEN`, that keeps the storefront off in production and on in preview builds. The header, footer, demo bar, and the About, Contact and policy pages, plus a matching 404. A local Lighthouse script and the speed and accessibility budgets it checks against.
+- The home page (hero banner, both collections, brand strip) and all six product pages, generated from one dynamic template, with colour and size pickers, sold-out handling, sale pricing and a schema.org Product script for each. A currency selector that shows a price already computed in every offered currency, so switching currency needs no arithmetic in the browser. The engine module that remembers which list a product was picked from, for the cart to carry forward later.
+- A new "Product content" area in the production guide, on what real product photography a launch would need and why a product's structured data needs it to be eligible for Google's shopping search results at all.
 
 ### Changed
 
@@ -29,6 +33,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The tracking plan says an item's `index` counts from 1 and that the colour-and-size SKU is not the `item_id`. The design spec has a short Cart section.
 - The design spec now says each country has its own reserved fiction phone range for the demo data (555-01xx is North American only), that a card number never leaves the browser, what the checkout's validation covers, and that the server checks an email's domain before a lead is saved.
 - The shop code is reorganised into three folders, with no change in behaviour: `src/engine` (the reusable code), `src/store` (Second Impression's own data) and `src/demo` (what exists only for the demo). The email domain check no longer has the demo's example.com, example.org and example.net built in: the demo now passes them in as the names to let through without a mail check.
+- The colour tokens gained a darker red for small text, since the bright spot red the garments use does not pass contrast at small sizes. `docs/brand.md` is rewritten to describe the fonts, palette and the speed and accessibility budgets actually measured.
+- The design spec's currency section no longer describes the currency choice as a cookie: it is kept in `localStorage`, needs no entry in the cookie declaration, and the country-based starting default waits for v0.2c.
+- The README's status line, and the production guide, updated to say what is now actually built behind the store-open switch.
 
 ## [0.1.0] - 2026-09-19
 
