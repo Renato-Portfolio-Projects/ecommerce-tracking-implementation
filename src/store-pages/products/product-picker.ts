@@ -1,4 +1,5 @@
-import { garmentLabel, garmentStyle, markColours } from '../../components/garments';
+import { garmentLabel } from '../../components/garment-label';
+import { garmentStyle, markColours } from '../../components/garments';
 import { fill } from '../../engine/fill';
 import type { Print } from '../../store/art';
 import type { Colour } from '../../store/products';

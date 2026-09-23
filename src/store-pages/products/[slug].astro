@@ -1,7 +1,8 @@
 ---
 import StorePage from '../../layouts/StorePage.astro';
 import Garment from '../../components/Garment.astro';
-import { FILL, garmentLabel } from '../../components/garments';
+import { garmentLabel } from '../../components/garment-label';
+import { FILL } from '../../components/garments';
 import { fill } from '../../engine/fill';
 import { isSoldOut, PRODUCTS } from '../../engine/catalog';
 import { formatMoney, pricesInAllCurrencies } from '../../engine/money';

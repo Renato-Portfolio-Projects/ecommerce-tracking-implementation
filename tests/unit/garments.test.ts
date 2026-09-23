@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Colour } from '../../src/store/products';
-import { DETAILS, MARKS, SHAPES, garmentLabel, garmentStyle, markColours } from '../../src/components/garments';
+import { garmentLabel } from '../../src/components/garment-label';
+import { COLLAR, DETAILS, MARKS, OFFSET, SHAPES, garmentStyle, garmentSvg, markColours } from '../../src/components/garments';
 
 const COLOURS: Colour[] = ['Paper', 'Ink', 'Red', 'Blue', 'Sand'];
 
@@ -71,5 +72,68 @@ describe('garmentLabel', () => {
     expect(garmentLabel('Misprint Tee', 'Red', 'misprint')).toBe(
       'Misprint Tee in Red, with a two-circle mark printed well off register',
     );
+  });
+});
+
+describe('garmentSvg', () => {
+  it('draws the outline twice, the second ink first and shifted, with the body over it', () => {
+    const svg = garmentSvg('chino', 'Sand', 'none', 'Plain Chino in Sand');
+    expect(svg).toContain(`<path class="second" d="${SHAPES.chino}" transform="translate(${OFFSET.x} ${OFFSET.y})"></path>`);
+    expect(svg).toContain(`<path class="body" d="${SHAPES.chino}"></path>`);
+    expect(svg.indexOf('class="second"')).toBeLessThan(svg.indexOf('class="body"'));
+  });
+
+  it('gives a tee its collar and trousers their pockets and fly, never both', () => {
+    const tee = garmentSvg('tee', 'Paper', 'none', 'Plain Tee in Paper');
+    expect(tee).toContain(`<path class="collar" d="${COLLAR}"></path>`);
+    expect(tee).not.toContain('class="detail"');
+    for (const kind of ['chino', 'relaxed', 'pleated'] as const) {
+      const trousers = garmentSvg(kind, 'Ink', 'none', 'trousers');
+      expect(trousers, kind).toContain(`<path class="detail" d="${DETAILS[kind]}"></path>`);
+      expect(trousers, kind).not.toContain('class="collar"');
+    }
+  });
+
+  it('colours the drawing with the same custom properties the rest of the store uses', () => {
+    for (const colour of COLOURS) {
+      expect(garmentSvg('tee', colour, 'none', 'x'), colour).toContain(`style="${garmentStyle(colour)}"`);
+    }
+  });
+
+  it('adds the two circles of a print in the colours the print is meant to have, and none otherwise', () => {
+    expect(garmentSvg('tee', 'Paper', 'none', 'x')).not.toContain('<circle');
+    for (const print of ['logo', 'misprint'] as const) {
+      for (const colour of COLOURS) {
+        const svg = garmentSvg('tee', colour, print, 'x');
+        const [first, second] = MARKS[print];
+        const inks = markColours(print, colour);
+        expect(svg, `${print} ${colour}`).toContain(
+          `<circle data-mark="first" cx="${first.x}" cy="${first.y}" r="${first.r}" style="fill: ${inks.first}"></circle>`,
+        );
+        expect(svg, `${print} ${colour}`).toContain(
+          `<circle data-mark="second" cx="${second.x}" cy="${second.y}" r="${second.r}" style="fill: ${inks.second}; mix-blend-mode: ${inks.blend}"></circle>`,
+        );
+      }
+    }
+  });
+
+  it('describes a labelled drawing to people who cannot see it, and can be found by the product page', () => {
+    const svg = garmentSvg('tee', 'Ink', 'logo', 'Logo Tee in Ink, with a two-circle mark on the chest');
+    expect(svg.startsWith('<svg class="garment" data-garment viewBox="0 0 200 200" role="img" aria-label="Logo Tee in Ink')).toBe(true);
+    expect(svg).not.toContain('aria-hidden');
+  });
+
+  it('hides a drawing that has no label from people who cannot see it, because its words are beside it', () => {
+    const svg = garmentSvg('tee', 'Ink', 'none');
+    expect(svg.startsWith('<svg class="garment" viewBox="0 0 200 200" aria-hidden="true"')).toBe(true);
+    expect(svg).not.toContain('role="img"');
+    expect(svg).not.toContain('aria-label');
+    expect(svg).not.toContain('data-garment');
+  });
+
+  it('keeps a label from breaking out of its attribute', () => {
+    const svg = garmentSvg('tee', 'Ink', 'none', 'A "quoted" <name> & more');
+    expect(svg).toContain('aria-label="A &quot;quoted&quot; &lt;name&gt; &amp; more"');
+    expect(svg.match(/<svg/g)).toHaveLength(1);
   });
 });
