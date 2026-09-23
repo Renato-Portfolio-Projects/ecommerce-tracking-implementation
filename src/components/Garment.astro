@@ -1,0 +1,36 @@
+---
+import type { GarmentKind, Print } from '../store/art';
+import type { Colour } from '../store/products';
+import { COLLAR, DETAILS, MARKS, OFFSET, SHAPES, garmentStyle, markColours } from './garments';
+
+interface Props {
+  kind: GarmentKind;
+  colour: Colour;
+  print?: Print;
+  /** The description of the drawing, for people who cannot see it. See garmentLabel. */
+  label: string;
+}
+
+const { kind, colour, print = 'none', label } = Astro.props;
+const shape = SHAPES[kind];
+const marks = print === 'none' ? null : { circles: MARKS[print], colours: markColours(print, colour) };
+---
+
+<svg class="garment" viewBox="0 0 200 200" role="img" aria-label={label} style={garmentStyle(colour)}>
+  <path class="second" d={shape} transform={`translate(${OFFSET.x} ${OFFSET.y})`}></path>
+  <path class="body" d={shape}></path>
+  {kind === 'tee' ? <path class="collar" d={COLLAR}></path> : <path class="detail" d={DETAILS[kind]}></path>}
+  {
+    marks && (
+      <>
+        <circle cx={marks.circles[0].x} cy={marks.circles[0].y} r={marks.circles[0].r} style={`fill: ${marks.colours.first}`}></circle>
+        <circle
+          cx={marks.circles[1].x}
+          cy={marks.circles[1].y}
+          r={marks.circles[1].r}
+          style={`fill: ${marks.colours.second}; mix-blend-mode: ${marks.colours.blend}`}
+        ></circle>
+      </>
+    )
+  }
+</svg>

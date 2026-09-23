@@ -5,7 +5,7 @@ import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, requestsToOtherSites
 
 describe('the site built with the store closed', () => {
   it('holds the placeholder page and the 404 page, and nothing else', () => {
-    expect(htmlFiles(CLOSED)).toEqual(['404.html', 'index.html']);
+    expect(htmlFiles(CLOSED)).toEqual(['404.html', 'index.html', 'style-guide/index.html']);
   });
 
   it('has none of the store\'s pages', () => {
@@ -25,6 +25,7 @@ describe('the site built with the store open', () => {
       'policies/returns/index.html',
       'policies/shipping/index.html',
       'policies/terms/index.html',
+      'style-guide/index.html',
     ]);
   });
 

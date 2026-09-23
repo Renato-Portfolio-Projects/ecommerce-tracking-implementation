@@ -77,3 +77,16 @@ Avoid: cutting-edge, innovative, leverage, unlock, seamless, robust, holistic, e
 ## The demo notice
 
 The bar on every storefront page reads: "Portfolio demo store: fictional products, no real payments."
+
+## Speed and accessibility budgets
+
+`npm run lighthouse` runs Lighthouse against the built store on a phone-sized screen and checks these numbers. It is run by hand, not in CI, because Lighthouse needs a real browser and a quiet machine for a fair score, which the roadmap leaves for v1.0 to add to CI. The numbers below were confirmed by running it once the store's pages existed, on 2026-09-21.
+
+| Metric | Budget |
+|---|---|
+| Performance (mobile) | 95 or more |
+| Accessibility (mobile) | 100 |
+| Best Practices (mobile) | 95 or more |
+| JavaScript on a page | 30 KB or less |
+
+Every page also has to reach the Core Web Vitals "good" band: Largest Contentful Paint within 2.5 seconds, Interaction to Next Paint at 200 milliseconds or less, and Cumulative Layout Shift at 0.1 or less ([web.dev: Web Vitals](https://web.dev/articles/vitals), last updated 2024-10-31). Lighthouse's Performance score reflects these on the page it tests, but they are only truly measured from real visits, which this portfolio does not have yet.
