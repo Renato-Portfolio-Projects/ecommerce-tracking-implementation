@@ -1,0 +1,9 @@
+---
+import CartPanel from '../components/CartPanel.astro';
+import StorePage from '../layouts/StorePage.astro';
+import { WORDS } from '../store/words';
+---
+
+<StorePage title={WORDS['cart.title']} description={WORDS['site.description']}>
+  <CartPanel variant="page" />
+</StorePage>

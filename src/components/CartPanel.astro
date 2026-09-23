@@ -1,0 +1,95 @@
+---
+import { fill } from '../engine/fill';
+import { CART_LIFETIME_DAYS } from '../store/policy';
+import { WORDS } from '../store/words';
+
+interface Props {
+  /** The drawer that opens over any page, or the body of the cart page. Both show the same cart. */
+  variant: 'drawer' | 'page';
+}
+
+const { variant } = Astro.props;
+const drawer = variant === 'drawer';
+const Heading = drawer ? 'h2' : 'h1';
+
+// The words the script needs are written into the page, so that it does not have to carry all of them.
+// They are the sentences with blanks that cart-ui.ts fills in for each line and for the summary; the
+// words that never change (the title, the buttons, the empty message) are simply written below.
+const words = {
+  limitReached: WORDS['cart.limitReached'],
+  droppedOne: WORDS['cart.droppedOne'],
+  droppedMany: WORDS['cart.droppedMany'],
+  freeAway: WORDS['cart.freeAway'],
+  freeReached: WORDS['cart.freeReached'],
+  removeLabel: WORDS['cart.removeLabel'],
+  decrease: WORDS['cart.decrease'],
+  increase: WORDS['cart.increase'],
+  added: WORDS['product.added'],
+  was: WORDS['product.was'],
+};
+---
+
+<section class={`cart-panel cart-panel--${variant}`} data-cart-panel data-words={JSON.stringify(words)}>
+  <div class="cart-head">
+    <Heading class="cart-title" id={drawer ? 'cart-drawer-title' : undefined} tabindex="-1">{WORDS['cart.title']}</Heading>
+    {
+      drawer && (
+        <button type="button" class="cart-close" data-cart-close aria-label={WORDS['cart.close']}>
+          <span aria-hidden="true">&times;</span>
+        </button>
+      )
+    }
+  </div>
+
+  {/* Two message areas, both empty until the script has something to say. The first is seen, and holds
+       only a warning (a quantity stopped at the limit, or saved items that are no longer available).
+       The second is for screen readers only and says what was just added; nothing is shown for that,
+       since the drawer opening with the item in it is the confirmation. */}
+  <p class="cart-notice" data-cart-notice role="status"></p>
+  <p class="visually-hidden" data-cart-announce role="status"></p>
+
+  <div class="cart-empty" data-cart-empty hidden>
+    <p>{WORDS['cart.empty']}</p>
+    {
+      drawer ? (
+        <button type="button" class="btn" data-cart-close>{WORDS['cart.keepShopping']}</button>
+      ) : (
+        <a class="btn" href="/">{WORDS['cart.keepShopping']}</a>
+      )
+    }
+  </div>
+
+  <ul class="cart-lines" data-cart-lines hidden></ul>
+
+  {/* One line of the cart, written once. The browser keeps a template out of sight; cart-ui.ts copies
+       it for each line and fills in the blanks. The labels that need the product's name (on the plus,
+       minus and Remove buttons) are set there too. */}
+  <template data-cart-line>
+    <li class="cart-line">
+      <a class="cart-thumb" data-cart-thumb tabindex="-1" aria-hidden="true"></a>
+      <div class="cart-line-body">
+        <a class="cart-line-name" data-cart-name></a>
+        <p class="cart-line-variant" data-cart-variant></p>
+        <p class="cart-line-price"><span class="was" data-cart-was hidden></span><span data-cart-unit></span></p>
+      </div>
+      <div class="cart-line-controls">
+        <div class="cart-stepper" role="group" aria-label={WORDS['cart.quantity']}>
+          <button type="button" data-cart-decrease><span aria-hidden="true">&minus;</span></button>
+          <span class="cart-qty" data-cart-qty></span>
+          <button type="button" data-cart-increase><span aria-hidden="true">+</span></button>
+        </div>
+        <button type="button" class="cart-remove" data-cart-remove>{WORDS['cart.remove']}</button>
+      </div>
+      <p class="cart-line-total" data-cart-total></p>
+    </li>
+  </template>
+
+  <div class="cart-summary" data-cart-summary hidden>
+    <p class="cart-free" data-cart-free></p>
+    <div class="cart-bar" aria-hidden="true"><div class="cart-bar-fill" data-cart-fill></div></div>
+    <p class="cart-subtotal"><span>{WORDS['cart.subtotal']}</span><span data-cart-subtotal></span></p>
+    <p class="cart-later">{WORDS['cart.laterNote']}</p>
+    <button type="button" class="btn" data-cart-checkout>{WORDS['cart.checkout']}</button>
+    <p class="cart-saved">{fill(WORDS['cart.saved'], { days: CART_LIFETIME_DAYS })}</p>
+  </div>
+</section>
