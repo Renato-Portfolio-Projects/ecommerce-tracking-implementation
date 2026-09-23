@@ -123,7 +123,7 @@ Because reaching 10K disables the container until it is upgraded, the guardrails
 - Meta: no tag fires until marketing consent.
 - Server side: the consent state travels with every event. The CAPI tag requires marketing consent, and hashed `user_data` is only attached when it is granted. Because nothing fires before consent, a visitor who says no costs no server quota.
 - Lead and order records are saved regardless of tracking consent (the visitor asked for them). Marketing email is a separate, unticked opt-in checkbox (CASL). `/proof` shows both consents as "consent receipts".
-- The default-currency cookie is a functional preference cookie and is listed in the cookie declaration.
+- The currency a visitor chooses is kept in `localStorage`, not a cookie, so it needs no entry in the cookie declaration. The country-based starting default waits for v0.2c, since there is no server yet to read a visitor's country; until then every visitor starts at CAD.
 - Privacy policy page lists vendors, what is collected and why, 7-day retention, how to withdraw, and a plain "this is a demo" statement. Drafted for Renato's review. It is not legal advice.
 - Data minimisation: every form has a "Use demo data" button (section 6) that fills a fictional persona on an `@example.com` address. Records auto-delete after 7 days. Other visitors' emails are never shown (the global feed is masked). No card numbers are ever captured.
 - CI asserts that no request at all reaches a Google or Meta endpoint before consent, that Reject keeps it that way, and that the footer link flips the behaviour both ways.
