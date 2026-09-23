@@ -193,6 +193,18 @@ a {
   text-transform: uppercase;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .page {
   max-width: 42rem;
   margin: 0 auto;
@@ -305,6 +317,154 @@ a {
 
 @media (max-width: 720px) {
   .hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- A product page ---- */
+
+.back-link {
+  display: inline-block;
+  margin-bottom: var(--space-4);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.product {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.product .garment {
+  width: 100%;
+  background: var(--paper-shade);
+  border-radius: 3px;
+  padding: 8%;
+}
+
+.product-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.product-price .was {
+  color: var(--ink-soft);
+  font-size: 1rem;
+  font-weight: 400;
+  margin-right: var(--space-2);
+}
+
+.product-price .sale {
+  color: var(--spot-red-text);
+}
+
+.picker {
+  border: 0;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+}
+
+.picker legend {
+  margin-bottom: var(--space-2);
+}
+
+.picker .swatch-option,
+.picker .size-option {
+  display: inline-flex;
+  margin: 0 var(--space-2) var(--space-2) 0;
+}
+
+.swatch-option input,
+.size-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.swatch-option .swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklab, var(--ink) 25%, transparent);
+  box-shadow: 0 0 0 2px transparent;
+  cursor: pointer;
+}
+
+.swatch-option input:checked + .swatch {
+  border-color: var(--paper);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.swatch-option input:focus-visible + .swatch {
+  outline: 3px solid var(--spot-blue);
+  outline-offset: 2px;
+}
+
+.size-option span {
+  display: inline-block;
+  min-width: 2.5rem;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.size-option input:checked + span {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.size-option input:focus-visible + span {
+  outline: 3px solid var(--spot-blue);
+  outline-offset: 2px;
+}
+
+.size-option:has(input:disabled) span {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+  cursor: not-allowed;
+  border-color: color-mix(in oklab, var(--ink) 15%, transparent);
+}
+
+.size-status {
+  min-height: 1.5em;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.quantity-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.quantity-picker input {
+  width: 4rem;
+  font: inherit;
+  padding: 0.4rem;
+  border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+  border-radius: 2px;
+}
+
+.free-shipping {
+  margin-top: var(--space-2);
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.detail-list {
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 720px) {
+  .product {
     grid-template-columns: 1fr;
   }
 }
@@ -461,4 +621,10 @@ a {
   padding: 0.75rem 1.4rem;
   text-decoration: none;
   cursor: pointer;
+}
+
+.btn:disabled {
+  background: color-mix(in oklab, var(--ink) 25%, transparent);
+  color: var(--ink-soft);
+  cursor: not-allowed;
 }

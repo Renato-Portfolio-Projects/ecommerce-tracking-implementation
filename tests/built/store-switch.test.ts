@@ -9,7 +9,20 @@ describe('the site built with the store closed', () => {
   });
 
   it('has none of the store\'s pages', () => {
-    for (const path of ['about', 'contact', 'policies/shipping', 'policies/returns', 'policies/terms']) {
+    const paths = [
+      'about',
+      'contact',
+      'policies/shipping',
+      'policies/returns',
+      'policies/terms',
+      'products/plain-tee',
+      'products/logo-tee',
+      'products/misprint-tee',
+      'products/plain-chino',
+      'products/relaxed-chino',
+      'products/pleated-chino',
+    ];
+    for (const path of paths) {
       expect(existsSync(new URL(`${path}/index.html`, CLOSED)), path).toBe(false);
     }
   });
@@ -25,6 +38,12 @@ describe('the site built with the store open', () => {
       'policies/returns/index.html',
       'policies/shipping/index.html',
       'policies/terms/index.html',
+      'products/logo-tee/index.html',
+      'products/misprint-tee/index.html',
+      'products/plain-chino/index.html',
+      'products/plain-tee/index.html',
+      'products/pleated-chino/index.html',
+      'products/relaxed-chino/index.html',
       'style-guide/index.html',
     ]);
   });

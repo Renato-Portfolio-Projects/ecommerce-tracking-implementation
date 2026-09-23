@@ -1,0 +1,133 @@
+---
+import StorePage from '../../layouts/StorePage.astro';
+import Garment from '../../components/Garment.astro';
+import { FILL, garmentLabel } from '../../components/garments';
+import { fill } from '../../engine/fill';
+import { isSoldOut, PRODUCTS } from '../../engine/catalog';
+import { formatMoney, pricesInAllCurrencies } from '../../engine/money';
+import { ART } from '../../store/art';
+import { MAX_QUANTITY_PER_LINE } from '../../store/policy';
+import { FREE_SHIPPING_FROM_CAD } from '../../store/shipping-methods';
+import { WORDS, type WordKey } from '../../store/words';
+
+export function getStaticPaths() {
+  return PRODUCTS.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+const { product } = Astro.props;
+const art = ART[product.sku];
+const prices = pricesInAllCurrencies(product.priceCad);
+const comparePrices = product.compareAtCad === undefined ? undefined : pricesInAllCurrencies(product.compareAtCad);
+const blurb = WORDS[`product.${product.sku}.blurb` as WordKey];
+const detail1 = WORDS[`product.${product.sku}.detail1` as WordKey];
+const detail2 = WORDS[`product.${product.sku}.detail2` as WordKey];
+const detail3 = WORDS[`product.${product.sku}.detail3` as WordKey];
+const backHref = `/#${product.collection}`;
+const backLabel = fill(WORDS['product.back'], { collection: product.collection === 'tees' ? WORDS['nav.tees'] : WORDS['nav.pants'] });
+
+const jsonLd = {
+  '@context': 'https://schema.org/',
+  '@type': 'Product',
+  name: product.name,
+  description: blurb,
+  sku: product.sku,
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'CAD',
+    price: (product.priceCad / 100).toFixed(2),
+    availability: product.colours
+      .flatMap((colour) => product.sizes.map((size) => ({ colour, size })))
+      .some((variant) => !isSoldOut(product, variant.colour, variant.size))
+      ? 'https://schema.org/InStock'
+      : 'https://schema.org/OutOfStock',
+  },
+};
+---
+
+<StorePage title={product.name} description={blurb}>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <a class="back-link" href={backHref}>{backLabel}</a>
+
+  <div
+    class="product"
+    data-product
+    data-product-name={product.name}
+    data-print={art.print}
+    data-choose-size={WORDS['product.chooseSize']}
+    data-size-sold-out={WORDS['product.sizeSoldOut']}
+  >
+    <Garment kind={art.kind} colour={product.colours[0]} print={art.print} label={garmentLabel(product.name, product.colours[0], art.print)} />
+
+    <div class="product-info">
+      <h1>{product.name}</h1>
+      <p class="product-price">
+        {comparePrices && (
+          <span class="was" data-prices={JSON.stringify(comparePrices)}>
+            {fill(WORDS['product.was'], { price: comparePrices.CAD })}
+          </span>
+        )}
+        <span class={comparePrices ? 'sale' : undefined} data-prices={JSON.stringify(prices)}>
+          {prices.CAD}
+        </span>
+      </p>
+      <p>{blurb}</p>
+
+      <fieldset class="picker">
+        <legend class="label">{WORDS['product.colour']}</legend>
+        {product.colours.map((colour, index) => (
+          <label class="swatch-option">
+            <input type="radio" name="colour" value={colour} checked={index === 0} />
+            <span class="swatch" style={`background: ${FILL[colour]}`}></span>
+            <span class="visually-hidden">{colour}</span>
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset class="picker">
+        <legend class="label">{WORDS['product.size']}</legend>
+        {product.sizes.map((size) => (
+          <label class="size-option">
+            <input
+              type="radio"
+              name="size"
+              value={size}
+              disabled={isSoldOut(product, product.colours[0], size)}
+              data-sold-out-colours={JSON.stringify(product.colours.filter((colour) => isSoldOut(product, colour, size)))}
+            />
+            <span>{size}</span>
+          </label>
+        ))}
+      </fieldset>
+      <p class="size-status" data-size-status aria-live="polite">{WORDS['product.chooseSize']}</p>
+
+      <label class="quantity-picker">
+        <span class="label">{WORDS['product.quantity']}</span>
+        <input type="number" min="1" max={MAX_QUANTITY_PER_LINE} value="1" />
+      </label>
+
+      <button type="button" class="btn" data-add-to-cart disabled>{WORDS['product.add']}</button>
+      <p class="free-shipping">{fill(WORDS['product.freeShipping'], { freeFrom: formatMoney(FREE_SHIPPING_FROM_CAD, 'CAD') })}</p>
+
+      <h2>{WORDS['product.details']}</h2>
+      <ul class="detail-list">
+        <li>{detail1}</li>
+        <li>{detail2}</li>
+        <li>{detail3}</li>
+      </ul>
+    </div>
+  </div>
+</StorePage>
+
+<script>
+  import { initProductPicker } from './product-picker';
+  import type { Print } from '../../store/art';
+
+  const root = document.querySelector<HTMLElement>('[data-product]');
+  if (root) {
+    initProductPicker(root, root.dataset.productName ?? '', (root.dataset.print ?? 'none') as Print, {
+      chooseSize: root.dataset.chooseSize ?? '',
+      sizeSoldOut: root.dataset.sizeSoldOut ?? '',
+    });
+  }
+</script>

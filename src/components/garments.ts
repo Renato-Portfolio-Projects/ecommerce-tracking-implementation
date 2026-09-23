@@ -60,7 +60,8 @@ export const MARKS: Record<Exclude<Print, 'none'>, [Circle, Circle]> = {
   ],
 };
 
-const FILL: Record<Colour, string> = {
+/** The one CSS colour each product colour paints with, used for both the garment drawing and a swatch. */
+export const FILL: Record<Colour, string> = {
   Paper: 'var(--paper)',
   Ink: 'var(--ink)',
   Red: 'var(--spot-red)',
