@@ -15,3 +15,10 @@ export const CART_LIFETIME_DAYS = 7;
 
 /** What a product SKU looks like, for example SI-TEE-001. The catalog check uses it. */
 export const SKU_PATTERN = /^SI-[A-Z]{3}-\d{3}$/;
+
+/**
+ * How long the lead popup stays quiet after it has been shown, counted from the last time it was
+ * shown, whether the visitor closed it or took the code. It matches CART_LIFETIME_DAYS on purpose:
+ * this demo keeps a lead for seven days, so the popup forgets a visitor on the same clock.
+ */
+export const LEAD_POPUP_INTERVAL_DAYS = 7;

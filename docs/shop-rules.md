@@ -162,6 +162,16 @@ The cart is plain code that holds what and how many, and where in the store each
 6. **The cart is saved in the browser for 7 days from its last change.** What is saved is each line's SKU, colour, size, quantity and list, and the time. There are no prices and no personal data. Why: an active cart should not expire mid-shop, and a stored price could go stale.
 7. **A saved cart is checked again when it is opened.** A line that is no longer valid, such as a product that is gone, a sold-out variant or a quantity out of range, is dropped and the shopper can be told. A cart that has expired, or that makes no sense, becomes an empty cart.
 
+## The lead popup
+
+The popup asks a visitor for a first name and an email in exchange for the welcome code. These rules decide when it may open by itself and when the small reminder that offers the code again is shown. What the visitor types is checked under "Checkout forms".
+
+1. **It opens by itself at most once every 7 days.** The 7 days are counted from the last time it was shown, whether the visitor closed it or took the code. Why: a visitor who has seen the offer should not have it pushed at them again on the next page, and 7 days is how long this demo keeps a lead.
+2. **Showing it always writes a note, however it was opened.** If the visitor opens it by hand, that counts as showing it. Why: the popup should not open by itself just after it was asked for.
+3. **The reminder is shown only when the popup has been shown and the code was not taken.** Why: someone who took the code does not need reminding, and someone who has not seen the popup is not reminded of it.
+4. **All that is kept is when it was last shown and how it ended (closed, or the code was taken).** There is no name and no email in it, and no permanent flag saying the code was taken. Why: nothing personal is needed to keep count, and a permanent flag would make the popup impossible to show again.
+5. **A note that is missing, damaged or dated in the future counts as never shown.** Why: a clock that was put back must not silence the popup for years.
+
 ## Limits
 
 | Rule | Limit |
@@ -169,6 +179,7 @@ The cart is plain code that holds what and how many, and where in the store each
 | Most units of one product, colour and size on one cart line | 10 |
 | Most different lines in one cart | 20 |
 | How long a saved cart is kept, from its last change | 7 days |
+| How long the lead popup stays quiet after it is shown | 7 days |
 
 The limit of 20 lines is a safety guard, not a business rule, so it can be raised freely.
 
@@ -278,7 +289,7 @@ The code is kept in three folders, so that the reusable part can be told apart f
 
 | Folder | What it holds | Files |
 |---|---|---|
-| `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart-view.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `list-handoff.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
+| `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart-view.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `lead-popup.ts`, `list-handoff.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
 | `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes, cart limits, which drawing each product uses, the words a shopper reads and the places its pages link to outside the site | `art.ts`, `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts`, `site.ts`, `words.ts` |
 | `src/demo` | What exists only for the demo: the test cards, the eight demo people and the demo email domains. A real store deletes this folder | `email-domains.ts`, `personas.ts`, `test-cards.ts` |
 
@@ -300,6 +311,7 @@ Every number and list above is defined in one place in the code. To change one, 
 | Most units of one item on a line | A sensible cap for a demo store | `MAX_QUANTITY_PER_LINE` in `src/store/policy.ts` |
 | Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/store/policy.ts` |
 | How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/store/policy.ts` |
+| How long the lead popup stays quiet after it is shown | Counted from the last time it was shown, however it ended, and equal to the 7 days a lead is kept | `LEAD_POPUP_INTERVAL_DAYS` in `src/store/policy.ts` |
 | Exchange rates | Fixed demo rates, not live ones | `CURRENCIES` in `src/store/currencies.ts` |
 | The starting currency by country | CAD, USD, GBP and EUR by country, and USD for everywhere else | `defaultCurrencyFor` in `src/store/currencies.ts` |
 | The euro-area countries | The 21 members of the euro area | `EURO_AREA_COUNTRIES` in `src/store/currencies.ts` |
