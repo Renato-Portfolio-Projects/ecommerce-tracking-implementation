@@ -101,6 +101,7 @@ export const WORDS = {
   'cart.subtotal': 'Subtotal',
   'cart.laterNote': 'Shipping and tax are added at checkout.',
   'cart.checkout': 'Checkout',
+  'cart.viewCart': 'View cart',
   'cart.freeAway': 'You are {amount} away from free standard shipping.',
   'cart.freeReached': 'You have free standard shipping.',
   'cart.limitReached': 'You can have up to {max} of one item, so we stopped at {max}.',

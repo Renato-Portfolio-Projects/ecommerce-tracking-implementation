@@ -830,6 +830,14 @@ a {
   text-align: center;
 }
 
+/* The drawer's link to the cart page: quieter than Checkout, and tall enough to be an easy target. */
+.cart-view-link {
+  justify-self: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .cart-panel--page .cart-line {
   grid-template-columns: 6rem 1fr auto;
 }

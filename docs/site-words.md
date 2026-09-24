@@ -136,6 +136,7 @@ Built in the third part of this work. The drawer and the cart page share these w
 | `cart.subtotal` | Subtotal | The total of the items, before shipping and tax |
 | `cart.laterNote` | Shipping and tax are added at checkout. | A line under the subtotal |
 | `cart.checkout` | Checkout | The button under the subtotal. The checkout page arrives in a later part of the project |
+| `cart.viewCart` | View cart | A link under the Checkout button on the cart drawer, to the cart page. The cart page does not have it, since it is the cart page |
 | `cart.freeAway` | You are {amount} away from free standard shipping. | The progress bar message while the items come to less than the threshold |
 | `cart.freeReached` | You have free standard shipping. | The progress bar message once the items reach the threshold |
 | `cart.limitReached` | You can have up to {max} of one item, so we stopped at {max}. | Shown when a shopper asks for more than the limit of one item |

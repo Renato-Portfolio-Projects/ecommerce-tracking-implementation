@@ -114,6 +114,19 @@ describe('the cart drawer', () => {
     expect(html).toContain(`<button type="button" class="cart-close" data-cart-close aria-label="${WORDS['cart.close']}">`);
     expect(html).toContain(`<button type="button" class="btn" data-cart-close>${WORDS['cart.keepShopping']}</button>`);
   });
+
+  it('links to the cart page, in the store\'s words, under the Checkout button, and the cart page does not link to itself', () => {
+    for (const file of pages) {
+      const html = readPage(OPEN, file);
+      const expected = file === 'cart/index.html' ? 0 : 1;
+      expect(html.match(/class="cart-view-link"/g)?.length ?? 0, file).toBe(expected);
+    }
+    const html = decodeEntities(readPage(OPEN, 'index.html'));
+    expect(html).toContain(`<a class="cart-view-link" href="/cart">${WORDS['cart.viewCart']}</a>`);
+    const order = ['data-cart-checkout', 'class="cart-view-link"', 'class="cart-saved"'].map((marker) => html.indexOf(marker));
+    expect(order.every((position) => position > -1), 'a marker is missing').toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
 });
 
 describe('the cart link in the header', () => {

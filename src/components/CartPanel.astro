@@ -90,6 +90,9 @@ const words = {
     <p class="cart-subtotal"><span>{WORDS['cart.subtotal']}</span><span data-cart-subtotal></span></p>
     <p class="cart-later">{WORDS['cart.laterNote']}</p>
     <button type="button" class="btn" data-cart-checkout>{WORDS['cart.checkout']}</button>
+    {/* Only the drawer has this. It is the way from the drawer to the cart page, which nothing else on the
+         site links to (the header's cart link opens the drawer). It is a plain link, so it needs no script. */}
+    {drawer && <a class="cart-view-link" href="/cart">{WORDS['cart.viewCart']}</a>}
     <p class="cart-saved">{fill(WORDS['cart.saved'], { days: CART_LIFETIME_DAYS })}</p>
   </div>
 </section>
