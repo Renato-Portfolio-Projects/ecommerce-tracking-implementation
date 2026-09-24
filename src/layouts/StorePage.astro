@@ -4,6 +4,7 @@ import Base from './Base.astro';
 import CartPanel from '../components/CartPanel.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import LeadPopup from '../components/LeadPopup.astro';
 
 interface Props {
   /** The page's own title. The store's name is added after it. */
@@ -13,9 +14,11 @@ interface Props {
   wide?: boolean;
   /** False for the cart page, which already shows the cart and needs no drawer over it. */
   cartDrawer?: boolean;
+  /** True only for the home page, where the lead popup opens by itself. On every other page it opens only when asked. */
+  leadPopupAuto?: boolean;
 }
 
-const { title, description, wide = false, cartDrawer = true } = Astro.props;
+const { title, description, wide = false, cartDrawer = true, leadPopupAuto = false } = Astro.props;
 ---
 
 <Base title={`${title} | ${WORDS['site.name']}`} description={description} store>
@@ -35,6 +38,8 @@ const { title, description, wide = false, cartDrawer = true } = Astro.props;
       </dialog>
     )
   }
+  {/* The lead popup and its corner tab, on every store page (see LeadPopup.astro). */}
+  <LeadPopup auto={leadPopupAuto} />
 </Base>
 
 <script>

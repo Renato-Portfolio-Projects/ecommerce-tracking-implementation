@@ -172,7 +172,7 @@ Built in the second part of this work. Every price is stored in Canadian dollars
 
 ## Lead popup
 
-Built in the fourth part of this work. It appears after 5 seconds or 40% of the page, once every 7 days. The messages about a wrong name or email are the ones already listed in `docs/shop-rules.md`.
+Built in the fourth part of this work. On the home page it opens by itself after 5 seconds or 40% of the page, at most once every 7 days, and a visitor can open the same form at any time from the footer link or the corner tab. The messages about a wrong name or email are the ones already listed in `docs/shop-rules.md`.
 
 | Key | Wording | Where it appears |
 |---|---|---|
@@ -189,6 +189,7 @@ Built in the fourth part of this work. It appears after 5 seconds or 40% of the 
 | `popup.success` | Your code is {code}. Use it at checkout for {percent}% off. | Shown after the form is accepted |
 | `popup.close` | Close | Read out for the close button |
 | `popup.noThanks` | No thanks | A text button under the form that closes the popup |
+| `popup.reopen` | Get {percent}% off | The link in the footer and the small tab in the corner of the page, which open the same form by hand. It shows the offer, never the code |
 
 ## About
 

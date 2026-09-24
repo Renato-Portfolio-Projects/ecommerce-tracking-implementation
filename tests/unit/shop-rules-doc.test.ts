@@ -98,6 +98,7 @@ describe('docs/shop-rules.md', () => {
         coupon.code,
         `${coupon.percentOff}% off each item`,
         coupon.expired ? 'Expired' : 'Valid',
+        coupon.welcome === true ? 'Yes' : '-',
       ]),
     );
   });

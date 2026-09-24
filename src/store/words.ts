@@ -139,6 +139,7 @@ export const WORDS = {
   'popup.success': 'Your code is {code}. Use it at checkout for {percent}% off.',
   'popup.close': 'Close',
   'popup.noThanks': 'No thanks',
+  'popup.reopen': 'Get {percent}% off',
 
   // About
   'about.title': 'About',

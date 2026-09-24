@@ -112,7 +112,7 @@ describe('the cart drawer', () => {
     for (const file of pages) {
       const html = readPage(OPEN, file);
       const expected = file === 'cart/index.html' ? 0 : 1;
-      expect(html.match(/<dialog\b/g)?.length ?? 0, file).toBe(expected);
+      expect(html.match(/<dialog class="cart-drawer"/g)?.length ?? 0, file).toBe(expected);
     }
   });
 

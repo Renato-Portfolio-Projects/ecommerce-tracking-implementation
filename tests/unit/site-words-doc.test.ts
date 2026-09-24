@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { WORDS } from '../../src/store/words';
-import { COUPONS } from '../../src/store/coupon-codes';
+import { welcomeCoupon } from '../../src/engine/coupons';
 import { COUNTRIES } from '../../src/store/destinations';
 import { CART_LIFETIME_DAYS, MAX_CART_LINES, MAX_QUANTITY_PER_LINE } from '../../src/store/policy';
 import { FREE_SHIPPING_FROM_CAD, SHIPPING_METHODS } from '../../src/store/shipping-methods';
@@ -52,7 +52,7 @@ describe('docs/site-words.md', () => {
   it('shows, in the blanks table, the values the code holds now', () => {
     const standard = SHIPPING_METHODS.find((method) => method.id === 'standard')!;
     const express = SHIPPING_METHODS.find((method) => method.id === 'express')!;
-    const welcome = COUPONS.find((coupon) => !coupon.expired)!;
+    const welcome = welcomeCoupon()!;
     const shown = Object.fromEntries(
       tableUnderHeading(doc, '## Blanks filled from the code').map(([blank, value]) => [unquote(blank), value]),
     );

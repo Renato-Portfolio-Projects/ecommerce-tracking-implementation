@@ -27,6 +27,14 @@ describe('the site built with the store closed', () => {
       expect(existsSync(new URL(`${path}/index.html`, CLOSED)), path).toBe(false);
     }
   });
+
+  it('has no lead popup, no link to open it and no tab for it on any page', () => {
+    for (const file of htmlFiles(CLOSED)) {
+      const html = readPage(CLOSED, file);
+      expect(html, file).not.toContain('data-lead-popup');
+      expect(html, file).not.toContain('data-lead-open');
+    }
+  });
 });
 
 describe('the site built with the store open', () => {

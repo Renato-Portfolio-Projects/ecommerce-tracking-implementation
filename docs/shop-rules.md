@@ -143,12 +143,14 @@ Canada is taxed by province, in the next table. The United States is 0% on purpo
 
 ## Coupons
 
-| Code | Discount | Status |
-|---|---|---|
-| WELCOME10 | 10% off each item | Valid |
-| SPRING20 | 20% off each item | Expired |
+| Code | Discount | Status | Offered by the lead popup |
+|---|---|---|---|
+| WELCOME10 | 10% off each item | Valid | Yes |
+| SPRING20 | 20% off each item | Expired | - |
 
 `SPRING20` is recognised on purpose, so the store can show an "expired" message and tracking can record that outcome. The checkout shows the result of every code in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised.
+
+The **welcome code** is the one the lead popup offers, and it is the code marked as such in the data. Any number of other codes can be live at the same time: a shopper who was given one somewhere else, such as an email or an ad, types it at checkout, and it works like any other. The popup only ever offers the welcome code. The store must have exactly one live welcome code, and a test fails otherwise, so the popup can never pick between two by accident. The percentage in the popup's words, on its footer link and on its tab follows that code, so a new offer is changed in one place: mark the old code expired, and add the new one marked as the welcome code.
 
 ## The cart
 
