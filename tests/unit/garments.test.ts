@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Colour } from '../../src/store/products';
-import { garmentLabel } from '../../src/components/garment-label';
+import { garmentLabel, garmentLabelTemplate } from '../../src/components/garment-label';
 import { COLLAR, DETAILS, MARKS, OFFSET, SHAPES, garmentStyle, garmentSvg, markColours } from '../../src/components/garments';
 
 const COLOURS: Colour[] = ['Paper', 'Ink', 'Red', 'Blue', 'Sand'];
@@ -72,6 +72,16 @@ describe('garmentLabel', () => {
     expect(garmentLabel('Misprint Tee', 'Red', 'misprint')).toBe(
       'Misprint Tee in Red, with a two-circle mark printed well off register',
     );
+  });
+});
+
+describe('garmentLabelTemplate', () => {
+  it('is the sentence garmentLabel fills in, with blanks left for the product and the colour', () => {
+    expect(garmentLabelTemplate('none')).toContain('{product}');
+    expect(garmentLabelTemplate('none')).toContain('{colour}');
+    for (const print of ['none', 'logo', 'misprint'] as const) {
+      expect(garmentLabel('Example Tee', 'Ink', print), print).toBe(garmentLabelTemplate(print).replace('{product}', 'Example Tee').replace('{colour}', 'Ink'));
+    }
   });
 });
 

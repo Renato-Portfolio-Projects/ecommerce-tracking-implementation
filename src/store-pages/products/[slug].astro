@@ -1,7 +1,7 @@
 ---
 import StorePage from '../../layouts/StorePage.astro';
 import Garment from '../../components/Garment.astro';
-import { garmentLabel } from '../../components/garment-label';
+import { garmentLabel, garmentLabelTemplate } from '../../components/garment-label';
 import { FILL } from '../../components/garments';
 import { fill } from '../../engine/fill';
 import { isSoldOut, PRODUCTS } from '../../engine/catalog';
@@ -50,11 +50,16 @@ const jsonLd = {
 
   <a class="back-link" href={backHref}>{backLabel}</a>
 
+  {/* What the page's script needs to know, written into the page as data: which product this is
+       (`data-sku`, for the cart) and the sentences it fills in, so that the script does not have to
+       carry the words file. `data-label` describes the drawing, with blanks for the product and the colour. */}
   <div
     class="product"
     data-product
+    data-sku={product.sku}
     data-product-name={product.name}
     data-print={art.print}
+    data-label={garmentLabelTemplate(art.print)}
     data-choose-size={WORDS['product.chooseSize']}
     data-size-sold-out={WORDS['product.sizeSoldOut']}
   >
@@ -104,7 +109,7 @@ const jsonLd = {
 
       <label class="quantity-picker">
         <span class="label">{WORDS['product.quantity']}</span>
-        <input type="number" min="1" max={MAX_QUANTITY_PER_LINE} value="1" />
+        <input type="number" min="1" max={MAX_QUANTITY_PER_LINE} value="1" data-quantity />
       </label>
 
       <button type="button" class="btn" data-add-to-cart disabled>{WORDS['product.add']}</button>
@@ -127,6 +132,7 @@ const jsonLd = {
   const root = document.querySelector<HTMLElement>('[data-product]');
   if (root) {
     initProductPicker(root, root.dataset.productName ?? '', (root.dataset.print ?? 'none') as Print, {
+      label: root.dataset.label ?? '',
       chooseSize: root.dataset.chooseSize ?? '',
       sizeSoldOut: root.dataset.sizeSoldOut ?? '',
     });
