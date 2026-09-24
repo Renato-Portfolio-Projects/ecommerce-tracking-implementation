@@ -24,6 +24,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A build-time switch, `PUBLIC_STORE_OPEN`, that keeps the storefront off in production and on in preview builds. The header, footer, demo bar, and the About, Contact and policy pages, plus a matching 404. A local Lighthouse script and the speed and accessibility budgets it checks against.
 - The home page (hero banner, both collections, brand strip) and all six product pages, generated from one dynamic template, with colour and size pickers, sold-out handling, sale pricing and a schema.org Product script for each. A currency selector that shows a price already computed in every offered currency, so switching currency needs no arithmetic in the browser. The engine module that remembers which list a product was picked from, for the cart to carry forward later.
 - A new "Product content" area in the production guide, on what real product photography a launch would need and why a product's structured data needs it to be eligible for Google's shopping search results at all.
+- The cart in the store: a cart page and a drawer that opens over any store page, both drawn by one panel. Add to cart on a product page puts the chosen colour, size and quantity in the cart, with the list the product was picked from, and opens the drawer. Each line has plus, minus and Remove buttons and a small drawing of the garment. The cart shows a subtotal and a free-shipping bar that is exact, not rounded, and the cart link in the header shows how many units it holds. The cart is kept in the browser for seven days, checked again when it is reopened, and kept in step across tabs and currency changes. Its prices are worked out in the browser, which makes it the one exception to prices being worked out when the site is built. There is no checkout yet, so the Checkout button does nothing, and nothing is sent to any tracker.
+- Built-page tests for the cart page, the drawer and the header link, and a check that every product page carries its own SKU and a marked quantity field.
+- Two rows in the production guide's "Orders and data" area: where a real store keeps its cart, and live stock in place of sold-out sizes fixed when the site is built.
 
 ### Changed
 
@@ -36,6 +39,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The colour tokens gained a darker red for small text, since the bright spot red the garments use does not pass contrast at small sizes. `docs/brand.md` is rewritten to describe the fonts, palette and the speed and accessibility budgets actually measured.
 - The design spec's currency section no longer describes the currency choice as a cookie: it is kept in `localStorage`, needs no entry in the cookie declaration, and the country-based starting default waits for v0.2c.
 - The README's status line, and the production guide, updated to say what is now actually built behind the store-open switch.
+- The Lighthouse script also tests the cart page and a product page, and the README's Lighthouse table is replaced with measured figures for six pages. Its "0 KB" JavaScript column, which counts script files only and had been run on four pages that were neither the cart nor a product page, is now 17 KB on a store page and 19 KB on a product page, against a budget of 30.
+- The product page's script no longer carries the words file: the page hands it the one sentence it needs. The description of a garment drawing moved into its own file, `garment-label.ts`, so that a script which draws a garment does not pull the words in.
+- The design spec's Cart section now describes the cart's screens, the production guide's rows on prices and currency say that the cart is priced in the browser, and the README's status line says that the cart works.
 
 ## [0.1.0] - 2026-09-19
 
