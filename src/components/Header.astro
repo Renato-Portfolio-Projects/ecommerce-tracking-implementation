@@ -16,6 +16,11 @@ const cartWords = {
   one: WORDS['header.cartLabelOne'],
   many: WORDS['header.cartLabelMany'],
 };
+
+// On the cart page the cart link points at the page the shopper is already on, so it is marked as the current
+// page. That tells a screen reader where they are, and tells cart-ui.ts to leave a click on it alone, since
+// following it would only reload the page.
+const onCartPage = Astro.url.pathname.replace(/\/$/, '') === '/cart';
 ---
 
 <header class="header">
@@ -30,7 +35,7 @@ const cartWords = {
         {CURRENCIES.map((currency) => <option value={currency.code}>{WORDS[`currency.${currency.code}`]}</option>)}
       </select>
     </label>
-    <a class="cart-indicator" href="/cart" data-cart-link data-words={JSON.stringify(cartWords)}>{WORDS['header.cart']}</a>
+    <a class="cart-indicator" href="/cart" data-cart-link data-words={JSON.stringify(cartWords)} aria-current={onCartPage ? 'page' : undefined}>{WORDS['header.cart']}</a>
   </div>
 </header>
 

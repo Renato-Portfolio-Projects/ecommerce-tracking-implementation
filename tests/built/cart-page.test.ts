@@ -144,7 +144,14 @@ describe('the cart link in the header', () => {
   it('goes to the cart page from every page that has the header, and starts as the empty cart', () => {
     for (const file of pages) {
       const html = readPage(OPEN, file);
-      expect(html, file).toMatch(/<a class="cart-indicator" href="\/cart" data-cart-link data-words="[^"]*">Cart<\/a>/);
+      expect(html, file).toMatch(/<a class="cart-indicator" href="\/cart" data-cart-link data-words="[^"]*"( aria-current="page")?>Cart<\/a>/);
+    }
+  });
+
+  it('is marked as the current page on the cart page, where a click on it must not reload the page, and on no other page', () => {
+    for (const file of pages) {
+      const link = readPage(OPEN, file).match(/<a class="cart-indicator"[^>]*>/)![0];
+      expect(link.includes('aria-current="page"'), file).toBe(file === 'cart/index.html');
     }
   });
 

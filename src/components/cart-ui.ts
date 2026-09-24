@@ -193,8 +193,9 @@ function renderAll(change: CartChange = {}): void {
 /**
  * The drawer is a native dialog, so the browser already moves the focus into it when it opens, keeps
  * the page behind it out of reach, closes it on Escape and puts the focus back where it was. Only
- * the ways of opening and closing it are written here. Where there is no drawer, as on the cart page
- * itself, the cart link in the header simply goes to the cart page.
+ * the ways of opening and closing it are written here. Where there is no drawer, the cart link in the
+ * header is left as an ordinary link to the cart page. The one such page today is the cart page itself,
+ * where the link is marked as the current page and a click on it does nothing (see handleClick).
  */
 function drawer(): HTMLDialogElement | null {
   return document.querySelector<HTMLDialogElement>('[data-cart-drawer]');
@@ -211,7 +212,9 @@ function openDrawer(): void {
  * - a click on the dimmed page around the drawer, or on a close button, closes the drawer;
  * - a plain click on the header's cart link opens the drawer instead of going to the cart page. The
  *   link is still a real link: a middle click, a click with a modifier key held (to open it in a new
- *   tab or window), and any click on a page with no drawer, all go to /cart;
+ *   tab or window), and any click on a page with no drawer, all go to /cart. The exception is the cart
+ *   page itself, where Header.astro marks the link `aria-current="page"`: it points at the page the
+ *   shopper is already on, so a plain click is ignored, because following it would only reload the page;
  * - a plus, minus or Remove button changes the cart. The quantity is set from what the line
  *   currently shows (`data-quantity`) plus or minus one, and the change comes back as a
  *   `cart:changed` event that redraws the panel; this function draws nothing itself.
@@ -230,10 +233,18 @@ function handleClick(event: MouseEvent): void {
     return;
   }
   const plainClick = event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-  if (dialog && plainClick && clicked.closest('[data-cart-link]')) {
-    event.preventDefault();
-    openDrawer();
-    return;
+  const cartLink = clicked.closest('[data-cart-link]');
+  if (cartLink && plainClick) {
+    // Already on the cart page: nothing to open, and following the link would reload the page.
+    if (cartLink.getAttribute('aria-current') === 'page') {
+      event.preventDefault();
+      return;
+    }
+    if (dialog) {
+      event.preventDefault();
+      openDrawer();
+      return;
+    }
   }
 
   const button = clicked.closest<HTMLButtonElement>('[data-cart-increase], [data-cart-decrease], [data-cart-remove]');
