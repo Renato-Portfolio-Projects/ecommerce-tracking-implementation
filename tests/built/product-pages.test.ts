@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { garmentLabelTemplate } from '../../src/components/garment-label';
 import { isSoldOut, PRODUCTS } from '../../src/engine/catalog';
 import { fill } from '../../src/engine/fill';
 import { formatMoney, pricesInAllCurrencies } from '../../src/engine/money';
@@ -69,7 +70,12 @@ describe.each(PRODUCTS)('the product page for $name', (product) => {
   });
 
   it('offers a quantity from 1 up to the most one line may hold', () => {
-    expect(html).toContain(`<input type="number" min="1" max="${MAX_QUANTITY_PER_LINE}" value="1">`);
+    expect(html).toContain(`<input type="number" min="1" max="${MAX_QUANTITY_PER_LINE}" value="1" data-quantity>`);
+  });
+
+  it('carries its own SKU and a quantity field, which is what Add to cart reads', () => {
+    expect(html).toContain(`data-sku="${product.sku}"`);
+    expect(html.match(/data-quantity/g)).toHaveLength(1);
   });
 
   it('names the free shipping threshold', () => {
@@ -97,7 +103,8 @@ describe.each(PRODUCTS)('the product page for $name', (product) => {
   it('draws the garment for its first colour, described for people who cannot see it', () => {
     expect(html).toContain(`data-garment`);
     expect(html.match(/<svg class="garment" data-garment/g)).toHaveLength(1);
-    void art;
+    // The page carries the sentence that describes the drawing, so its script does not have to carry every word.
+    expect(text).toContain(`data-label="${garmentLabelTemplate(art.print)}"`);
   });
 
   it('has the demo bar, a skip link first, the header, the main area and the footer', () => {

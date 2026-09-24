@@ -5,7 +5,10 @@ import { storedCurrencyOr } from '../engine/money';
  * The header's currency selector. A priced element on the page carries every currency's already
  * formatted string as `data-prices` JSON (from `pricesInAllCurrencies` in src/engine/money.ts), so
  * switching currency only ever swaps which string is shown, never does the conversion itself in
- * the browser. The choice is saved in localStorage, not a cookie, and read back on the next visit.
+ * the browser. The one exception is the cart: its lines exist only in the browser, from the saved
+ * cart, so cart-ui.ts works out their prices itself (through `cartView`) in the currency given by
+ * `currentCurrency`, and redraws when this selector announces `currency:changed`. The choice is saved
+ * in localStorage, not a cookie, and read back on the next visit.
  *
  * A returning visitor who chose a currency other than CAD sees a brief flash of CAD prices before
  * this script corrects them, since the page is static and cannot know the choice until it runs.
@@ -14,7 +17,12 @@ import { storedCurrencyOr } from '../engine/money';
 
 const STORAGE_KEY = 'second-impression:currency';
 
-function currentCurrency(): CurrencyCode {
+/** The currency chosen on this page view, kept so a browser that will not save it still shows one currency everywhere. */
+let chosenNow: CurrencyCode | undefined;
+
+/** The currency to show now: this visit's choice, else the saved one, else Canadian dollars. The cart reads it too. */
+export function currentCurrency(): CurrencyCode {
+  if (chosenNow) return chosenNow;
   let saved: string | null = null;
   try {
     saved = localStorage.getItem(STORAGE_KEY);
@@ -42,11 +50,15 @@ export function initCurrencySwitcher(): void {
 
   select.addEventListener('change', () => {
     const chosen = select.value as CurrencyCode;
+    chosenNow = chosen;
     try {
       localStorage.setItem(STORAGE_KEY, chosen);
     } catch {
       // A visitor blocking storage still gets to switch currency for this page view.
     }
     applyCurrency(chosen);
+    // Tells anything else that shows money, so far the cart, to redraw. It works in every browser: the
+    // cart's prices are worked out in the browser, not swapped in from the page like the others.
+    document.dispatchEvent(new CustomEvent('currency:changed'));
   });
 }

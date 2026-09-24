@@ -1,6 +1,7 @@
 ---
 import { WORDS } from '../store/words';
 import Base from './Base.astro';
+import CartPanel from '../components/CartPanel.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 
@@ -10,9 +11,11 @@ interface Props {
   description: string;
   /** True for a page that lays itself out full width, such as the home page. Narrow otherwise. */
   wide?: boolean;
+  /** False for the cart page, which already shows the cart and needs no drawer over it. */
+  cartDrawer?: boolean;
 }
 
-const { title, description, wide = false } = Astro.props;
+const { title, description, wide = false, cartDrawer = true } = Astro.props;
 ---
 
 <Base title={`${title} | ${WORDS['site.name']}`} description={description} store>
@@ -22,4 +25,19 @@ const { title, description, wide = false } = Astro.props;
     <slot />
   </main>
   <Footer />
+  {/* The cart drawer, on every store page that has one. A native dialog is not on screen until
+       cart-ui.ts opens it with showModal(), which is what makes the browser handle focus, the
+       Escape key and the page behind it. It holds the same panel as the cart page. */}
+  {
+    cartDrawer && (
+      <dialog class="cart-drawer" data-cart-drawer aria-labelledby="cart-drawer-title">
+        <CartPanel variant="drawer" />
+      </dialog>
+    )
+  }
 </Base>
+
+<script>
+  import { initCartUi } from '../components/cart-ui';
+  initCartUi();
+</script>

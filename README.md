@@ -2,7 +2,7 @@
 
 A fictional online store, Second Impression, built to demonstrate production-style tracking: Google Tag Manager, GA4, Meta Pixel and Conversions API through a server container, consent handling, and a live page where you can check every event yourself.
 
-> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page and the six product pages are built and can be seen in a preview build; the cart, checkout and lead popup are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
+> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page, the six product pages and a working cart (an Add to cart button, a cart drawer and a cart page) are built and can be seen in a preview build; checkout and the lead popup are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
 
 ## What this will show
 
@@ -54,13 +54,17 @@ npm run dev
 
 ## Speed and accessibility
 
-Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen. The budgets are in `docs/brand.md`. Scores from 2026-09-21:
+Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen. The budgets are in `docs/brand.md`. Scores from 2026-09-24:
 
 | Page | Performance | Accessibility | Best Practices | JavaScript |
 |---|---|---|---|---|
-| Home | 100 | 100 | 100 | 0 KB |
-| About | 100 | 100 | 100 | 0 KB |
-| Shipping | 100 | 100 | 100 | 0 KB |
+| Home | 99 | 100 | 100 | 17 KB |
+| About | 100 | 100 | 100 | 17 KB |
+| Shipping | 100 | 100 | 100 | 17 KB |
 | Style guide | 100 | 100 | 100 | 0 KB |
+| Cart | 99 | 100 | 100 | 17 KB |
+| Product page (Logo Tee) | 100 | 100 | 100 | 19 KB |
+
+The JavaScript column adds up the script files a page loads, as the local test server sends them, without compression. Every store page carries the cart, the currency selector and the drawing code, and a product page adds its colour and size picker. The style guide is not part of the store and loads none. A score can move by a point or so from one run to the next.
 
 Lighthouse runs by hand, not in CI: a real browser and a quiet machine give a fairer score than a CI runner does. Adding it to CI is on the v1.0 checklist.

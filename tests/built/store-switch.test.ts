@@ -11,6 +11,7 @@ describe('the site built with the store closed', () => {
   it('has none of the store\'s pages', () => {
     const paths = [
       'about',
+      'cart',
       'contact',
       'policies/shipping',
       'policies/returns',
@@ -33,6 +34,7 @@ describe('the site built with the store open', () => {
     expect(htmlFiles(OPEN)).toEqual([
       '404.html',
       'about/index.html',
+      'cart/index.html',
       'contact/index.html',
       'index.html',
       'policies/returns/index.html',

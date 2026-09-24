@@ -1,4 +1,4 @@
-// What the garment drawings are made of: the outlines, the colours and the words that describe them.
+// What the garment drawings are made of: the outlines, the colours and how a drawing is written out.
 // src/components/Garment.astro puts them together. Everything is drawn on a 200 by 200 square.
 //
 // Each shape below is SVG path data: a short, standard mini-language of pen instructions, read as a
@@ -16,10 +16,8 @@
 // path per garment. The three cuts of trousers differ only in the numbers: a wider or narrower shape,
 // and, for the pleated cut, two extra straight lines for the pleats.
 
-import { fill } from '../engine/fill';
 import type { GarmentKind, Print } from '../store/art';
 import type { Colour } from '../store/products';
-import { WORDS } from '../store/words';
 
 /** The outline of each garment. See the file comment above for how to read the path data. */
 export const SHAPES: Record<GarmentKind, string> = {
@@ -95,8 +93,33 @@ export function markColours(print: Exclude<Print, 'none'>, colour: Colour): { fi
   return { first: 'var(--paper)', second: 'var(--ink)', blend: 'multiply' };
 }
 
-/** The description of a drawing, for people who cannot see it. */
-export function garmentLabel(product: string, colour: Colour, print: Print): string {
-  const key = print === 'logo' ? 'garment.altLogo' : print === 'misprint' ? 'garment.altMisprint' : 'garment.alt';
-  return fill(WORDS[key], { product, colour });
+function escapeAttribute(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * One garment drawing, written out as SVG text. Garment.astro uses it for the pages that are built
+ * ahead of time, and the cart uses it in the browser for the small drawing beside each line, so the
+ * two can never draw a garment differently. With a label the drawing describes itself to people who
+ * cannot see it, and the product page can find it. Without one it is hidden from them, because the
+ * words beside it already say what it is.
+ */
+export function garmentSvg(kind: GarmentKind, colour: Colour, print: Print, label?: string): string {
+  const shape = SHAPES[kind];
+  const parts = [
+    `<path class="second" d="${shape}" transform="translate(${OFFSET.x} ${OFFSET.y})"></path>`,
+    `<path class="body" d="${shape}"></path>`,
+    kind === 'tee' ? `<path class="collar" d="${COLLAR}"></path>` : `<path class="detail" d="${DETAILS[kind]}"></path>`,
+  ];
+  if (print !== 'none') {
+    const [first, second] = MARKS[print];
+    const inks = markColours(print, colour);
+    parts.push(
+      `<circle data-mark="first" cx="${first.x}" cy="${first.y}" r="${first.r}" style="fill: ${inks.first}"></circle>`,
+      `<circle data-mark="second" cx="${second.x}" cy="${second.y}" r="${second.r}" style="fill: ${inks.second}; mix-blend-mode: ${inks.blend}"></circle>`,
+    );
+  }
+  const marker = label === undefined ? '' : 'data-garment ';
+  const description = label === undefined ? 'aria-hidden="true"' : `role="img" aria-label="${escapeAttribute(label)}"`;
+  return `<svg class="garment" ${marker}viewBox="0 0 200 200" ${description} style="${garmentStyle(colour)}">${parts.join('')}</svg>`;
 }

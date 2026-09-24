@@ -13,7 +13,9 @@ const ROOT = fileURLToPath(new URL('../dist-store/', import.meta.url));
 const PORT = 4600;
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 
-const PAGES = ['/', '/about', '/policies/shipping', '/style-guide'];
+// The home page and two pages of text, the style guide, and the two pages that carry the most script: the
+// cart page (which draws the cart) and a product page (which also has the colour and size picker).
+const PAGES = ['/', '/about', '/policies/shipping', '/style-guide', '/cart', '/products/logo-tee'];
 
 /**
  * The first Markdown table under a heading: each row as a list of trimmed cells, the header and the

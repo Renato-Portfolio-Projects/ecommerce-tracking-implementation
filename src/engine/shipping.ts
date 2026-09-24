@@ -29,3 +29,12 @@ export function shippingCost(
 export function freeShippingRemaining(currency: CurrencyCode, itemsNet: number): number {
   return Math.max(0, convertFromCad(FREE_SHIPPING_FROM_CAD, currency) - itemsNet);
 }
+
+/**
+ * How far along the way to free Standard shipping the items are, from 0 to 100. It is exact and not
+ * rounded, so that it reads 100 only once there is nothing more to add: items 30 cents short of the
+ * line are at 99.7, where a rounded number would say 100 beside the words "You are $0.30 away".
+ */
+export function freeShippingProgress(currency: CurrencyCode, itemsNet: number): number {
+  return Math.min(100, (itemsNet * 100) / convertFromCad(FREE_SHIPPING_FROM_CAD, currency));
+}

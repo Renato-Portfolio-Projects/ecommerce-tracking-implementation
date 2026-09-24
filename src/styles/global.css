@@ -181,6 +181,7 @@ a {
 .cart-indicator {
   font-size: 0.9rem;
   font-weight: 600;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -627,4 +628,287 @@ a {
   background: color-mix(in oklab, var(--ink) 25%, transparent);
   color: var(--ink-soft);
   cursor: not-allowed;
+}
+
+/* ---- The cart: one panel, shown as a drawer over any page or as the body of the cart page ---- */
+
+.cart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* An element that is hidden stays hidden, even where a rule below gives it a display of its own. */
+.cart-panel [hidden] {
+  display: none;
+}
+
+/* The cart sets its own spacing, so the page's general paragraph spacing is switched off inside it. */
+.cart-panel p {
+  margin: 0;
+}
+
+.cart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cart-title {
+  font-size: 1.75rem;
+}
+
+/* Empty, the notice takes no room, but it stays in the page so that a screen reader hears it when it fills. */
+.cart-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper-shade);
+  border-left: 3px solid var(--spot-red);
+  font-size: 0.9rem;
+}
+
+.cart-notice:empty {
+  padding: 0;
+  border: 0;
+}
+
+.cart-empty p {
+  margin: 0 0 var(--space-3);
+}
+
+.cart-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: start;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
+}
+
+.cart-thumb {
+  grid-row: span 2;
+}
+
+.cart-thumb .garment {
+  display: block;
+  width: 100%;
+  background: var(--paper-shade);
+  border-radius: 3px;
+  padding: 6%;
+}
+
+.cart-line-name {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cart-line-name:hover {
+  text-decoration: underline;
+}
+
+.cart-line-variant,
+.cart-line-price {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.cart-line-price .was {
+  margin-right: var(--space-2);
+  text-decoration: line-through;
+}
+
+.cart-line-controls {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cart-line-total {
+  grid-column: 3;
+  grid-row: 1;
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.cart-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid color-mix(in oklab, var(--ink) 30%, transparent);
+  border-radius: 2px;
+}
+
+.cart-stepper button {
+  width: 2rem;
+  height: 2rem;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.cart-stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cart-qty {
+  min-width: 2rem;
+  text-align: center;
+}
+
+.cart-remove {
+  padding: 0.25rem 0;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.cart-summary {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
+}
+
+.cart-free,
+.cart-later,
+.cart-saved {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.cart-later,
+.cart-saved {
+  color: var(--ink-soft);
+}
+
+.cart-bar {
+  height: 0.5rem;
+  overflow: hidden;
+  background: var(--paper-shade);
+  border-radius: 999px;
+}
+
+.cart-bar-fill {
+  width: 0;
+  height: 100%;
+  background: var(--spot-blue);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cart-bar-fill {
+    transition: width 0.25s ease-out;
+  }
+}
+
+.cart-subtotal {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.cart-summary .btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* The drawer's link to the cart page, and the cart page's link back to the store: both quieter than
+   Checkout, which stays the main action, and tall enough to be an easy target. */
+.cart-view-link,
+.cart-keep-link {
+  justify-self: center;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cart-panel--page .cart-line {
+  grid-template-columns: 6rem 1fr auto;
+}
+
+/* The drawer: the same panel in a native dialog, pinned to the right edge over a dimmed page. */
+
+.cart-drawer {
+  inset: 0 0 0 auto;
+  width: min(26rem, 100vw);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: var(--space-3);
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  box-shadow: -8px 0 32px color-mix(in oklab, var(--ink) 25%, transparent);
+}
+
+.cart-drawer::backdrop {
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+/* While the drawer is open the page behind it does not scroll. */
+body:has(.cart-drawer[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cart-drawer[open] {
+    animation: cart-slide-in 0.2s ease-out;
+  }
+
+  @keyframes cart-slide-in {
+    from {
+      transform: translateX(100%);
+    }
+  }
+}
+
+.cart-panel--drawer {
+  height: 100%;
+}
+
+.cart-panel--drawer .cart-title {
+  font-size: 1.4rem;
+}
+
+/* Only the lines scroll, so the subtotal and the Checkout button stay in view. */
+.cart-panel--drawer .cart-lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cart-panel--drawer .cart-summary {
+  flex: none;
+}
+
+.cart-close {
+  width: 2.5rem;
+  height: 2.5rem;
+  font: inherit;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
