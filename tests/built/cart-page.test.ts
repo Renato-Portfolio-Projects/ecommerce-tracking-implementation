@@ -46,6 +46,17 @@ describe('the cart page', () => {
     expect(html).not.toContain('data-cart-close');
   });
 
+  it('has a Keep shopping link back to the store under the Checkout button, and no other page has one', () => {
+    for (const other of pages) {
+      const expected = other === file ? 1 : 0;
+      expect(readPage(OPEN, other).match(/class="cart-keep-link"/g)?.length ?? 0, other).toBe(expected);
+    }
+    expect(text).toContain(`<a class="cart-keep-link" href="/">${WORDS['cart.keepShopping']}</a>`);
+    const order = ['data-cart-checkout', 'class="cart-keep-link"', 'class="cart-saved"'].map((marker) => html.indexOf(marker));
+    expect(order.every((position) => position > -1), 'a marker is missing').toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
   it('has the words of an empty cart, of a line, and of the total, each in the store\'s own words', () => {
     for (const key of ['cart.empty', 'cart.keepShopping', 'cart.remove', 'cart.subtotal', 'cart.laterNote', 'cart.checkout'] as const) {
       expect(text, key).toContain(WORDS[key]);

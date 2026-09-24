@@ -830,8 +830,10 @@ a {
   text-align: center;
 }
 
-/* The drawer's link to the cart page: quieter than Checkout, and tall enough to be an easy target. */
-.cart-view-link {
+/* The drawer's link to the cart page, and the cart page's link back to the store: both quieter than
+   Checkout, which stays the main action, and tall enough to be an easy target. */
+.cart-view-link,
+.cart-keep-link {
   justify-self: center;
   padding: 0.5rem 0;
   font-size: 0.9rem;

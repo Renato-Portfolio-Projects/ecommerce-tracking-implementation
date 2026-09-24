@@ -127,7 +127,7 @@ Built in the third part of this work. The drawer and the cart page share these w
 | `cart.title` | Your cart | The heading of the cart drawer and the cart page |
 | `cart.close` | Close cart | The close button on the cart drawer |
 | `cart.empty` | Your cart is empty. | Shown when the cart has no items |
-| `cart.keepShopping` | Keep shopping | A link under the empty-cart message, and under the cart on the cart page |
+| `cart.keepShopping` | Keep shopping | Under the empty-cart message (on the drawer it is a button that closes the drawer, and on the cart page a link to the home page), and, on the cart page only, a link to the home page under the Checkout button when the cart has items |
 | `cart.remove` | Remove | The button that takes a line out of the cart |
 | `cart.removeLabel` | Remove {product} ({variant}) from your cart | Read out for a Remove button. The blanks are the name and the colour and size |
 | `cart.decrease` | Decrease quantity of {product} ({variant}) | Read out for the minus button on a line |
