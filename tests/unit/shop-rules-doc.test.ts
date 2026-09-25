@@ -308,6 +308,7 @@ describe('docs/shop-rules.md', () => {
       ['`src/engine`', files('engine')],
       ['`src/store`', files('store')],
       ['`src/demo`', files('demo')],
+      ['`src/server`', files('server')],
     ]);
   });
 

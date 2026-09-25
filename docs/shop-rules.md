@@ -28,7 +28,7 @@ Every price is stored in Canadian dollars, and every conversion starts from ther
 
 ## Default currency
 
-Each visitor starts in a currency chosen from the country their connection appears to come from. The site gets that country from Vercel, at country level only, and never stores it. It is only a starting point: the visitor can switch to any of the four currencies until checkout starts, and then it locks. A missing or unrecognisable country starts in USD.
+Each visitor starts in a currency chosen from the country their connection appears to come from. The site gets that country from Vercel, at country level only, and never stores it. A small function, `/api/currency`, does the work on the server and answers with the currency alone, so the country never reaches the browser. Like every function, it answers 404 until the store is open. It is only a starting point: the visitor can switch to any of the four currencies until checkout starts, and then it locks. A missing or unrecognisable country starts in USD.
 
 | Visitor's country | Starts in |
 |---|---|
@@ -293,18 +293,23 @@ Every "Use demo data" button fills in one of eight fictional people, so no visit
 
 ## Where the code lives
 
-The code is kept in three folders, so that the reusable part can be told apart from one store's own data and from what exists only for the demo.
+The code is kept in four folders, so that the reusable part can be told apart from one store's own data, from what exists only for the demo, and from the part that runs on a server.
 
 | Folder | What it holds | Files |
 |---|---|---|
 | `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart-view.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `lead-popup.ts`, `list-handoff.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
 | `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes, cart limits, which drawing each product uses, the words a shopper reads and the places its pages link to outside the site | `art.ts`, `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts`, `site.ts`, `words.ts` |
 | `src/demo` | What exists only for the demo: the test cards, the eight demo people and the demo email domains. A real store deletes this folder | `email-domains.ts`, `personas.ts`, `test-cards.ts` |
+| `src/server` | The code that runs on a server, in Vercel functions: the gate that makes every function answer 404 while the store is closed, the rules every answer follows (only the methods it names, a plain 500 for a fault, nothing kept by a shared cache), and one handler for each function. It may use the engine, the store and the demo, and nothing that runs in the browser | `currency.ts`, `gate.ts`, `http.ts` |
 
-Two rules keep the folders apart, and a test checks them on every run:
+Four rules keep the folders apart, and a test checks them on every run:
 
 - The store folder imports nothing from the other two, so a store's folder can be swapped whole.
-- The engine never imports from the demo folder, so deleting the demo folder leaves the engine working.
+- The engine never imports from the demo folder, so deleting the demo folder leaves the engine working, and it never imports from the server folder either.
+- The demo never imports from the server folder, so the demo stays what a real store deletes and nothing more.
+- The server folder imports only from the engine, the store, the demo and itself, never from the browser code, so it can run on a server that has no page.
+
+The functions themselves are the files in the `api/` folder at the top of the repository. Each is two lines that hand a request to a handler in `src/server`, and a test says so, so that no logic sits where the tests cannot reach it. Vercel runs each file as a function at `/api/` and the file's name.
 
 To reuse the engine for another store, write a new `src/store` folder with the same file names and the same exports, and delete `src/demo`. The engine reads everything it needs about a store from what those files export. A few things in the engine still carry this store's choices, and would need attention first: the field names that end in `Cad` (such as `priceCad`), the Canadian English formatting of money, the example SKU in one error message, and the postal code formats, which cover only the nine countries this store ships to.
 

@@ -3,10 +3,11 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
-// The code is kept in three folders under src:
+// The code is kept in four folders under src:
 //   engine: the reusable code, which knows nothing about one particular store
 //   store:  one store's own data (its products, prices, countries, rules)
 //   demo:   what exists only for the demo, which a real store deletes
+//   server: the code that runs on the server, in Vercel functions, which may use the other three
 // Each folder may depend only on the folders named below. These tests read every import and fail if
 // one points somewhere it should not, so the boundaries cannot wear away without anyone noticing.
 
@@ -26,9 +27,9 @@ function sourceFiles(folder: string): string[] {
   return found;
 }
 
-/** The places a file's imports and re-exports point to. */
+/** The places a file's imports and re-exports point to, including an import that only runs a file (`import './x';`). */
 function importSpecifiers(code: string): string[] {
-  return [...code.matchAll(/^(?:import|export)\b[^;]*?\bfrom\s+'([^']+)';/gm)].map((match) => match[1]);
+  return [...code.matchAll(/^(?:import|export)\b[^;]*?\bfrom\s+'([^']+)';|^import\s+'([^']+)';/gm)].map((match) => match[1] ?? match[2]);
 }
 
 /**
@@ -55,8 +56,8 @@ function offenders(folder: string, allowed: string[]): string[] {
 }
 
 describe('how the code is organised', () => {
-  it('has an engine, a store and a demo folder, and no folder called shop', () => {
-    for (const folder of ['engine', 'store', 'demo']) expect(existsSync(join(srcRoot, folder)), folder).toBe(true);
+  it('has an engine, a store, a demo and a server folder, and no folder called shop', () => {
+    for (const folder of ['engine', 'store', 'demo', 'server']) expect(existsSync(join(srcRoot, folder)), folder).toBe(true);
     expect(existsSync(join(srcRoot, 'shop'))).toBe(false);
   });
 
@@ -64,12 +65,20 @@ describe('how the code is organised', () => {
     expect(offenders('store', ['store'])).toEqual([]);
   });
 
-  it('keeps the engine free of the demo, so deleting the demo folder leaves the engine working', () => {
+  it('keeps the engine free of the demo and of the server, so deleting the demo folder leaves the engine working and the engine never depends on the server', () => {
     expect(offenders('engine', ['engine', 'store'])).toEqual([]);
   });
 
+  it('keeps the demo free of the server, so the demo is what a real store deletes and nothing more', () => {
+    expect(offenders('demo', ['demo', 'engine', 'store'])).toEqual([]);
+  });
+
+  it('lets the server use the engine, the store and the demo, and nothing that runs in the browser', () => {
+    expect(offenders('server', ['server', 'engine', 'store', 'demo'])).toEqual([]);
+  });
+
   it('has code in each folder, so the checks above are not passing on empty folders', () => {
-    for (const folder of ['engine', 'store', 'demo']) expect(sourceFiles(folder).length, folder).toBeGreaterThan(0);
+    for (const folder of ['engine', 'store', 'demo', 'server']) expect(sourceFiles(folder).length, folder).toBeGreaterThan(0);
   });
 });
 
@@ -87,9 +96,10 @@ describe('the checks that keep the boundaries', () => {
       "} from '../demo/c';",
       "export { e } from './e';",
       "import { readFileSync } from 'node:fs';",
+      "import '../demo/only-runs-a-file';",
       'const text = "from \'../demo/not-an-import\'";',
     ].join('\n');
-    expect(importSpecifiers(code)).toEqual(['./a', '../store/b', '../demo/c', './e', 'node:fs']);
+    expect(importSpecifiers(code)).toEqual(['./a', '../store/b', '../demo/c', './e', 'node:fs', '../demo/only-runs-a-file']);
   });
 
   it('says which folder an import lands in, and ignores packages', () => {
