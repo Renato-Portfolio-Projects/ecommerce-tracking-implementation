@@ -691,9 +691,11 @@ a {
   padding: 0;
 }
 
+/* The middle column is minmax(0, 1fr), not 1fr, so it may shrink below the width of its buttons, which wrap. With 1fr
+   it could not, and on a phone the line total was pushed off the right edge of the screen. */
 .cart-line {
   display: grid;
-  grid-template-columns: 4.5rem 1fr auto;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--space-2) var(--space-3);
   padding: var(--space-3) 0;
@@ -736,6 +738,7 @@ a {
 .cart-line-controls {
   grid-column: 2;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
@@ -849,7 +852,14 @@ a {
 }
 
 .cart-panel--page .cart-line {
-  grid-template-columns: 6rem 1fr auto;
+  grid-template-columns: 6rem minmax(0, 1fr) auto;
+}
+
+/* On a phone the page's picture is the drawer's size, to leave room for the buttons and the total. */
+@media (max-width: 26rem) {
+  .cart-panel--page .cart-line {
+    grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+  }
 }
 
 /* The drawer: the same panel in a native dialog, pinned to the right edge over a dimmed page. */

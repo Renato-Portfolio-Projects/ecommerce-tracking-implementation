@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
@@ -162,5 +163,37 @@ describe('the cart link in the header', () => {
       one: WORDS['header.cartLabelOne'],
       many: WORDS['header.cartLabelMany'],
     });
+  });
+});
+
+// A test cannot measure a screen, so this only checks that the styles which keep a cart line on a narrow phone are
+// still in the built stylesheet. That a line really fits, from 320 pixels up, is checked by driving a page in a browser.
+describe('the cart lines on a narrow screen', () => {
+  const assets = new URL('_astro/', OPEN);
+  const css = readdirSync(assets)
+    .filter((name) => name.endsWith('.css'))
+    .map((name) => readFileSync(new URL(name, assets), 'utf8'))
+    .join('\n');
+  /** What one rule says, without spaces, or nothing if there is no rule for exactly that selector. */
+  const rule = (selector: string) => {
+    const escaped = selector.replace(/[.\-]/g, '\\$&');
+    const found = css.match(new RegExp(`(?:^|[}\\s])${escaped}\\{([^}]*)\\}`));
+    return found?.[1].replace(/\s+/g, '');
+  };
+
+  it('lets the middle column of a line shrink, so the total is not pushed off the screen', () => {
+    for (const selector of ['.cart-line', '.cart-panel--page .cart-line']) {
+      expect(rule(selector), selector).toMatch(/grid-template-columns:[^;]*minmax\(0,1fr\)/);
+    }
+  });
+
+  it('lets the buttons of a line wrap onto a second row, so the middle column has room to shrink', () => {
+    expect(rule('.cart-line-controls')).toContain('flex-wrap:wrap');
+  });
+
+  it('gives the cart page the drawer\'s smaller picture on a phone, to leave room for the buttons and the total', () => {
+    const phone = css.replace(/\s+/g, '').match(/@media\(width<=26rem\)\{\.cart-panel--page\.cart-line\{([^}]*)\}\}/);
+    expect(phone, 'a rule for widths up to 26rem').not.toBeNull();
+    expect(phone![1]).toMatch(/grid-template-columns:4\.5remminmax\(0,1fr\)auto/);
   });
 });
