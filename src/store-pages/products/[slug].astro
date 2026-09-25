@@ -7,6 +7,7 @@ import { fill } from '../../engine/fill';
 import { isSoldOut, PRODUCTS } from '../../engine/catalog';
 import { formatMoney, pricesInAllCurrencies } from '../../engine/money';
 import { ART } from '../../store/art';
+import { CURRENCIES } from '../../store/currencies';
 import { MAX_QUANTITY_PER_LINE } from '../../store/policy';
 import { FREE_SHIPPING_FROM_CAD } from '../../store/shipping-methods';
 import { WORDS, type WordKey } from '../../store/words';
@@ -19,6 +20,11 @@ const { product } = Astro.props;
 const art = ART[product.sku];
 const prices = pricesInAllCurrencies(product.priceCad);
 const comparePrices = product.compareAtCad === undefined ? undefined : pricesInAllCurrencies(product.compareAtCad);
+// The currency selector replaces the whole text of a priced element with the string the page carries for that
+// currency, so the earlier price carries its word ("was $42.00") in every currency, not just the price.
+const wasWords =
+  comparePrices &&
+  Object.fromEntries(CURRENCIES.map(({ code }) => [code, fill(WORDS['product.was'], { price: comparePrices[code] })]));
 const blurb = WORDS[`product.${product.sku}.blurb` as WordKey];
 const detail1 = WORDS[`product.${product.sku}.detail1` as WordKey];
 const detail2 = WORDS[`product.${product.sku}.detail2` as WordKey];
@@ -68,9 +74,9 @@ const jsonLd = {
     <div class="product-info">
       <h1>{product.name}</h1>
       <p class="product-price">
-        {comparePrices && (
-          <span class="was" data-prices={JSON.stringify(comparePrices)}>
-            {fill(WORDS['product.was'], { price: comparePrices.CAD })}
+        {wasWords && (
+          <span class="was" data-prices={JSON.stringify(wasWords)}>
+            {wasWords.CAD}
           </span>
         )}
         <span class={comparePrices ? 'sale' : undefined} data-prices={JSON.stringify(prices)}>
