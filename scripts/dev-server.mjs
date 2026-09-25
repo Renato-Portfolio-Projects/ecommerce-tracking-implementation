@@ -129,6 +129,9 @@ function serveStatic(root, res, url) {
  */
 export async function startDevServer({ root = join(ROOT_OF_REPOSITORY, 'dist-store'), apiFolder = join(ROOT_OF_REPOSITORY, 'api'), port = 4700, country, open = true } = {}) {
   process.env.PUBLIC_STORE_OPEN = open ? 'true' : 'false';
+  // With no database settings, the lead function keeps leads in memory for as long as this server runs. With them
+  // (for example from `node --env-file=.env.local scripts/dev-server.mjs`), it uses the real database.
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) process.env.SECOND_IMPRESSION_MEMORY_STORE = 'true';
   const resolvedRoot = resolve(root);
   const { functions, remove } = await loadFunctions(apiFolder);
   const server = createServer((req, res) => {

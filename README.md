@@ -62,6 +62,8 @@ npm run serve:store
 
 That serves the built store and the functions in `api/` together at `http://localhost:4700`. Add `-- --country FR` to pretend to be visiting from France, or `-- --closed` to run the functions as production does, with the store closed. `npm run dev` and `npm run dev:store` do not run the functions.
 
+The lead function keeps leads in memory while that server runs, unless the database's two settings are present, and it never does on Vercel. To try the real database once, by hand, put `KV_REST_API_URL` and `KV_REST_API_TOKEN` in a file called `.env.local` (git does not keep it, and it holds a key that allows writing, so it is never pasted, printed or shared) and run `npm run smoke:lead`. It keeps one demo lead, reads it back, checks that it expires by itself, and deletes it, printing results only.
+
 ## Speed and accessibility
 
 Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen, served with its functions running and pretending to be in France, so the page switches to euros while it loads. The budgets are in `docs/brand.md`. Scores from 2026-09-25:

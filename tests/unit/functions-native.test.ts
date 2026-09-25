@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -58,6 +58,8 @@ describe('the functions in api/, run the way Vercel runs them', () => {
       writeFileSync(output, code);
     }
     writeFileSync(join(made, 'package.json'), JSON.stringify({ type: 'module' }));
+    // The packages a function imports (the database's client, for one) are found where Vercel finds them.
+    symlinkSync(join(root, 'node_modules'), join(made, 'node_modules'), 'junction');
 
     for (const file of functions) {
       const compiled = pathToFileURL(join(made, 'api', `${relative(join(root, 'api'), file).replace(/\.ts$/, '.js')}`)).href;
@@ -65,16 +67,28 @@ describe('the functions in api/, run the way Vercel runs them', () => {
         const loaded = await import(${JSON.stringify(compiled)});
         const worker = loaded.default;
         if (typeof worker?.fetch !== 'function') throw new Error('the function has no fetch handler');
-        const response = await worker.fetch(new Request('https://example.test/api/x', { headers: { 'x-vercel-ip-country': 'FR' } }));
-        console.log(JSON.stringify({ status: response.status, type: response.headers.get('content-type') }));
+        const answers = [];
+        const lead = { firstName: 'Maya', email: 'maya@example.com', marketing: false, source: 'auto', website: '' };
+        for (const request of [
+          new Request('https://example.test/api/x', { headers: { 'x-vercel-ip-country': 'FR' } }),
+          new Request('https://example.test/api/x', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(lead) }),
+        ]) {
+          const response = await worker.fetch(request);
+          answers.push({ status: response.status, type: response.headers.get('content-type') });
+        }
+        console.log(JSON.stringify(answers));
       `;
       const out = execFileSync(process.execPath, ['--input-type=module', '-e', script], {
         encoding: 'utf8',
-        env: { ...process.env, PUBLIC_STORE_OPEN: 'true' },
+        // No database is reachable here, so the lead function is asked to keep leads in memory, as the local server does.
+        env: { ...process.env, PUBLIC_STORE_OPEN: 'true', SECOND_IMPRESSION_MEMORY_STORE: 'true', KV_REST_API_URL: '', KV_REST_API_TOKEN: '', VERCEL: '' },
       });
-      const answer = JSON.parse(out.trim().split('\n').pop()!) as { status: number; type: string };
-      expect(answer.status, file).toBeLessThan(500);
-      expect(answer.type, file).toContain('application/json');
+      const answers = JSON.parse(out.trim().split('\n').pop()!) as { status: number; type: string }[];
+      expect(answers, file).toHaveLength(2);
+      for (const answer of answers) {
+        expect(answer.status, file).toBeLessThan(500);
+        expect(answer.type, file).toContain('application/json');
+      }
     }
   });
 });

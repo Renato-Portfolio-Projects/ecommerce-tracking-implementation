@@ -1,4 +1,4 @@
-import type { LeadRecord, Store } from './store.js';
+import { leadKey, type LeadRecord, type Store } from './store.js';
 
 /** The store that lives in memory: used by the tests, and by the local server when it has no database to use. */
 export interface MemoryStore extends Store {
@@ -31,10 +31,10 @@ export function createMemoryStore(now: () => number = Date.now): MemoryStore {
       return count;
     },
     async saveLead(id, record, lifetimeSeconds) {
-      leads.set(`lead:${id}`, { record: { ...record }, expiresAt: now() + lifetimeSeconds * 1000 });
+      leads.set(leadKey(id), { record: { ...record }, expiresAt: now() + lifetimeSeconds * 1000 });
     },
     async readLead(id) {
-      const found = kept(leads, `lead:${id}`);
+      const found = kept(leads, leadKey(id));
       return found === undefined ? undefined : { ...found.record };
     },
     keys() {

@@ -5,7 +5,7 @@ import { checkEmailDomain, emailDomainOf, isDisposableDomain, type MailService }
 import { LEAD_ATTEMPTS_PER_HOUR, LEAD_RECORD_LIFETIME_DAYS } from '../store/policy.js';
 import type { Environment } from './gate.js';
 import { answer, guarded } from './http.js';
-import type { LeadRecord, Store } from './store.js';
+import { RATE_LIMIT_KEY_PREFIX, type LeadRecord, type Store } from './store.js';
 
 /**
  * `/api/lead`: takes the lead the popup has collected, checks it again, and keeps it for seven days. Everything it
@@ -54,7 +54,7 @@ export function clientAddress(request: Request): string {
  */
 export function visitorKey(address: string, secret: string, now: number): string {
   const hour = Math.floor(now / HOUR_MILLISECONDS);
-  return `rl:${createHmac('sha256', secret).update(`${address}|${hour}`).digest('hex')}`;
+  return `${RATE_LIMIT_KEY_PREFIX}${createHmac('sha256', secret).update(`${address}|${hour}`).digest('hex')}`;
 }
 
 const failed = (error: string, status: number, extra: Record<string, string> = {}) => answer({ ok: false, error }, status, extra);

@@ -5,6 +5,17 @@
  */
 
 /**
+ * The names things are kept under. Each kind starts with its own tag, so that a key says what it is, and these are the
+ * only places that tags are written. `docs/server-data.md` lists every one, and a test fails if the code uses a tag the
+ * page does not list.
+ */
+export const LEAD_KEY_PREFIX = 'lead:';
+export const RATE_LIMIT_KEY_PREFIX = 'rl:';
+
+/** The name a lead is kept under: the tag and its random id. */
+export const leadKey = (id: string): string => `${LEAD_KEY_PREFIX}${id}`;
+
+/**
  * What is kept about one lead: what the visitor typed into the popup, the time, and where the popup was opened from.
  * Nothing else about them is kept, ever: no address on the network, no browser details, no country, no cookie.
  */

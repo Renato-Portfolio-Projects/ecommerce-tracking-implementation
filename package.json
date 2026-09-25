@@ -13,6 +13,7 @@
     "build:store": "node scripts/with-store-open.mjs astro build --outDir dist-store",
     "preview": "astro preview",
     "serve:store": "node scripts/dev-server.mjs",
+    "smoke:lead": "node --env-file=.env.local scripts/smoke-lead.mjs",
     "check": "astro check",
     "test": "vitest run tests/unit",
     "test:built": "vitest run tests/built",
@@ -20,6 +21,7 @@
     "lighthouse": "npm run build:store && node scripts/lighthouse.mjs"
   },
   "dependencies": {
+    "@upstash/redis": "^1.39.0",
     "astro": "^7.3.3"
   },
   "devDependencies": {
