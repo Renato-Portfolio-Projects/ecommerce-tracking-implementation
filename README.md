@@ -53,6 +53,15 @@ npm run dev
 
 `npm run verify` type-checks, runs the unit tests, builds the site and checks the built page.
 
+To look at the whole store as a visitor would, functions included, build it and serve it:
+
+```bash
+npm run build:store
+npm run serve:store
+```
+
+That serves the built store and the functions in `api/` together at `http://localhost:4700`. Add `-- --country FR` to pretend to be visiting from France, or `-- --closed` to run the functions as production does, with the store closed. `npm run dev` and `npm run dev:store` do not run the functions.
+
 ## Speed and accessibility
 
 Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen. The budgets are in `docs/brand.md`. Scores from 2026-09-25:

@@ -309,7 +309,7 @@ Four rules keep the folders apart, and a test checks them on every run:
 - The demo never imports from the server folder, so the demo stays what a real store deletes and nothing more.
 - The server folder imports only from the engine, the store, the demo and itself, never from the browser code, so it can run on a server that has no page.
 
-The functions themselves are the files in the `api/` folder at the top of the repository. Each is two lines that hand a request to a handler in `src/server`, and a test says so, so that no logic sits where the tests cannot reach it. Vercel runs each file as a function at `/api/` and the file's name.
+The functions themselves are the files in the `api/` folder at the top of the repository. Each is two lines that hand a request to a handler in `src/server`, and a test says so, so that no logic sits where the tests cannot reach it. Vercel runs each file as a function at `/api/` and the file's name. To try them on this machine, `npm run serve:store` serves the built store and the functions together.
 
 To reuse the engine for another store, write a new `src/store` folder with the same file names and the same exports, and delete `src/demo`. The engine reads everything it needs about a store from what those files export. A few things in the engine still carry this store's choices, and would need attention first: the field names that end in `Cad` (such as `priceCad`), the Canadian English formatting of money, the example SKU in one error message, and the postal code formats, which cover only the nine countries this store ships to.
 
