@@ -18,3 +18,14 @@ export function checkCoupon(typed: string | undefined): CouponCheck {
   if (!coupon) return { status: 'invalid' };
   return coupon.expired ? { status: 'expired', coupon } : { status: 'valid', coupon };
 }
+
+/**
+ * The code the lead popup offers: the one marked `welcome` that has not expired. Other codes can be
+ * live at the same time, because checkCoupon accepts any live code a shopper types; this only says
+ * which one the popup hands out. If two live codes were both marked `welcome` it would quietly take
+ * the first, which is why a test fails unless the store has exactly one. `coupons` can be given so
+ * the rule can be tried on a list of its own.
+ */
+export function welcomeCoupon(coupons: readonly Coupon[] = COUPONS): Coupon | undefined {
+  return coupons.find((coupon) => coupon.welcome === true && !coupon.expired);
+}

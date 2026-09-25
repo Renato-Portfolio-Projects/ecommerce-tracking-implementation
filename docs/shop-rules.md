@@ -143,12 +143,14 @@ Canada is taxed by province, in the next table. The United States is 0% on purpo
 
 ## Coupons
 
-| Code | Discount | Status |
-|---|---|---|
-| WELCOME10 | 10% off each item | Valid |
-| SPRING20 | 20% off each item | Expired |
+| Code | Discount | Status | Offered by the lead popup |
+|---|---|---|---|
+| WELCOME10 | 10% off each item | Valid | Yes |
+| SPRING20 | 20% off each item | Expired | - |
 
 `SPRING20` is recognised on purpose, so the store can show an "expired" message and tracking can record that outcome. The checkout shows the result of every code in plain words, whether it worked or not: applied (with what it saves), expired, or not recognised.
+
+The **welcome code** is the one the lead popup offers, and it is the code marked as such in the data. Any number of other codes can be live at the same time: a shopper who was given one somewhere else, such as an email or an ad, types it at checkout, and it works like any other. The popup only ever offers the welcome code. The store must have exactly one live welcome code, and a test fails otherwise, so the popup can never pick between two by accident. The percentage in the popup's words, on its footer link and on its tab follows that code, so a new offer is changed in one place: mark the old code expired, and add the new one marked as the welcome code.
 
 ## The cart
 
@@ -162,6 +164,20 @@ The cart is plain code that holds what and how many, and where in the store each
 6. **The cart is saved in the browser for 7 days from its last change.** What is saved is each line's SKU, colour, size, quantity and list, and the time. There are no prices and no personal data. Why: an active cart should not expire mid-shop, and a stored price could go stale.
 7. **A saved cart is checked again when it is opened.** A line that is no longer valid, such as a product that is gone, a sold-out variant or a quantity out of range, is dropped and the shopper can be told. A cart that has expired, or that makes no sense, becomes an empty cart.
 
+## The lead popup
+
+The popup asks a visitor for a first name and an email in exchange for the welcome code. These rules decide when it may open by itself and when the small reminder that offers the code again is shown. What the visitor types is checked under "Checkout forms".
+
+1. **It opens by itself at most once every 7 days.** The 7 days are counted from the last time it was shown, whether the visitor closed it or took the code. Why: a visitor who has seen the offer should not have it pushed at them again on the next page, and 7 days is how long this demo keeps a lead.
+2. **Showing it always writes a note, however it was opened.** If the visitor opens it by hand, that counts as showing it. Why: the popup should not open by itself just after it was asked for.
+3. **The reminder is shown only when the popup has been shown and the code was not taken.** Why: someone who took the code does not need reminding, and someone who has not seen the popup is not reminded of it.
+4. **All that is kept is when it was last shown and how it ended (closed, or the code was taken).** There is no name and no email in it, and no permanent flag saying the code was taken. Why: nothing personal is needed to keep count, and a permanent flag would make the popup impossible to show again.
+5. **A note that is missing, damaged or dated in the future counts as never shown.** Why: a clock that was put back must not silence the popup for years.
+6. **By itself it opens only on the home page, after 5 seconds or once the visitor has scrolled 40% of the way down, whichever comes first.** The seconds count only while the tab is on screen, and the 40% is of the distance the page can be scrolled, not of its full height. Why: the home page is where a visitor arrives, and a visitor choosing a size on a product page is never interrupted. The 5 seconds is a deliberate demo setting, so a reviewer sees the popup quickly. A real store would wait longer, and popup guidance suggests 30 to 60 seconds.
+7. **It never opens over another dialog, and its clock starts again whenever another dialog closes.** If the cart drawer is open when the time comes, that opening is skipped and nothing is written down, so the popup stays due. When the drawer closes, the 5 seconds start again from the beginning, so the popup comes 5 seconds after the visitor has dealt with the cart, never at the moment they dismiss it, and also when the drawer was opened and closed before the 5 seconds were up. Scrolling past the 40% can still open it whenever no dialog is open.
+8. **A half-typed form is kept when the popup is closed, and is put back empty once the code has been taken.** Why: a stray click should not lose what a visitor typed, and a visitor who has taken the code can open the popup again and try another lead, which is what a demo needs.
+9. **The code is shown only after the details pass the checks, and the browser's own way of sending a form is never used.** The form is sent by script, and a form that fell back to the browser's way would put a name and an email in the address. Until there is a server, the details are checked in the browser and the code is shown, and nothing is saved or sent. Why: nothing personal may ever appear in a URL, and the popup must not claim to have taken a lead it has not.
+
 ## Limits
 
 | Rule | Limit |
@@ -169,6 +185,9 @@ The cart is plain code that holds what and how many, and where in the store each
 | Most units of one product, colour and size on one cart line | 10 |
 | Most different lines in one cart | 20 |
 | How long a saved cart is kept, from its last change | 7 days |
+| How long the lead popup stays quiet after it is shown | 7 days |
+| How long after arriving the lead popup opens by itself | 5 seconds |
+| How far down the page the visitor must scroll to open it by itself | 40% |
 
 The limit of 20 lines is a safety guard, not a business rule, so it can be raised freely.
 
@@ -254,7 +273,7 @@ The numbers are the ones Stripe publishes for testing. Other rules:
 
 ## Demo people
 
-Every "Use demo data" button fills in one of eight fictional people, so no visitor has to type personal details. One is picked at random the first time a visitor uses a button, and the same person is used everywhere after that, so a visitor's lead and order share one identity. A "new persona" link picks a different one.
+Every "Use demo data" button fills in one of eight fictional people, so no visitor has to type personal details. One is picked at random the first time a visitor uses a button, and the same person is used everywhere after that, so a visitor's lead and order share one identity. The person is remembered for the visit only, in the tab's session storage, so closing the tab forgets it. A "Try another person" button, shown once a person has been filled in, always picks a different one.
 
 - Emails are on `example.com`, which is reserved for examples and never delivers mail.
 - Phone numbers are in each country's own reserved fiction range, so a demo number can never ring a real person. Canada and the United States use 555-0100 to 555-0199. The United Kingdom, France and Germany use the ranges their regulators (Ofcom, ARCEP and the Bundesnetzagentur) set aside for films and television.
@@ -278,7 +297,7 @@ The code is kept in three folders, so that the reusable part can be told apart f
 
 | Folder | What it holds | Files |
 |---|---|---|
-| `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart-view.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `list-handoff.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
+| `src/engine` | The reusable code: pricing, the cart, the checks on what a shopper types, the email domain checks, and the helper that fills the blanks in a piece of text. It knows nothing about one particular store | `cart-storage.ts`, `cart-view.ts`, `cart.ts`, `catalog.ts`, `checkout-form.ts`, `coupons.ts`, `disposable-email-domains.txt`, `email-domain.ts`, `fill.ts`, `lead-popup.ts`, `list-handoff.ts`, `money.ts`, `postal-codes.ts`, `pricing.ts`, `shipping.ts`, `tax.ts` |
 | `src/store` | Second Impression's own data: its products, currencies and rates, countries and tax rates, shipping methods, coupon codes, cart limits, which drawing each product uses, the words a shopper reads and the places its pages link to outside the site | `art.ts`, `coupon-codes.ts`, `currencies.ts`, `destinations.ts`, `policy.ts`, `products.ts`, `shipping-methods.ts`, `site.ts`, `words.ts` |
 | `src/demo` | What exists only for the demo: the test cards, the eight demo people and the demo email domains. A real store deletes this folder | `email-domains.ts`, `personas.ts`, `test-cards.ts` |
 
@@ -300,6 +319,9 @@ Every number and list above is defined in one place in the code. To change one, 
 | Most units of one item on a line | A sensible cap for a demo store | `MAX_QUANTITY_PER_LINE` in `src/store/policy.ts` |
 | Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/store/policy.ts` |
 | How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/store/policy.ts` |
+| How long the lead popup stays quiet after it is shown | Counted from the last time it was shown, however it ended, and equal to the 7 days a lead is kept | `LEAD_POPUP_INTERVAL_DAYS` in `src/store/policy.ts` |
+| How long after arriving the lead popup opens by itself | A deliberate demo setting, so a reviewer sees it quickly. A real store would wait 30 to 60 seconds | `LEAD_POPUP_DELAY_SECONDS` in `src/store/policy.ts` |
+| How far down the page the visitor must scroll to open the lead popup by itself | Counted as a share of the distance the page can be scrolled, so it does not depend on the height of the screen | `LEAD_POPUP_SCROLL_PERCENT` in `src/store/policy.ts` |
 | Exchange rates | Fixed demo rates, not live ones | `CURRENCIES` in `src/store/currencies.ts` |
 | The starting currency by country | CAD, USD, GBP and EUR by country, and USD for everywhere else | `defaultCurrencyFor` in `src/store/currencies.ts` |
 | The euro-area countries | The 21 members of the euro area | `EURO_AREA_COUNTRIES` in `src/store/currencies.ts` |

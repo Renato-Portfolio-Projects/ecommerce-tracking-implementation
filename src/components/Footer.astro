@@ -1,6 +1,8 @@
 ---
+import { fill } from '../engine/fill';
 import { WORDS } from '../store/words';
 import { SITE_LINKS } from '../store/site';
+import { welcomeOffer } from './welcome-offer';
 ---
 
 <footer class="footer">
@@ -8,6 +10,11 @@ import { SITE_LINKS } from '../store/site';
     <div>
       <p class="wordmark plain">{WORDS['site.name']}</p>
       <p>{WORDS['site.tagline']}</p>
+      {/* Opens the lead popup by hand, from any page. It is a button, not a link, because it does something on
+           the page instead of going somewhere. It shows the offer, never the code. */}
+      <button type="button" class="link-button" data-lead-open="footer" data-cta="Lead Popup - Footer link" aria-haspopup="dialog">
+        {fill(WORDS['popup.reopen'], { percent: welcomeOffer().percentOff })}
+      </button>
     </div>
     <div>
       <p class="label">{WORDS['footer.demoHeading']}</p>

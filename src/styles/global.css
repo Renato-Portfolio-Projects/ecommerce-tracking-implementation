@@ -158,6 +158,9 @@ a {
 
 .tools {
   display: flex;
+  /* On a screen as narrow as 320 px the currency picker and the cart link do not fit side by side, and without this
+     they push the whole page wider than the screen. The cart link drops to its own row instead. */
+  flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
 }
@@ -493,7 +496,9 @@ a {
 .footer {
   background: var(--ink);
   color: var(--paper);
-  padding: var(--space-5) var(--space-3) var(--space-4);
+  /* The room at the bottom keeps the last line clear of the lead popup's corner tab, which is fixed to the
+     bottom left of the screen (see .lead-tab) and would otherwise cover the start of that line. */
+  padding: var(--space-5) var(--space-3) calc(var(--space-6) + var(--space-3) + env(safe-area-inset-bottom, 0px));
 }
 
 .footer-inner {
@@ -617,9 +622,12 @@ a {
   font-weight: 600;
   background: var(--spot-blue);
   color: var(--paper);
-  border: 0;
+  /* A border that cannot be seen. In forced-colours mode (Windows high contrast) the browser drops a background and
+     colours a border, so without one a button is left as plain text. The padding is 2px less to make up for it,
+     so the button is the size it was. */
+  border: 2px solid transparent;
   border-radius: 2px;
-  padding: 0.75rem 1.4rem;
+  padding: calc(0.75rem - 2px) calc(1.4rem - 2px);
   text-decoration: none;
   cursor: pointer;
 }
@@ -901,7 +909,8 @@ body:has(.cart-drawer[open]) {
   flex: none;
 }
 
-.cart-close {
+.cart-close,
+.lead-close {
   width: 2.5rem;
   height: 2.5rem;
   font: inherit;
@@ -911,4 +920,187 @@ body:has(.cart-drawer[open]) {
   background: none;
   border: 0;
   cursor: pointer;
+}
+
+/* ---- The lead popup: a dialog that offers the welcome code, and the two ways to open it by hand ---- */
+
+/* A button that looks like a link, for actions that happen on the page: the footer link that opens the popup, and
+   the popup's own small buttons. It takes the colour around it, so it reads correctly in the dark footer too. */
+.link-button {
+  padding: 0.5rem 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.lead-popup {
+  width: min(26rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  /* The border cannot be seen, and is there for forced-colours mode, which gives it a colour so the popup has an
+     edge. The padding is 1px less to make up for it. */
+  padding: calc(var(--space-4) - 1px);
+  overflow-y: auto;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--ink) 25%, transparent);
+}
+
+/* The page behind is dimmed, the same as behind the cart drawer, and not blurred. */
+.lead-popup::backdrop {
+  background: color-mix(in oklab, var(--ink) 55%, transparent);
+}
+
+/* On a phone it sits at the bottom of the screen and is as wide as the screen, which is less aggressive than a
+   box in the middle that covers the page. */
+@media (max-width: 30rem) {
+  .lead-popup {
+    width: 100vw;
+    max-width: none;
+    max-height: 90dvh;
+    margin: auto 0 0;
+    padding: calc(var(--space-3) - 1px);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px) - 1px);
+    border-radius: 2px 2px 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lead-popup[open] {
+    animation: lead-fade-in 0.2s ease-out;
+  }
+
+  @keyframes lead-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+}
+
+.lead-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.lead-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.lead-body {
+  margin: var(--space-2) 0 0;
+}
+
+.lead-form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.lead-field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.lead-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lead-field input {
+  font: inherit;
+  padding: 0.6rem 0.7rem;
+  background: color-mix(in oklab, var(--paper) 50%, white);
+  border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
+  border-radius: 2px;
+}
+
+.lead-field input[aria-invalid='true'] {
+  border-color: var(--spot-red-text);
+}
+
+.lead-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--spot-red-text);
+}
+
+.lead-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: 0.9rem;
+}
+
+.lead-check input {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0;
+}
+
+.lead-submit {
+  width: 100%;
+  text-align: center;
+}
+
+.lead-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+}
+
+.lead-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.lead-decline {
+  display: block;
+  margin: var(--space-2) auto 0;
+}
+
+.lead-success {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  font-weight: 600;
+  background: var(--paper-shade);
+  border-radius: 2px;
+}
+
+.lead-success p {
+  margin: 0;
+}
+
+/* The small reminder in the bottom left corner, kept clear of the cart drawer, which opens from the right. It is a
+   pill on every screen, and it lifts above the bar at the bottom of some phones. */
+.lead-tab {
+  position: fixed;
+  left: var(--space-3);
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+  padding: calc(0.6rem - 1px) calc(1rem - 1px);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  /* Not seen, and there so that forced-colours mode can give the tab a shape (see .btn). */
+  border: 1px solid transparent;
+  border-radius: 999px;
+  box-shadow: 0 2px 12px color-mix(in oklab, var(--ink) 30%, transparent);
+  cursor: pointer;
+}
+
+.lead-tab[hidden] {
+  display: none;
 }

@@ -156,3 +156,14 @@ export function demoAddress(persona: Persona): {
   const { country, firstName, lastName, address1, city, province, postalCode } = persona;
   return { country, firstName, lastName, address1, city, ...(province === undefined ? {} : { province }), postalCode };
 }
+
+/**
+ * The person a demo button should fill in. A visit keeps one person, so that a lead and a later order
+ * share one identity: the saved person is used again. When none is saved, or the saved id is not one of
+ * theirs, a person is picked. When `another` is true a different person is picked, and it is never the
+ * saved one. `savedId` is `unknown` because it comes out of the browser's storage.
+ */
+export function personaToUse(savedId: unknown, random: () => number, another = false): Persona {
+  const saved = personaById(savedId);
+  return saved !== undefined && !another ? saved : pickPersona(random, saved?.id);
+}

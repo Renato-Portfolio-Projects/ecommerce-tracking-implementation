@@ -172,7 +172,7 @@ Built in the second part of this work. Every price is stored in Canadian dollars
 
 ## Lead popup
 
-Built in the fourth part of this work. It appears after 5 seconds or 40% of the page, once every 7 days. The messages about a wrong name or email are the ones already listed in `docs/shop-rules.md`.
+Built in the fourth part of this work. On the home page it opens by itself after 5 seconds or 40% of the page, at most once every 7 days, and a visitor can open the same form at any time from the footer link or the corner tab. The messages about a wrong name or email are the ones already listed in `docs/shop-rules.md`.
 
 | Key | Wording | Where it appears |
 |---|---|---|
@@ -185,10 +185,12 @@ Built in the fourth part of this work. It appears after 5 seconds or 40% of the 
 | `popup.demoButton` | Use demo data | A small button that fills the fields with a made-up person |
 | `popup.demoAnnounce` | Form filled with demo data. | Read out to screen readers after the demo button is pressed |
 | `popup.demoNote` | Demo details are made up. Anything you type yourself is deleted after {days} days. | A small note under the demo button |
-| `popup.newPerson` | Try another person | A small link that fills the fields with a different made-up person |
+| `popup.newPerson` | Try another person | A small button, styled as a link, that fills the fields with a different made-up person. It stays hidden until a person has been filled in |
 | `popup.success` | Your code is {code}. Use it at checkout for {percent}% off. | Shown after the form is accepted |
 | `popup.close` | Close | Read out for the close button |
 | `popup.noThanks` | No thanks | A text button under the form that closes the popup |
+| `popup.reopen` | Get {percent}% off | The button, styled as a link, in the footer and the small tab in the corner of the page, which open the same form by hand. It shows the offer, never the code |
+| `popup.loadFailed` | The form could not be loaded. Please reload the page and try again. | A message under the main button, shown only if the form's code cannot be loaded, which is rare. The browser does not try again by itself, so the visitor has to reload the page |
 
 ## About
 

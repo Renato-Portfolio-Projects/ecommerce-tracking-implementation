@@ -89,4 +89,6 @@ The bar on every storefront page reads: "Portfolio demo store: fictional product
 | Best Practices (mobile) | 95 or more |
 | JavaScript on a page | 30 KB or less |
 
+The JavaScript figure is what a page loads on its own, and it is what `npm run lighthouse` counts. The lead popup's form is loaded only when the popup is first shown, so it is on top of that figure: it is 5.7 KB (2.5 KB compressed), which puts a store page at about 27 KB and a product page at about 29 KB once it has loaded. That is under the budget with little room, so the tag scripts of v0.2d will need a rule of their own for how they are counted.
+
 Every page also has to reach the Core Web Vitals "good" band: Largest Contentful Paint within 2.5 seconds, Interaction to Next Paint at 200 milliseconds or less, and Cumulative Layout Shift at 0.1 or less ([web.dev: Web Vitals](https://web.dev/articles/vitals), last updated 2024-10-31). Lighthouse's Performance score reflects these on the page it tests, but they are only truly measured from real visits, which this portfolio does not have yet.

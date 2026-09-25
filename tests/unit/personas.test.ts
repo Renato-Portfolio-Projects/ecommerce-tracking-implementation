@@ -9,6 +9,7 @@ import {
   demoLead,
   personaById,
   pickPersona,
+  personaToUse,
   type Persona,
 } from '../../src/demo/personas';
 
@@ -221,5 +222,44 @@ describe('pickPersona', () => {
       expect(next.id).not.toBe(current.id);
       current = next;
     }
+  });
+});
+
+describe('personaToUse', () => {
+  it('uses the saved person again, so a visit keeps one identity', () => {
+    for (const persona of PERSONAS) {
+      expect(personaToUse(persona.id, () => 0.5), persona.id).toBe(persona);
+    }
+  });
+
+  it('picks a person when none is saved, and again when the saved id is not a person', () => {
+    expect(personaToUse(undefined, () => 0)).toBe(PERSONAS[0]);
+    expect(personaToUse(null, () => 0)).toBe(PERSONAS[0]);
+    expect(personaToUse('nobody', () => 0)).toBe(PERSONAS[0]);
+    expect(personaToUse(42, () => 0)).toBe(PERSONAS[0]);
+    expect(personaToUse(undefined, () => 0.999999)).toBe(PERSONAS[PERSONAS.length - 1]);
+  });
+
+  it('always picks someone else when asked for another, whatever the roll', () => {
+    for (const persona of PERSONAS) {
+      for (const roll of [0, 0.2, 0.5, 0.8, 0.999999]) {
+        expect(personaToUse(persona.id, () => roll, true).id, `${persona.id} ${roll}`).not.toBe(persona.id);
+      }
+    }
+  });
+
+  it('picks any person when asked for another and none is saved', () => {
+    expect(personaToUse(undefined, () => 0, true)).toBe(PERSONAS[0]);
+    expect(personaToUse('nobody', () => 0.999999, true)).toBe(PERSONAS[PERSONAS.length - 1]);
+  });
+
+  it('can reach every person when asked for another, one after the other', () => {
+    const seen = new Set<string>();
+    let current: Persona = PERSONAS[0];
+    for (let i = 0; i < 400; i += 1) {
+      current = personaToUse(current.id, () => (i * 0.6180339887) % 1, true);
+      seen.add(current.id);
+    }
+    expect(seen.size).toBe(PERSONAS.length);
   });
 });
