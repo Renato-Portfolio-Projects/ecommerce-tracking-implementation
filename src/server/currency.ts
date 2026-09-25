@@ -1,6 +1,6 @@
-import { defaultCurrencyFor } from '../store/currencies';
-import type { Environment } from './gate';
-import { answer, guarded } from './http';
+import { defaultCurrencyFor } from '../store/currencies.js';
+import type { Environment } from './gate.js';
+import { answer, guarded } from './http.js';
 
 /** The header Vercel adds to a request, holding the two-letter country its connection appears to come from. */
 export const COUNTRY_HEADER = 'x-vercel-ip-country';

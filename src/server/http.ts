@@ -1,4 +1,4 @@
-import { storeIsOpen, type Environment } from './gate';
+import { storeIsOpen, type Environment } from './gate.js';
 
 /**
  * The rules every server function follows, in one place, so that no function can forget one:

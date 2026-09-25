@@ -200,7 +200,8 @@ describe('the files in api/, which Vercel runs as functions', () => {
         .split(/\r?\n/)
         .filter((line) => line.trim() !== '' && !line.trim().startsWith('//'));
       expect(lines, name).toHaveLength(2);
-      expect(lines[0], name).toMatch(/^import \{ \w+ \} from '\.\.\/src\/server\/[\w-]+';$/);
+      // The `.js` is what Vercel needs, since it runs the function as a native module (see functions-native.test.ts).
+      expect(lines[0], name).toMatch(/^import \{ \w+ \} from '\.\.\/src\/server\/[\w-]+\.js';$/);
       expect(lines[1], name).toMatch(/^export default \{ fetch: \w+\(process\.env\) \};$/);
     }
   });
