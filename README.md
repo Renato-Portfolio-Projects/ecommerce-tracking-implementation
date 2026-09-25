@@ -35,6 +35,7 @@ A fictional online store, Second Impression, built to demonstrate production-sty
 - [Design spec](docs/design/2026-09-19-dummy-store-design.md)
 - [Tracking plan](docs/tracking-plan.md)
 - [Shop rules](docs/shop-rules.md)
+- [Browser storage and sessions](docs/browser-storage.md)
 - [Taking this to production](docs/production-guide.md)
 - [Brand notes](docs/brand.md)
 - [Accounts and domain checklist](docs/setup/accounts-and-domain.md)
