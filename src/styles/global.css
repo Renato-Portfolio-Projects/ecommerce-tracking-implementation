@@ -622,9 +622,12 @@ a {
   font-weight: 600;
   background: var(--spot-blue);
   color: var(--paper);
-  border: 0;
+  /* A border that cannot be seen. In forced-colours mode (Windows high contrast) the browser drops a background and
+     colours a border, so without one a button is left as plain text. The padding is 2px less to make up for it,
+     so the button is the size it was. */
+  border: 2px solid transparent;
   border-radius: 2px;
-  padding: 0.75rem 1.4rem;
+  padding: calc(0.75rem - 2px) calc(1.4rem - 2px);
   text-decoration: none;
   cursor: pointer;
 }
@@ -937,11 +940,13 @@ body:has(.cart-drawer[open]) {
 .lead-popup {
   width: min(26rem, calc(100vw - 2rem));
   max-height: calc(100dvh - 2rem);
-  padding: var(--space-4);
+  /* The border cannot be seen, and is there for forced-colours mode, which gives it a colour so the popup has an
+     edge. The padding is 1px less to make up for it. */
+  padding: calc(var(--space-4) - 1px);
   overflow-y: auto;
   color: var(--ink);
   background: var(--paper);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 2px;
   box-shadow: 0 8px 32px color-mix(in oklab, var(--ink) 25%, transparent);
 }
@@ -959,8 +964,8 @@ body:has(.cart-drawer[open]) {
     max-width: none;
     max-height: 90dvh;
     margin: auto 0 0;
-    padding: var(--space-3);
-    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+    padding: calc(var(--space-3) - 1px);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px) - 1px);
     border-radius: 2px 2px 0 0;
   }
 }
@@ -1083,13 +1088,14 @@ body:has(.cart-drawer[open]) {
   left: var(--space-3);
   bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   z-index: 10;
-  padding: 0.6rem 1rem;
+  padding: calc(0.6rem - 1px) calc(1rem - 1px);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--paper);
   background: var(--ink);
-  border: 0;
+  /* Not seen, and there so that forced-colours mode can give the tab a shape (see .btn). */
+  border: 1px solid transparent;
   border-radius: 999px;
   box-shadow: 0 2px 12px color-mix(in oklab, var(--ink) 30%, transparent);
   cursor: pointer;
