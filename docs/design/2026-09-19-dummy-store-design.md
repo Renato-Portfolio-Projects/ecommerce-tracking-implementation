@@ -22,7 +22,7 @@ Success looks like this:
 
 | Area | Decision |
 |---|---|
-| Back end | Light back end: Vercel serverless functions plus Upstash Redis on the Free plan (no card). Redis deletes each record itself after 7 days, so the retention promise does not depend on a cleanup script |
+| Back end | Light back end: Vercel serverless functions plus Upstash Redis on the Free plan (no card). The functions are plain files in an `api/` folder, each handing the request to code in `src/server`, and each answers 404 until the store is open. Redis deletes each record itself after 7 days, so the retention promise does not depend on a cleanup script |
 | Framework | Astro, multi-page, latest stable at build time. Next.js was considered and rejected: the target roles screen for tracking skills, and client-side navigation would add virtual-pageview work that competes with the tracking story |
 | Hosting | Vercel Hobby (a personal portfolio fits its non-commercial terms) |
 | Domain | `secondimpression.ca`, bought from Namecheap on 2026-09-19 for USD 11.98 a year (CAD 16.78 charged to Renato's card after conversion). The only planned cost (section 12) |
@@ -123,7 +123,7 @@ Because reaching 10K disables the container until it is upgraded, the guardrails
 - Meta: no tag fires until marketing consent.
 - Server side: the consent state travels with every event. The CAPI tag requires marketing consent, and hashed `user_data` is only attached when it is granted. Because nothing fires before consent, a visitor who says no costs no server quota.
 - Lead and order records are saved regardless of tracking consent (the visitor asked for them). Marketing email is a separate, unticked opt-in checkbox (CASL). `/proof` shows both consents as "consent receipts".
-- The currency a visitor chooses is kept in `localStorage`, not a cookie, so it needs no entry in the cookie declaration. The country-based starting default waits for v0.2c, since there is no server yet to read a visitor's country; until then every visitor starts at CAD.
+- The currency a visitor chooses is kept in `localStorage`, not a cookie, so it needs no entry in the cookie declaration. The country-based starting default is built (v0.2c-1): a small function, `/api/currency`, reads the country Vercel adds to the request and answers with the currency alone, so the country never reaches the browser or any record. The browser keeps the answer for the tab only, in `sessionStorage` (also not a cookie), and never as the visitor's choice, which always wins, even when it is Canadian dollars. Until the answer arrives, or if it never does, the page shows Canadian dollars.
 - Privacy policy page lists vendors, what is collected and why, 7-day retention, how to withdraw, and a plain "this is a demo" statement. Drafted for Renato's review. It is not legal advice.
 - Data minimisation: every form has a "Use demo data" button (section 6) that fills a fictional persona on an `@example.com` address. Records auto-delete after 7 days. Other visitors' emails are never shown (the global feed is masked). No card numbers are ever captured.
 - CI asserts that no request at all reaches a Google or Meta endpoint before consent, that Reject keeps it that way, and that the footer link flips the behaviour both ways.

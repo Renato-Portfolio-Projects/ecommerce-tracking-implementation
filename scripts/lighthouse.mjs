@@ -2,16 +2,19 @@
 // budgets in docs/brand.md. It is run by hand (npm run lighthouse), not in CI: a real browser and a
 // stable machine are needed for a fair score, which a CI runner does not reliably give. Chrome must be
 // installed. See "Speed and accessibility budgets" in docs/brand.md for the numbers and the reasoning.
+//
+// The store is served by the same local server as `npm run serve:store`, so its functions answer as they would
+// for a visitor. A plain file server has no /api/currency, so every page's request for the starting currency
+// would fail and be logged as a console error, which lowers the Best Practices score for a reason a visitor
+// never sees. The server pretends to be in France, so the page switches to euros as it loads, which is the case
+// that could move the layout, not the one where nothing changes.
 import { readFileSync } from 'node:fs';
-import { createServer } from 'node:http';
-import { extname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
+import { startDevServer } from './dev-server.mjs';
 
-const ROOT = fileURLToPath(new URL('../dist-store/', import.meta.url));
 const PORT = 4600;
-const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
 
 // The home page and two pages of text, the style guide, and the two pages that carry the most script: the
 // cart page (which draws the cart) and a product page (which also has the colour and size picker).
@@ -53,35 +56,8 @@ export function readBudgets(brandNotes) {
   return budgets;
 }
 
-/** The same file Astro's own build would answer an address with: index.html at the root, or exactly as named. */
-export function fileFor(pathname) {
-  if (pathname === '/' || pathname === '') return 'index.html';
-  if (extname(pathname)) return pathname;
-  return `${pathname.replace(/\/$/, '')}/index.html`;
-}
-
-function serveOnce(root, port) {
-  const server = createServer((req, res) => {
-    const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    const candidates = [fileFor(pathname), pathname === '/' ? null : '404.html'].filter(Boolean);
-    for (const [index, candidate] of candidates.entries()) {
-      try {
-        const data = readFileSync(join(root, candidate));
-        res.writeHead(index === 0 ? 200 : 404, { 'content-type': TYPES[extname(candidate)] ?? 'application/octet-stream' });
-        res.end(data);
-        return;
-      } catch {
-        // try the next candidate
-      }
-    }
-    res.writeHead(404);
-    res.end('not found');
-  });
-  return new Promise((resolve) => server.listen(port, '127.0.0.1', () => resolve(server)));
-}
-
 async function run() {
-  const server = await serveOnce(ROOT, PORT);
+  const server = await startDevServer({ port: PORT, country: 'FR' });
   const chrome = await chromeLauncher.launch({ chromeFlags: ['--headless=new'] });
   const results = [];
   try {
@@ -106,7 +82,7 @@ async function run() {
     }
   } finally {
     await chrome.kill();
-    server.close();
+    await server.close();
   }
   return results;
 }

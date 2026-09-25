@@ -6,7 +6,7 @@ import { PERSONA_STORAGE_KEY } from '../../src/components/demo-persona';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
-import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage } from '../helpers/built';
+import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, scriptOf } from '../helpers/built';
 
 const welcome = welcomeCoupon()!;
 const percent = welcome.percentOff;
@@ -176,16 +176,12 @@ describe('the two ways to open the lead popup by hand', () => {
   });
 });
 
-/** All the script a page loads from its own site, joined, so what it contains can be searched. */
-const scriptOf = (html: string) =>
-  [...html.matchAll(/<script type="module" src="\/([^"]+)"/g)].map((match) => readPage(OPEN, match[1])).join('\n');
-
 // These tests cannot press a key or wait five seconds, so they only check that the code which opens and closes the
 // popup is in what each page loads. What it does is checked by driving a page in a browser.
 describe('the script that opens and closes the lead popup', () => {
   it('is loaded by every page that has the popup, and carries its announcements and its note', () => {
     for (const file of pages) {
-      const script = scriptOf(readPage(OPEN, file));
+      const script = scriptOf(OPEN, readPage(OPEN, file));
       expect(script, file).toContain('lead-popup:shown');
       expect(script, file).toContain('lead-popup:closed');
       expect(script, file).toContain(LEAD_POPUP_KEY);
@@ -194,7 +190,7 @@ describe('the script that opens and closes the lead popup', () => {
 
   it('is not loaded by the store built closed, which has no popup to open', () => {
     for (const file of htmlFiles(CLOSED)) {
-      expect(scriptOf(readPage(CLOSED, file)), file).not.toContain('lead-popup:shown');
+      expect(scriptOf(CLOSED, readPage(CLOSED, file)), file).not.toContain('lead-popup:shown');
     }
   });
 });
@@ -216,7 +212,7 @@ describe('the code for the popup\'s form', () => {
     for (const file of pages) {
       const html = readPage(OPEN, file);
       expect(html, file).not.toContain(formFiles[0]);
-      const script = scriptOf(html);
+      const script = scriptOf(OPEN, html);
       expect(script, file).not.toContain(PERSONA_STORAGE_KEY);
       // The build writes a string with double quotes, single quotes or backticks, so all three are allowed.
       expect(script, file).not.toMatch(new RegExp(`(?:from|import)\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));

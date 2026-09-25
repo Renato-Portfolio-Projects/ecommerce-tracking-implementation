@@ -49,6 +49,20 @@ describe.each(PRODUCTS)('the product page for $name', (product) => {
     }
   });
 
+  it('keeps the word "was" with its earlier price in every currency, since a change of currency swaps in the text the page carries', () => {
+    const was = html.match(/<span class="was" data-prices="([^"]*)"/);
+    if (product.compareAtCad === undefined) {
+      expect(was).toBeNull();
+      return;
+    }
+    const comparePrices = pricesInAllCurrencies(product.compareAtCad);
+    const carried = JSON.parse(decodeEntities(was![1])) as Record<string, string>;
+    expect(Object.keys(carried)).toEqual(Object.keys(comparePrices));
+    for (const [code, price] of Object.entries(comparePrices)) {
+      expect(carried[code], code).toBe(fill(WORDS['product.was'], { price }));
+    }
+  });
+
   it('names every colour and size it comes in', () => {
     for (const colour of product.colours) expect(text, colour).toContain(colour);
     for (const size of product.sizes) expect(text, size).toContain(`>${size}<`);

@@ -12,6 +12,7 @@
     "build": "astro build",
     "build:store": "node scripts/with-store-open.mjs astro build --outDir dist-store",
     "preview": "astro preview",
+    "serve:store": "node scripts/dev-server.mjs",
     "check": "astro check",
     "test": "vitest run tests/unit",
     "test:built": "vitest run tests/built",
@@ -25,6 +26,7 @@
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.6.2",
     "chrome-launcher": "^1.2.1",
+    "esbuild": "^0.28.2",
     "lighthouse": "^13.5.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.1"
