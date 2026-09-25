@@ -190,6 +190,7 @@ Built in the fourth part of this work. On the home page it opens by itself after
 | `popup.close` | Close | Read out for the close button |
 | `popup.noThanks` | No thanks | A text button under the form that closes the popup |
 | `popup.reopen` | Get {percent}% off | The link in the footer and the small tab in the corner of the page, which open the same form by hand. It shows the offer, never the code |
+| `popup.loadFailed` | The form could not be loaded. Please reload the page and try again. | A message under the main button, shown only if the form's code cannot be loaded, which is rare. The browser does not try again by itself, so the visitor has to reload the page |
 
 ## About
 

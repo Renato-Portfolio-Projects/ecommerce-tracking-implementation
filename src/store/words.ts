@@ -140,6 +140,7 @@ export const WORDS = {
   'popup.close': 'Close',
   'popup.noThanks': 'No thanks',
   'popup.reopen': 'Get {percent}% off',
+  'popup.loadFailed': 'The form could not be loaded. Please reload the page and try again.',
 
   // About
   'about.title': 'About',

@@ -22,7 +22,8 @@ import { LEAD_POPUP_DELAY_SECONDS } from '../store/policy';
  * The form itself (checking it, the demo buttons, showing the code) is in lead-popup-form.ts, which is
  * loaded the first time the popup is shown and not before, so that every other visit to a page does not
  * carry it. This script passes on the presses that belong to the form, waiting for it if it has not
- * arrived yet, so that no press is lost and the form is never sent the browser's own way.
+ * arrived yet, so that no press is lost and the form is never sent the browser's own way. If it cannot be
+ * loaded at all, the popup says so, since the browser will not try that load again until the page is reloaded.
  *
  * It announces what happens, on the document, and sends nothing anywhere:
  * - `lead-popup:shown`, with `source`: `auto` if the page opened it, `manual` if the visitor did;
@@ -69,7 +70,11 @@ function writeNote(note: LeadPopupNote): void {
 type FormModule = typeof import('./lead-popup-form');
 let formModule: Promise<FormModule> | undefined;
 
-/** Loads the form's code the first time it is needed, and gives the same one after. A failed load is tried again next time. */
+/**
+ * Loads the form's code the first time it is needed, and gives the same one after. A browser remembers a module that
+ * failed to load until the page is reloaded (Chrome makes no second request), so a failed load is very likely to fail
+ * again. The record here is cleared anyway, so a browser that does try again gets its chance.
+ */
 function loadForm(): Promise<FormModule> {
   formModule ??= import('./lead-popup-form').catch((error: unknown) => {
     formModule = undefined;
@@ -78,11 +83,34 @@ function loadForm(): Promise<FormModule> {
   return formModule;
 }
 
-/** Runs something from the form's code, once it is loaded. If it cannot be loaded the press does nothing, and the next press tries again. */
+/** The message under the main button, which says the form's code could not be loaded. It is written from the popup's own data. */
+function loadFailureBox(): { box: HTMLElement; words: { loadFailed?: string } } | undefined {
+  const dialog = popup();
+  const box = dialog?.querySelector<HTMLElement>('[data-lead-load-error]');
+  if (!dialog || !box) return undefined;
+  return { box, words: JSON.parse(dialog.dataset.words ?? '{}') as { loadFailed?: string } };
+}
+
+/**
+ * Runs something from the form's code, once it is loaded. If the code cannot be loaded, the visitor is told to
+ * reload the page, and nothing else happens. Only a failed load is told this way: a fault in what the form does
+ * is left to the browser to report, so that it is never passed off as a loading problem.
+ */
 function withForm(action: (form: FormModule) => unknown): void {
-  loadForm()
-    .then(action)
-    .catch((error: unknown) => console.error('The lead popup form could not be loaded.', error));
+  loadForm().then(
+    (form) => {
+      const failure = loadFailureBox();
+      if (failure) failure.box.hidden = true;
+      return action(form);
+    },
+    (error: unknown) => {
+      console.error('The lead popup form could not be loaded.', error);
+      const failure = loadFailureBox();
+      if (!failure) return;
+      failure.box.textContent = failure.words.loadFailed ?? '';
+      failure.box.hidden = false;
+    },
+  );
 }
 
 function popup(): HTMLDialogElement | null {

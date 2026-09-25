@@ -18,6 +18,7 @@ const percent = welcomeOffer().percentOff;
 const words = {
   demoAnnounce: WORDS['popup.demoAnnounce'],
   success: WORDS['popup.success'],
+  loadFailed: WORDS['popup.loadFailed'],
   percent: String(percent),
 };
 ---
@@ -58,6 +59,8 @@ const words = {
       </label>
 
       <button type="submit" class="btn lead-submit" data-lead-submit>{WORDS['popup.submit']}</button>
+      {/* Shown by the script only if the form's code cannot be loaded, which is rare. The browser does not try a failed load again by itself, so the visitor is asked to reload the page. */}
+      <p class="lead-error" role="alert" data-lead-load-error hidden></p>
 
       <div class="lead-demo">
         <button type="button" class="link-button" data-lead-demo data-cta="Demo Data - Lead popup">{WORDS['popup.demoButton']}</button>

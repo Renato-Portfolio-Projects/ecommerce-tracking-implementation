@@ -102,9 +102,24 @@ describe('the lead popup, before any script has opened it', () => {
     expect(words).toEqual({
       demoAnnounce: WORDS['popup.demoAnnounce'],
       success: WORDS['popup.success'],
+      loadFailed: WORDS['popup.loadFailed'],
       percent: String(percent),
     });
     expect(words.success).toContain('{code}');
+  });
+
+  it('has a place for the message that the form\'s code could not be loaded, hidden, under the main button and inside the form\'s side of the popup', () => {
+    for (const file of pages) {
+      const popup = popupOf(readPage(OPEN, file));
+      expect(popup, file).toContain('<p class="lead-error" role="alert" data-lead-load-error hidden></p>');
+      const button = popup.indexOf('data-lead-submit');
+      const message = popup.indexOf('data-lead-load-error');
+      const success = popup.indexOf('data-lead-success');
+      const ask = popup.indexOf('data-lead-ask');
+      expect(ask, file).toBeLessThan(button);
+      expect(message, file).toBeGreaterThan(button);
+      expect(message, file).toBeLessThan(success);
+    }
   });
 
   it('keeps the welcome code out of every page: it is shown only after the form is accepted', () => {
