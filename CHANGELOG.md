@@ -34,6 +34,12 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A production guide area, "Lead capture": when a popup may appear, the welcome code and saving the lead. The marketing consent row now says the checkbox is built.
 - The tracking plan lists the popup's three announcements and its three `data-cta` labels, for the tracking phase to hang on.
 - Built-page tests for the popup on every store page, for the script that opens it and for its form being a separate file that no page loads with it. The README says what was checked in a real browser, and what was not.
+- The store's first server code. A `src/server` folder holds what runs on a server, and an `api/` folder holds the functions, written as plain files for Vercel Functions and not through an Astro adapter, so the site stays static. A gate makes every function answer 404, in the store's own words, until the store is open, and every answer tells caches never to keep it. A test keeps the server code apart from the browser code.
+- `/api/currency`: the country Vercel adds to a request becomes a starting currency, and only the currency is answered, never the country.
+- `npm run serve:store`, which serves the built store and its functions together on this machine, with `--country` to pretend to be visiting from another country and `--closed` to run as production does. `esbuild` is now listed in `package.json`, at the version Astro had already installed.
+- A visitor who has chosen no currency now starts in the one for their country. The answer is kept for the tab only, is never taken for the visitor's own choice, is dropped if they choose while it is on its way, and gives way to Canadian dollars if the function cannot be reached. The browser storage page lists the new key.
+- Built-page tests for the starting currency, and a helper that reads a page's script together with the files it imports.
+- Two rows in the production guide: the starting currency by country, and the server functions.
 
 ### Changed
 
@@ -53,6 +59,13 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The Lighthouse script also tests the cart page and a product page, and the README's Lighthouse table is replaced with measured figures for six pages. Its "0 KB" JavaScript column, which counts script files only and had been run on four pages that were neither the cart nor a product page, is now 17 KB on a store page and 19 KB on a product page, against a budget of 30.
 - The product page's script no longer carries the words file: the page hands it the one sentence it needs. The description of a garment drawing moved into its own file, `garment-label.ts`, so that a script which draws a garment does not pull the words in.
 - The design spec's Cart section now describes the cart's screens, the production guide's rows on prices and currency say that the cart is priced in the browser, and the README's status line says that the cart works.
+- `npm run lighthouse` now serves the store with its functions running, pretending to be in France. A plain file server made every page log a failed request for the starting currency, which lowered Best Practices to 96 for something a visitor never sees. The README's figures are updated, and the brand notes say that a product page with the popup's form loaded now carries about 30 KB of script, almost the whole 30 KB budget.
+- The design spec's currency and back-end lines, and the production guide's currency and security summaries, now describe the starting currency and the functions.
+
+### Fixed
+
+- A sale price on a product page kept its word "was" only until the page's script ran, when the currency selector replaced "was $42.00" with "$42.00". The word now stays in every currency.
+- On a phone narrower than about 420 pixels the total of a cart line could be pushed off the screen: cut off in the cart drawer, and making the cart page scroll sideways. The middle column of a line can now shrink, its buttons wrap, and the cart page uses the drawer's smaller picture on a phone. Nothing changes from 420 pixels up.
 
 ## [0.1.0] - 2026-09-19
 

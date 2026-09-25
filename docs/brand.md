@@ -80,7 +80,7 @@ The bar on every storefront page reads: "Portfolio demo store: fictional product
 
 ## Speed and accessibility budgets
 
-`npm run lighthouse` runs Lighthouse against the built store on a phone-sized screen and checks these numbers. It is run by hand, not in CI, because Lighthouse needs a real browser and a quiet machine for a fair score, which the roadmap leaves for v1.0 to add to CI. The numbers below were confirmed by running it once the store's pages existed, on 2026-09-21.
+`npm run lighthouse` runs Lighthouse against the built store on a phone-sized screen, served with its functions running and pretending to be in France, and checks these numbers. It is run by hand, not in CI, because Lighthouse needs a real browser and a quiet machine for a fair score, which the roadmap leaves for v1.0 to add to CI. The numbers below were confirmed by running it once the store's pages existed, on 2026-09-21.
 
 | Metric | Budget |
 |---|---|
@@ -89,6 +89,6 @@ The bar on every storefront page reads: "Portfolio demo store: fictional product
 | Best Practices (mobile) | 95 or more |
 | JavaScript on a page | 30 KB or less |
 
-The JavaScript figure is what a page loads on its own, and it is what `npm run lighthouse` counts. The lead popup's form is loaded only when the popup is first shown, so it is on top of that figure: it is 5.7 KB (2.5 KB compressed), which puts a store page at about 27 KB and a product page at about 29 KB once it has loaded. That is under the budget with little room, so the tag scripts of v0.2d will need a rule of their own for how they are counted.
+The JavaScript figure is what a page loads on its own, and it is what `npm run lighthouse` counts. The lead popup's form is loaded only when the popup is first shown, so it is on top of that figure: it is 5.7 KB (2.5 KB compressed), which puts a store page at about 28 KB and a product page at about 30 KB (29.6 KB, counted as the files are sent) once it has loaded. That is under the budget with almost no room, since the starting currency added 0.7 KB in v0.2c-1, so the tag scripts of v0.2d will need a rule of their own for how they are counted.
 
 Every page also has to reach the Core Web Vitals "good" band: Largest Contentful Paint within 2.5 seconds, Interaction to Next Paint at 200 milliseconds or less, and Cumulative Layout Shift at 0.1 or less ([web.dev: Web Vitals](https://web.dev/articles/vitals), last updated 2024-10-31). Lighthouse's Performance score reflects these on the page it tests, but they are only truly measured from real visits, which this portfolio does not have yet.

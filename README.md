@@ -2,7 +2,7 @@
 
 A fictional online store, Second Impression, built to demonstrate production-style tracking: Google Tag Manager, GA4, Meta Pixel and Conversions API through a server container, consent handling, and a live page where you can check every event yourself.
 
-> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page, the six product pages, a working cart (an Add to cart button, a cart drawer and a cart page) and the lead popup (an offer that opens by itself on the home page, or by hand from the footer, checks a name and an email and shows a welcome code) are built and can be seen in a preview build; checkout and the back end are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
+> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page, the six product pages, a working cart (an Add to cart button, a cart drawer and a cart page) and the lead popup (an offer that opens by itself on the home page, or by hand from the footer, checks a name and an email and shows a welcome code) are built and can be seen in a preview build. Each visitor starts in the currency for their country, worked out by the store's first server function; checkout, the orders and the rest of the back end are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
 
 ## What this will show
 
@@ -64,25 +64,27 @@ That serves the built store and the functions in `api/` together at `http://loca
 
 ## Speed and accessibility
 
-Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen. The budgets are in `docs/brand.md`. Scores from 2026-09-25:
+Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen, served with its functions running and pretending to be in France, so the page switches to euros while it loads. The budgets are in `docs/brand.md`. Scores from 2026-09-25:
 
 | Page | Performance | Accessibility | Best Practices | JavaScript |
 |---|---|---|---|---|
-| Home | 99 | 100 | 100 | 22 KB |
-| About | 100 | 100 | 100 | 22 KB |
-| Shipping | 100 | 100 | 100 | 22 KB |
+| Home | 99 | 100 | 100 | 23 KB |
+| About | 100 | 100 | 100 | 23 KB |
+| Shipping | 100 | 100 | 100 | 23 KB |
 | Style guide | 100 | 100 | 100 | 0 KB |
-| Cart | 99 | 100 | 100 | 22 KB |
-| Product page (Logo Tee) | 100 | 100 | 100 | 24 KB |
+| Cart | 99 | 100 | 100 | 23 KB |
+| Product page (Logo Tee) | 100 | 100 | 100 | 25 KB |
 
 The JavaScript column adds up the script files a page loads, as the local test server sends them, without compression. Every store page carries the cart, the currency selector, the drawing code and the lead popup's timing and buttons, and a product page adds its colour and size picker. The style guide is not part of the store and loads none. A score can move by a point or so from one run to the next.
 
-The popup's form has its own file, loaded only when the popup is first shown, so this test does not count it. It is 5.7 KB (2.5 KB compressed). With it loaded, a store page carries about 27 KB and a product page about 29 KB, under the 30 KB budget but with little room.
+The popup's form has its own file, loaded only when the popup is first shown, so this test does not count it. It is 5.7 KB (2.5 KB compressed). With it loaded, a store page carries about 28 KB and a product page about 30 KB (29.6 KB, counted as the files are sent), which is under the 30 KB budget with almost no room. The currency switch adds no measurable layout shift: it is 0.0002 on the home page and the product pages with or without it.
 
 ### What was checked in a browser, and what was not
 
-The popup and the pages around it were driven in a real Chrome (version 154) with real clicks, key presses, drags, scrolling and timers: a first visit, every way of opening and closing the popup, every message, the demo buttons, the code, a repeat visit, notes of different ages, another dialog being open, a hidden tab and a second tab, blocked storage, phones upright and on their side, tablets, 200% and 400% zoom, forced-colours mode (Windows high contrast), a slow network and a form file that fails to load. Every store page was checked at 320 pixels wide.
+The popup and the pages around it were driven in a real Chrome (version 154) with real clicks, key presses, drags, scrolling and timers: a first visit, every way of opening and closing the popup, every message, the demo buttons, the code, a repeat visit, notes of different ages, another dialog being open, a hidden tab and a second tab, blocked storage, phones upright and on their side, tablets, 200% and 400% zoom, forced-colours mode (Windows high contrast), a slow network and a form file that fails to load. Every store page was checked at 320 pixels wide, except the cart with an item in it, which turned out to run off a narrow screen (found and fixed in v0.2c-1, below).
 
-Not checked, and so not claimed: real phones, Safari and Firefox (the whole checking was done in Chrome, using its phone emulation), and a real screen reader. Labels, focus order and announcements were checked by script, which is not the same as hearing them.
+The starting currency was driven the same way against the local server, in 67 checks: four countries and a visitor with no country, a chosen currency winning, a choice made while the answer is on its way, blocked storage, seven ways for the request to fail, the cart in euros and redrawn when the answer comes late, and a second tab. Every link and every button on all 15 kinds of page were then clicked with a real mouse, about 550 checks. That walk-through found two problems that were already there. A sale price on a product page lost its word "was" as soon as the page's script ran, and on a phone narrower than about 420 pixels the total of a cart line could be pushed off the screen. Both are fixed, and the cart page and its drawer were measured at 13 widths from 320 to 1280 pixels, in all four currencies.
+
+Not checked, and so not claimed: real phones, Safari and Firefox (the whole checking was done in Chrome, using its phone emulation), a real screen reader, and Vercel's own country header on a real deployment, which the local server stands in for. Labels, focus order and announcements were checked by script, which is not the same as hearing them.
 
 Lighthouse runs by hand, not in CI: a real browser and a quiet machine give a fairer score than a CI runner does. Adding it to CI is on the v1.0 checklist.
