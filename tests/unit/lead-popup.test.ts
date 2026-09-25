@@ -6,9 +6,10 @@ import {
   noteWhenEnded,
   noteWhenShown,
   parseLeadPopupNote,
+  scrolledFarEnough,
   serializeLeadPopupNote,
 } from '../../src/engine/lead-popup';
-import { LEAD_POPUP_INTERVAL_DAYS } from '../../src/store/policy';
+import { LEAD_POPUP_INTERVAL_DAYS, LEAD_POPUP_DELAY_SECONDS, LEAD_POPUP_SCROLL_PERCENT } from '../../src/store/policy';
 
 const MINUTE = 60 * 1000;
 const DAY = 24 * 60 * MINUTE;
@@ -139,5 +140,59 @@ describe('when the corner reminder belongs on the page', () => {
 
   it('does not once the code has been taken', () => {
     expect(leadReminderWanted(noteWhenEnded(noteWhenShown(NOW), 'claimed'))).toBe(false);
+  });
+});
+
+describe('how far down the page is far enough to open the popup', () => {
+  // A page 3000 tall on a screen 1000 tall can be scrolled 2000, so the share is counted out of 2000.
+  const screen = 1000;
+  const page = 3000;
+  const scrollable = page - screen;
+  const enough = (scrollable * LEAD_POPUP_SCROLL_PERCENT) / 100;
+
+  it('is not far enough just short of the share, and is from exactly the share', () => {
+    expect(scrolledFarEnough(enough - 1, screen, page)).toBe(false);
+    expect(scrolledFarEnough(enough, screen, page)).toBe(true);
+    expect(scrolledFarEnough(scrollable, screen, page)).toBe(true);
+  });
+
+  it('counts the share of the distance that can be scrolled, not of the whole page', () => {
+    // A share of the whole height would need more scrolling than this, and a count that treated the screen as
+    // already seen would be satisfied much sooner. Both are wrong, and each of these three checks fails one.
+    const ofWholePage = (page * LEAD_POPUP_SCROLL_PERCENT) / 100;
+    expect(ofWholePage).not.toBe(enough);
+    expect(scrolledFarEnough(ofWholePage - 1, screen, page)).toBe(true);
+    expect(scrolledFarEnough(Math.min(ofWholePage, enough) - 1, screen, page)).toBe(false);
+    expect(scrolledFarEnough(0, screen, page)).toBe(false);
+  });
+
+  it('gives the same answer for the same share on a taller or a shorter screen', () => {
+    for (const [screenHeight, pageHeight] of [[600, 2600], [1400, 4400], [800, 1800]]) {
+      const distance = pageHeight - screenHeight;
+      const at = (distance * LEAD_POPUP_SCROLL_PERCENT) / 100;
+      expect(scrolledFarEnough(at - 1, screenHeight, pageHeight), `${screenHeight}x${pageHeight} just short`).toBe(false);
+      expect(scrolledFarEnough(at, screenHeight, pageHeight), `${screenHeight}x${pageHeight} at the share`).toBe(true);
+    }
+  });
+
+  it('never opens it on a page that cannot be scrolled, however the numbers land', () => {
+    expect(scrolledFarEnough(0, 1000, 1000)).toBe(false);
+    expect(scrolledFarEnough(500, 1000, 1000)).toBe(false);
+    expect(scrolledFarEnough(500, 1000, 800)).toBe(false);
+  });
+
+  it('does not open on a scroll position that is not a real one', () => {
+    expect(scrolledFarEnough(-50, screen, page)).toBe(false);
+    expect(scrolledFarEnough(Number.NaN, screen, page)).toBe(false);
+    expect(scrolledFarEnough(100, screen, Number.NaN)).toBe(false);
+  });
+});
+
+describe('the popup timing numbers', () => {
+  it('are a whole number of seconds and a share between 1 and 100', () => {
+    expect(Number.isInteger(LEAD_POPUP_DELAY_SECONDS)).toBe(true);
+    expect(LEAD_POPUP_DELAY_SECONDS).toBeGreaterThan(0);
+    expect(LEAD_POPUP_SCROLL_PERCENT).toBeGreaterThanOrEqual(1);
+    expect(LEAD_POPUP_SCROLL_PERCENT).toBeLessThanOrEqual(100);
   });
 });

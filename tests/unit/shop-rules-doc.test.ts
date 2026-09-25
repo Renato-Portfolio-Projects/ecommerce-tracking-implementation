@@ -1,6 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { MAX_QUANTITY_PER_LINE, MAX_CART_LINES, CART_LIFETIME_DAYS, LEAD_POPUP_INTERVAL_DAYS } from '../../src/store/policy';
+import {
+  MAX_QUANTITY_PER_LINE,
+  MAX_CART_LINES,
+  CART_LIFETIME_DAYS,
+  LEAD_POPUP_INTERVAL_DAYS,
+  LEAD_POPUP_DELAY_SECONDS,
+  LEAD_POPUP_SCROLL_PERCENT,
+} from '../../src/store/policy';
 import {
   PRODUCTS,
   findCollection,
@@ -109,6 +116,8 @@ describe('docs/shop-rules.md', () => {
       ['Most different lines in one cart', String(MAX_CART_LINES)],
       ['How long a saved cart is kept, from its last change', `${CART_LIFETIME_DAYS} days`],
       ['How long the lead popup stays quiet after it is shown', `${LEAD_POPUP_INTERVAL_DAYS} days`],
+      ['How long after arriving the lead popup opens by itself', `${LEAD_POPUP_DELAY_SECONDS} seconds`],
+      ['How far down the page the visitor must scroll to open it by itself', `${LEAD_POPUP_SCROLL_PERCENT}%`],
     ]);
   });
 

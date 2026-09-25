@@ -1,4 +1,4 @@
-import { LEAD_POPUP_INTERVAL_DAYS } from '../store/policy';
+import { LEAD_POPUP_INTERVAL_DAYS, LEAD_POPUP_SCROLL_PERCENT } from '../store/policy';
 
 /**
  * The lead popup's memory. All it keeps, in the browser, is when the popup was last shown and how
@@ -87,4 +87,17 @@ export function leadPopupDue(note: LeadPopupNote | undefined, now: number): bool
  */
 export function leadReminderWanted(note: LeadPopupNote | undefined): boolean {
   return note !== undefined && note.outcome !== 'claimed';
+}
+
+/**
+ * Whether the visitor has scrolled far enough down the page to open the popup by itself. It counts the
+ * way down the scrollable distance, which is the page's height less the screen's, so 40% means 40% of
+ * the way to the bottom. (Counting the screen's own height as already seen would open the popup at the
+ * first flick of the wheel on a tall screen.) A page that is no taller than the screen cannot be
+ * scrolled, so it never opens the popup this way.
+ */
+export function scrolledFarEnough(scrollY: number, viewportHeight: number, pageHeight: number): boolean {
+  const scrollable = pageHeight - viewportHeight;
+  if (!(scrollable > 0)) return false;
+  return (scrollY / scrollable) * 100 >= LEAD_POPUP_SCROLL_PERCENT;
 }

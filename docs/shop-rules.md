@@ -173,6 +173,8 @@ The popup asks a visitor for a first name and an email in exchange for the welco
 3. **The reminder is shown only when the popup has been shown and the code was not taken.** Why: someone who took the code does not need reminding, and someone who has not seen the popup is not reminded of it.
 4. **All that is kept is when it was last shown and how it ended (closed, or the code was taken).** There is no name and no email in it, and no permanent flag saying the code was taken. Why: nothing personal is needed to keep count, and a permanent flag would make the popup impossible to show again.
 5. **A note that is missing, damaged or dated in the future counts as never shown.** Why: a clock that was put back must not silence the popup for years.
+6. **By itself it opens only on the home page, after 5 seconds or once the visitor has scrolled 40% of the way down, whichever comes first.** The seconds count only while the tab is on screen, and the 40% is of the distance the page can be scrolled, not of its full height. Why: the home page is where a visitor arrives, and a visitor choosing a size on a product page is never interrupted. The 5 seconds is a deliberate demo setting, so a reviewer sees the popup quickly. A real store would wait longer, and popup guidance suggests 30 to 60 seconds.
+7. **It never opens over another dialog, and a skipped opening is not written down.** If the cart drawer is open when the time comes, that opening is skipped and the popup stays due, so scrolling can still open it later in the same visit.
 
 ## Limits
 
@@ -182,6 +184,8 @@ The popup asks a visitor for a first name and an email in exchange for the welco
 | Most different lines in one cart | 20 |
 | How long a saved cart is kept, from its last change | 7 days |
 | How long the lead popup stays quiet after it is shown | 7 days |
+| How long after arriving the lead popup opens by itself | 5 seconds |
+| How far down the page the visitor must scroll to open it by itself | 40% |
 
 The limit of 20 lines is a safety guard, not a business rule, so it can be raised freely.
 
@@ -314,6 +318,8 @@ Every number and list above is defined in one place in the code. To change one, 
 | Most different lines in a cart | A safety guard, not a business rule | `MAX_CART_LINES` in `src/store/policy.ts` |
 | How long a saved cart is kept | Counted from the last change, so an active cart does not expire | `CART_LIFETIME_DAYS` in `src/store/policy.ts` |
 | How long the lead popup stays quiet after it is shown | Counted from the last time it was shown, however it ended, and equal to the 7 days a lead is kept | `LEAD_POPUP_INTERVAL_DAYS` in `src/store/policy.ts` |
+| How long after arriving the lead popup opens by itself | A deliberate demo setting, so a reviewer sees it quickly. A real store would wait 30 to 60 seconds | `LEAD_POPUP_DELAY_SECONDS` in `src/store/policy.ts` |
+| How far down the page the visitor must scroll to open the lead popup by itself | Counted as a share of the distance the page can be scrolled, so it does not depend on the height of the screen | `LEAD_POPUP_SCROLL_PERCENT` in `src/store/policy.ts` |
 | Exchange rates | Fixed demo rates, not live ones | `CURRENCIES` in `src/store/currencies.ts` |
 | The starting currency by country | CAD, USD, GBP and EUR by country, and USD for everywhere else | `defaultCurrencyFor` in `src/store/currencies.ts` |
 | The euro-area countries | The 21 members of the euro area | `EURO_AREA_COUNTRIES` in `src/store/currencies.ts` |

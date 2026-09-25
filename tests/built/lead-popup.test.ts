@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { welcomeCoupon } from '../../src/engine/coupons';
+import { LEAD_POPUP_KEY } from '../../src/engine/lead-popup';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
-import { OPEN, decodeEntities, htmlFiles, readPage } from '../helpers/built';
+import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage } from '../helpers/built';
 
 const welcome = welcomeCoupon()!;
 const percent = welcome.percentOff;
@@ -154,6 +155,29 @@ describe('the two ways to open the lead popup by hand', () => {
       const html = decodeEntities(readPage(OPEN, file));
       expect(html, file).toContain(offer);
       expect(html, file).toContain(fill(WORDS['popup.title'], { percent }));
+    }
+  });
+});
+
+/** All the script a page loads from its own site, joined, so what it contains can be searched. */
+const scriptOf = (html: string) =>
+  [...html.matchAll(/<script type="module" src="\/([^"]+)"/g)].map((match) => readPage(OPEN, match[1])).join('\n');
+
+// These tests cannot press a key or wait five seconds, so they only check that the code which opens and closes the
+// popup is in what each page loads. What it does is checked by driving a page in a browser.
+describe('the script that opens and closes the lead popup', () => {
+  it('is loaded by every page that has the popup, and carries its announcements and its note', () => {
+    for (const file of pages) {
+      const script = scriptOf(readPage(OPEN, file));
+      expect(script, file).toContain('lead-popup:shown');
+      expect(script, file).toContain('lead-popup:closed');
+      expect(script, file).toContain(LEAD_POPUP_KEY);
+    }
+  });
+
+  it('is not loaded by the store built closed, which has no popup to open', () => {
+    for (const file of htmlFiles(CLOSED)) {
+      expect(scriptOf(readPage(CLOSED, file)), file).not.toContain('lead-popup:shown');
     }
   });
 });
