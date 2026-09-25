@@ -493,7 +493,9 @@ a {
 .footer {
   background: var(--ink);
   color: var(--paper);
-  padding: var(--space-5) var(--space-3) var(--space-4);
+  /* The room at the bottom keeps the last line clear of the lead popup's corner tab, which is fixed to the
+     bottom left of the screen (see .lead-tab) and would otherwise cover the start of that line. */
+  padding: var(--space-5) var(--space-3) calc(var(--space-6) + var(--space-3) + env(safe-area-inset-bottom, 0px));
 }
 
 .footer-inner {
