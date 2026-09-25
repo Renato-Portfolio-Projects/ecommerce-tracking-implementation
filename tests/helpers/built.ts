@@ -67,3 +67,23 @@ export function headingLevels(html: string): number[] {
 export function fileFor(address: string): string {
   return address === '/' ? 'index.html' : `${address.replace(/^\//, '').replace(/\/$/, '')}/index.html`;
 }
+
+/**
+ * All the script a page loads from its own site, joined, so what it contains can be searched: the scripts the page
+ * names, and every file they import in the ordinary way, and those files' own imports. A file that is loaded on demand,
+ * with import(), is not followed, since it is not loaded with the page.
+ */
+export function scriptOf(folder: URL, html: string): string {
+  const seen = new Set<string>();
+  const texts: string[] = [];
+  const read = (url: URL) => {
+    if (seen.has(url.href)) return;
+    seen.add(url.href);
+    const code = readFileSync(url, 'utf8');
+    texts.push(code);
+    // The build writes its imports with double quotes, single quotes or backticks, so all three are allowed.
+    for (const match of code.matchAll(/(?:from|import)\s*["'`](\.[^"'`]+\.js)["'`]/g)) read(new URL(match[1], url));
+  };
+  for (const match of html.matchAll(/<script type="module" src="\/([^"]+)"/g)) read(new URL(match[1], folder));
+  return texts.join('\n');
+}

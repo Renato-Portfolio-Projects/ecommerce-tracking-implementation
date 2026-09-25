@@ -7,7 +7,7 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | Kind | How long it lasts | Shared between tabs | Sent to the server | In this store today |
 |---|---|---|---|---|
 | `localStorage` | No expiry. It stays until the visitor clears it or the store's code removes it. In a private window it is cleared when the last private tab is closed | Yes, by every tab of the same site | Never | The cart, the chosen currency and the lead popup's note |
-| `sessionStorage` | For the life of one tab. It survives a reload and is cleared when the tab is closed | No, each tab has its own. A page opened from another page can start with a copy of the opener's, and the two are separate after that | Never | The demo person, and which list a product was picked from |
+| `sessionStorage` | For the life of one tab. It survives a reload and is cleared when the tab is closed | No, each tab has its own. A page opened from another page can start with a copy of the opener's, and the two are separate after that | Never | The demo person, which list a product was picked from, and the starting currency |
 | Cookies | Set by whoever writes them: until the browser session ends, or until a date | Yes | Yes, with requests to the site that set them | None. The store's own code sets no cookies. Google's tags will set their own from v0.2d if the visitor agrees (v0.3). Google lists its `_ga` cookie as lasting 2 years |
 | A variable in the page | Until the page is left | No | Never | What each script falls back on when the browser will not keep something |
 | Records on the server | 7 days, then the database deletes them itself | Not held in the browser | Not applicable | Planned (v0.2c): leads and orders |
@@ -17,9 +17,10 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | Key | Kind | What it holds | How long | If the browser will not keep it |
 |---|---|---|---|---|
 | `second-impression:cart` | `localStorage` | Each line's SKU, colour, size, quantity and the list it was picked from, and the time it was saved. No prices and no personal data | 7 days from the last change, then it counts as an empty cart | The cart works on the page it was made on and is empty on the next page |
-| `second-impression:currency` | `localStorage` | The code of the currency the visitor chose | Until the visitor clears it | The choice holds for that page only, and the next page starts in Canadian dollars |
+| `second-impression:currency` | `localStorage` | The code of the currency the visitor chose | Until the visitor clears it | The choice holds for that page only, and the next page starts in the starting currency for the visitor's country |
 | `second-impression:lead-popup` | `localStorage` | When the lead popup was last shown, and whether it ended closed or with the code taken. No name and no email | Until it is written over. The popup's 7 days of quiet are counted from the time in it | It is remembered for that page only, so the popup can open again on the next page load |
 | `second-impression:persona` | `sessionStorage` | The id of the demo person, such as `maya` | Until the tab is closed | The person holds for that page only |
+| `second-impression:default-currency` | `sessionStorage` | The currency the store started this tab in, worked out on the server from the visitor's country: CAD, USD, GBP or EUR. Never the country itself, and never a choice the visitor made | Until the tab is closed | It is asked for again on the next page, one small request each time, and holds for that page only |
 | `second-impression:list-handoff:<sku>` | `sessionStorage` | Which list a product card was clicked from: its id, its name and its position | From the click until the product page reads it, which removes it | The product page has no list to report |
 
 Nothing a visitor types is kept in the browser. The lead form's fields are never saved, and a half-typed form lives only in the open page. The one record made from what a visitor types is the lead, which the server will hold for 7 days from v0.2c.
@@ -29,7 +30,8 @@ Nothing a visitor types is kept in the browser. The lead form's fields are never
 | What the visitor does | What happens to what is stored |
 |---|---|
 | Arrives for the first time | Nothing is stored yet. On the home page the lead popup opens after 5 seconds and writes its note the moment it is shown |
-| Chooses a currency | It is saved, and every page loaded from then on starts in it |
+| Arrives with no currency chosen | The page starts in Canadian dollars, asks the server once for the starting currency for the visitor's country, and switches to it when the answer arrives. The answer is kept for the tab, so the next pages do not ask again, and it is dropped if the visitor picks a currency in the meantime |
+| Chooses a currency | It is saved, and every page loaded from then on starts in it, whatever the starting currency would have been |
 | Clicks a product card | The card writes the list hand-off and the product page reads it once and deletes it. A reload of the product page, a bookmark and a shared link have no list |
 | Adds to the cart | The cart is saved. Other open tabs of the store redraw their cart at once, because the browser tells them the saved cart changed. It does not tell the tab that made the change, which already knows |
 | Uses "Use demo data" | The demo person is saved for this tab, and every demo button in the tab uses the same person |
@@ -44,7 +46,7 @@ Nothing a visitor types is kept in the browser. The lead form's fields are never
 
 Browsers have settings that turn storage off. When one is on, a script that reads or writes storage gets an error, and a browser whose storage is full gives a different error. This is rare among shoppers. It is normal for automated visitors: Google's rendering service does not keep local or session storage from one page load to the next.
 
-Every read and write in the store's code is guarded, so a refusal cannot stop a page from working, and each script keeps what it needs in memory for as long as the page is open. A whole shopping trip was driven in a real Chrome with both kinds of storage blocked: there were no script errors, the item went into the cart and the drawer showed it, and the currency changed. On the next page the cart was empty and the prices were back in Canadian dollars, which is what "for that page only" means in the table above.
+Every read and write in the store's code is guarded, so a refusal cannot stop a page from working, and each script keeps what it needs in memory for as long as the page is open. A whole shopping trip was driven in a real Chrome with both kinds of storage blocked: there were no script errors, the item went into the cart and the drawer showed it, and the currency changed. On the next page the cart was empty and the currency was back to the one it starts in, which is what "for that page only" means in the table above. That trip was made when the store always started in Canadian dollars. It now starts in the currency for the visitor's country, which the store asks for again on each page, since with storage blocked it cannot keep the answer. That was driven in a real Chrome too, with no script errors.
 
 ## Three meanings of "session"
 

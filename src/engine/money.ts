@@ -66,18 +66,30 @@ export function pricesInAllCurrencies(cents: number): Record<CurrencyCode, strin
 }
 
 /**
- * Decides which currency to show, from whatever the browser handed back for what a visitor last
- * chose. `raw` is untrusted: on a first visit it is `null`, and at any other visit it could in
- * principle be missing, blank, or left over from a version of the store that offered different
- * currencies. This is the one place that decision is made, so nothing downstream has to re-check
- * it. `isCurrencyCode` (above) is what actually knows the four codes the store offers; this
- * function only adds the null/undefined check and the fallback. For example:
+ * The currency a visitor has chosen, from whatever the browser handed back for what they last chose. `raw` is
+ * untrusted: on a first visit it is `null`, and at any other visit it could in principle be missing, blank, or
+ * left over from a version of the store that offered different currencies. This is the one place that decision
+ * is made, so nothing downstream has to re-check it. `isCurrencyCode` (above) is what actually knows the four
+ * codes the store offers; this function only adds the null/undefined check. It gives the code if the store offers
+ * it, and nothing at all if not, with no fallback, because a visitor who has not chosen is different from one who
+ * chose the store's own currency: the first is offered the starting currency for their country, and the second
+ * keeps what they picked. For example:
  *
- *   storedCurrencyOr('USD', 'CAD') // 'USD', a currency the store offers, is kept
- *   storedCurrencyOr(null, 'CAD')  // 'CAD', nothing was saved yet
- *   storedCurrencyOr('JPY', 'CAD') // 'CAD', not one of the four the store offers
- *   storedCurrencyOr('usd', 'CAD') // 'CAD', codes are matched case-sensitively
+ *   chosenCurrency('USD') // 'USD', a currency the store offers
+ *   chosenCurrency(null)  // undefined, nothing was saved yet
+ *   chosenCurrency('JPY') // undefined, not one of the four the store offers
+ *   chosenCurrency('usd') // undefined, codes are matched case-sensitively
  */
-export function storedCurrencyOr(raw: string | null | undefined, fallback: CurrencyCode): CurrencyCode {
-  return raw !== null && raw !== undefined && isCurrencyCode(raw) ? raw : fallback;
+export function chosenCurrency(raw: string | null | undefined): CurrencyCode | undefined {
+  return raw !== null && raw !== undefined && isCurrencyCode(raw) ? raw : undefined;
+}
+
+/**
+ * The currency in an answer from /api/currency. The answer comes over the network, so it is untrusted: it must
+ * be an object with a `currency` that is one of the four the store offers, and anything else gives nothing.
+ */
+export function currencyFromAnswer(data: unknown): CurrencyCode | undefined {
+  if (typeof data !== 'object' || data === null) return undefined;
+  const { currency } = data as Record<string, unknown>;
+  return typeof currency === 'string' ? chosenCurrency(currency) : undefined;
 }

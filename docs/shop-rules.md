@@ -28,7 +28,7 @@ Every price is stored in Canadian dollars, and every conversion starts from ther
 
 ## Default currency
 
-Each visitor starts in a currency chosen from the country their connection appears to come from. The site gets that country from Vercel, at country level only, and never stores it. A small function, `/api/currency`, does the work on the server and answers with the currency alone, so the country never reaches the browser. Like every function, it answers 404 until the store is open. It is only a starting point: the visitor can switch to any of the four currencies until checkout starts, and then it locks. A missing or unrecognisable country starts in USD.
+Each visitor starts in a currency chosen from the country their connection appears to come from. The site gets that country from Vercel, at country level only, and never stores it. A small function, `/api/currency`, does the work on the server and answers with the currency alone, so the country never reaches the browser. Like every function, it answers 404 until the store is open. A visitor who has chosen a currency keeps it, whatever the country says. One who has not sees Canadian dollars first, as the page is built, and switches to their starting currency when the answer arrives. The answer is kept for the tab, so the server is asked once per tab, and it is dropped if the visitor picks a currency while it is on its way. If the server cannot be reached, gives an error or answers with anything but one of the four currencies, the store stays in Canadian dollars. It is only a starting point: the visitor can switch to any of the four currencies until checkout starts, and then it locks. A missing or unrecognisable country starts in USD.
 
 | Visitor's country | Starts in |
 |---|---|

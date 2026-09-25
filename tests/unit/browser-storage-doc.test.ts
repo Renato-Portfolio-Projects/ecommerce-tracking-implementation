@@ -31,6 +31,7 @@ const KEYS = [
   { key: 'second-impression:currency', kind: 'localStorage', names: ['second-impression:currency'] },
   { key: 'second-impression:lead-popup', kind: 'localStorage', names: ['LEAD_POPUP_KEY'] },
   { key: 'second-impression:persona', kind: 'sessionStorage', names: ['PERSONA_STORAGE_KEY'] },
+  { key: 'second-impression:default-currency', kind: 'sessionStorage', names: ['DEFAULT_CURRENCY_KEY'] },
   { key: 'second-impression:list-handoff:<sku>', kind: 'sessionStorage', names: ['listHandoffKey'] },
 ] as const;
 

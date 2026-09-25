@@ -12,7 +12,8 @@ import {
   isCurrencyCode,
   pricesInAllCurrencies,
   scaleToInteger,
-  storedCurrencyOr,
+  chosenCurrency,
+  currencyFromAnswer,
 } from '../../src/engine/money';
 
 describe('CURRENCIES', () => {
@@ -123,19 +124,6 @@ describe('pricesInAllCurrencies', () => {
   });
 });
 
-describe('storedCurrencyOr', () => {
-  it('accepts a saved currency the store offers', () => {
-    expect(storedCurrencyOr('USD', 'CAD')).toBe('USD');
-    expect(storedCurrencyOr('GBP', 'CAD')).toBe('GBP');
-  });
-
-  it('falls back for anything missing or not offered', () => {
-    for (const raw of [null, undefined, '', 'usd', 'JPY', 'CAD ']) {
-      expect(storedCurrencyOr(raw, 'CAD'), String(raw)).toBe('CAD');
-    }
-  });
-});
-
 describe('EURO_AREA_COUNTRIES', () => {
   it('lists the 21 euro-area countries, each once, with a two-letter code and a name', () => {
     expect(EURO_AREA_COUNTRIES).toHaveLength(21);
@@ -189,5 +177,56 @@ describe('defaultCurrencyFor', () => {
     for (const header of [null, undefined, '', '   ', 'Canada', 'C', 'CAN', '12', 'ZZ']) {
       expect(defaultCurrencyFor(header), String(header)).toBe('USD');
     }
+  });
+});
+
+describe('chosenCurrency', () => {
+  it('gives the code when the store offers it, whoever it came from', () => {
+    for (const code of ['CAD', 'USD', 'GBP', 'EUR']) expect(chosenCurrency(code), code).toBe(code);
+  });
+
+  it('gives nothing, and no fallback, for nothing chosen or a currency the store does not offer', () => {
+    for (const raw of [null, undefined, '', ' ', 'JPY', 'usd', 'Cad', 'USD ', 'CAD\n', '<script>', '0']) {
+      expect(chosenCurrency(raw), String(raw)).toBeUndefined();
+    }
+  });
+
+  it('is what tells a visitor who chose Canadian dollars from one who chose nothing', () => {
+    expect(chosenCurrency('CAD')).toBe('CAD');
+    expect(chosenCurrency(null)).toBeUndefined();
+  });
+});
+
+describe('currencyFromAnswer, the answer of /api/currency', () => {
+  it('reads the currency from an answer of the right shape', () => {
+    for (const currency of ['CAD', 'USD', 'GBP', 'EUR']) expect(currencyFromAnswer({ currency }), currency).toBe(currency);
+  });
+
+  it('gives nothing for anything else, since an answer over the network is not to be trusted', () => {
+    const bad: unknown[] = [
+      null,
+      undefined,
+      'EUR',
+      42,
+      true,
+      [],
+      ['EUR'],
+      {},
+      { currency: null },
+      { currency: 42 },
+      { currency: ['EUR'] },
+      { currency: { code: 'EUR' } },
+      { currency: 'JPY' },
+      { currency: 'eur' },
+      { currency: ' EUR' },
+      { currency: '' },
+      { error: 'not found' },
+      { Currency: 'EUR' },
+    ];
+    for (const data of bad) expect(currencyFromAnswer(data), JSON.stringify(data)).toBeUndefined();
+  });
+
+  it('ignores anything else the answer carries, so it cannot smuggle a second value in', () => {
+    expect(currencyFromAnswer({ currency: 'GBP', country: 'GB', extra: '<b>' })).toBe('GBP');
   });
 });
