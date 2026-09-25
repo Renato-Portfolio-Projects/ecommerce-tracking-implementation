@@ -201,7 +201,10 @@ function handleClick(event: MouseEvent): void {
  * The seconds count only while the tab is on screen, since a tab left in the background is not a visitor
  * who has been reading. When the moment comes it is checked again: the popup may have been shown in the
  * meantime, by hand or in another tab. If another dialog is open, such as the cart drawer, this opening is
- * skipped without being written down, so the popup stays due, and scrolling can still open it later.
+ * skipped without being written down, so the popup stays due. Whenever another dialog closes, the clock
+ * starts again from the full five seconds, so a visitor who has just dealt with the cart has that long in
+ * peace before the popup comes, and it never comes the instant something is dismissed. Scrolling far enough
+ * can still open it, unless a dialog is open.
  */
 function armAutoOpen(): void {
   if (!leadPopupDue(readNote(), Date.now())) return;
@@ -232,6 +235,14 @@ function armAutoOpen(): void {
     else stopClock();
   }
 
+  // A dialog's `close` event does not bubble, so it is heard on the way down (capture). This is only ever another
+  // dialog: the popup's own is not open until this is switched off.
+  function whenAnotherDialogCloses(): void {
+    stopClock();
+    remaining = DELAY_MS;
+    if (document.visibilityState === 'visible') startClock();
+  }
+
   function whenScrolled(): void {
     if (scrolledFarEnough(window.scrollY, window.innerHeight, document.documentElement.scrollHeight)) offer();
   }
@@ -240,6 +251,7 @@ function armAutoOpen(): void {
     stopClock();
     document.removeEventListener('visibilitychange', whenVisibilityChanges);
     window.removeEventListener('scroll', whenScrolled);
+    document.removeEventListener('close', whenAnotherDialogCloses, true);
     disarmAuto = undefined;
   }
 
@@ -255,6 +267,7 @@ function armAutoOpen(): void {
   disarmAuto = disarm;
   document.addEventListener('visibilitychange', whenVisibilityChanges);
   window.addEventListener('scroll', whenScrolled, { passive: true });
+  document.addEventListener('close', whenAnotherDialogCloses, true);
   whenVisibilityChanges();
 }
 
