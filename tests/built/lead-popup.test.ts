@@ -1,6 +1,8 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { welcomeCoupon } from '../../src/engine/coupons';
 import { LEAD_POPUP_KEY } from '../../src/engine/lead-popup';
+import { PERSONA_STORAGE_KEY } from '../../src/components/demo-persona';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
@@ -178,6 +180,32 @@ describe('the script that opens and closes the lead popup', () => {
   it('is not loaded by the store built closed, which has no popup to open', () => {
     for (const file of htmlFiles(CLOSED)) {
       expect(scriptOf(readPage(CLOSED, file)), file).not.toContain('lead-popup:shown');
+    }
+  });
+});
+
+// The form's code is loaded when the popup is first shown, not with the page. In the built site that means it is a file of
+// its own, that no page names as a script, and that the popup script asks for with import() and never imports the ordinary way.
+describe('the code for the popup\'s form', () => {
+  const assets = new URL('_astro/', OPEN);
+  const formFiles = readdirSync(assets).filter((name) => name.endsWith('.js') && readFileSync(new URL(name, assets), 'utf8').includes(PERSONA_STORAGE_KEY));
+
+  it('is one file of its own, which carries the form\'s checks, its demo person and its announcement', () => {
+    expect(formFiles).toHaveLength(1);
+    const code = readFileSync(new URL(formFiles[0], assets), 'utf8');
+    expect(code).toContain('lead-popup:submitted');
+    expect(code).toContain('data-lead-error');
+  });
+
+  it('is not what any page loads with it, and is asked for by import() only', () => {
+    for (const file of pages) {
+      const html = readPage(OPEN, file);
+      expect(html, file).not.toContain(formFiles[0]);
+      const script = scriptOf(html);
+      expect(script, file).not.toContain(PERSONA_STORAGE_KEY);
+      // The build writes a string with double quotes, single quotes or backticks, so all three are allowed.
+      expect(script, file).not.toMatch(new RegExp(`(?:from|import)\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));
+      expect(script, file).toMatch(new RegExp(`import\\(\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));
     }
   });
 });

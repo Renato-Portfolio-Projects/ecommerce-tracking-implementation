@@ -175,6 +175,8 @@ The popup asks a visitor for a first name and an email in exchange for the welco
 5. **A note that is missing, damaged or dated in the future counts as never shown.** Why: a clock that was put back must not silence the popup for years.
 6. **By itself it opens only on the home page, after 5 seconds or once the visitor has scrolled 40% of the way down, whichever comes first.** The seconds count only while the tab is on screen, and the 40% is of the distance the page can be scrolled, not of its full height. Why: the home page is where a visitor arrives, and a visitor choosing a size on a product page is never interrupted. The 5 seconds is a deliberate demo setting, so a reviewer sees the popup quickly. A real store would wait longer, and popup guidance suggests 30 to 60 seconds.
 7. **It never opens over another dialog, and a skipped opening is not written down.** If the cart drawer is open when the time comes, that opening is skipped and the popup stays due, so scrolling can still open it later in the same visit.
+8. **A half-typed form is kept when the popup is closed, and is put back empty once the code has been taken.** Why: a stray click should not lose what a visitor typed, and a visitor who has taken the code can open the popup again and try another lead, which is what a demo needs.
+9. **The code is shown only after the details pass the checks, and the browser's own way of sending a form is never used.** The form is sent by script, and a form that fell back to the browser's way would put a name and an email in the address. Until there is a server, the details are checked in the browser and the code is shown, and nothing is saved or sent. Why: nothing personal may ever appear in a URL, and the popup must not claim to have taken a lead it has not.
 
 ## Limits
 
@@ -271,7 +273,7 @@ The numbers are the ones Stripe publishes for testing. Other rules:
 
 ## Demo people
 
-Every "Use demo data" button fills in one of eight fictional people, so no visitor has to type personal details. One is picked at random the first time a visitor uses a button, and the same person is used everywhere after that, so a visitor's lead and order share one identity. A "new persona" link picks a different one.
+Every "Use demo data" button fills in one of eight fictional people, so no visitor has to type personal details. One is picked at random the first time a visitor uses a button, and the same person is used everywhere after that, so a visitor's lead and order share one identity. The person is remembered for the visit only, in the tab's session storage, so closing the tab forgets it. A "Try another person" button, shown once a person has been filled in, always picks a different one.
 
 - Emails are on `example.com`, which is reserved for examples and never delivers mail.
 - Phone numbers are in each country's own reserved fiction range, so a demo number can never ring a real person. Canada and the United States use 555-0100 to 555-0199. The United Kingdom, France and Germany use the ranges their regulators (Ofcom, ARCEP and the Bundesnetzagentur) set aside for films and television.

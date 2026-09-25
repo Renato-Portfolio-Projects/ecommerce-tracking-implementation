@@ -19,9 +19,16 @@ import { LEAD_POPUP_DELAY_SECONDS } from '../store/policy';
  * whether the reminder belongs, are in src/engine/lead-popup.ts and are tested there. This script
  * only reads the clock, the scroll position and the browser's storage, and passes them to those rules.
  *
+ * The form itself (checking it, the demo buttons, showing the code) is in lead-popup-form.ts, which is
+ * loaded the first time the popup is shown and not before, so that every other visit to a page does not
+ * carry it. This script passes on the presses that belong to the form, waiting for it if it has not
+ * arrived yet, so that no press is lost and the form is never sent the browser's own way.
+ *
  * It announces what happens, on the document, and sends nothing anywhere:
  * - `lead-popup:shown`, with `source`: `auto` if the page opened it, `manual` if the visitor did;
- * - `lead-popup:closed`, with `reason`: how the visitor closed it.
+ * - `lead-popup:closed`, with `reason`: how the visitor closed it;
+ * - `lead-popup:submitted`, from the form, when the code is shown. This script hears it to note that the
+ *   code was taken.
  */
 
 /** How the popup came to open. The page's own timing is `auto`, a click on the footer link or the corner tab is `manual`. */
@@ -58,6 +65,26 @@ function writeNote(note: LeadPopupNote): void {
   }
 }
 
+/** The form's code, once it has been asked for. */
+type FormModule = typeof import('./lead-popup-form');
+let formModule: Promise<FormModule> | undefined;
+
+/** Loads the form's code the first time it is needed, and gives the same one after. A failed load is tried again next time. */
+function loadForm(): Promise<FormModule> {
+  formModule ??= import('./lead-popup-form').catch((error: unknown) => {
+    formModule = undefined;
+    throw error;
+  });
+  return formModule;
+}
+
+/** Runs something from the form's code, once it is loaded. If it cannot be loaded the press does nothing, and the next press tries again. */
+function withForm(action: (form: FormModule) => unknown): void {
+  loadForm()
+    .then(action)
+    .catch((error: unknown) => console.error('The lead popup form could not be loaded.', error));
+}
+
 function popup(): HTMLDialogElement | null {
   return document.querySelector<HTMLDialogElement>('[data-lead-popup]');
 }
@@ -81,6 +108,7 @@ function show(source: LeadPopupSource): void {
   disarmAuto?.();
   dialog.showModal();
   writeNote(noteWhenShown(Date.now()));
+  withForm(() => undefined);
   document.dispatchEvent(new CustomEvent('lead-popup:shown', { detail: { source } }));
 }
 
@@ -98,8 +126,9 @@ function closeWith(reason: LeadPopupCloseReason): void {
 function whenClosed(): void {
   const reason = closeReason ?? 'other';
   closeReason = undefined;
+  // A visitor who took the code stays marked as having taken it, however the popup is closed afterwards.
   const note = readNote();
-  if (note) writeNote(noteWhenEnded(note, 'closed'));
+  if (note && note.outcome !== 'claimed') writeNote(noteWhenEnded(note, 'closed'));
   updateTab();
   document.dispatchEvent(new CustomEvent('lead-popup:closed', { detail: { reason } }));
 }
@@ -133,6 +162,7 @@ function handlePress(event: MouseEvent): void {
 /**
  * Does what the popup's buttons ask. One listener on the whole document handles all of them, in this order:
  * - the footer link and the corner tab open the popup by hand;
+ * - the two demo buttons fill the form, through the form's code;
  * - the close button and "No thanks" close it, each saying which;
  * - a click on the dimmed page around the box closes it, unless the visitor has typed something, so a stray
  *   click cannot lose it. The other three ways still close it then, and Escape always does.
@@ -144,6 +174,14 @@ function handleClick(event: MouseEvent): void {
 
   if (clicked.closest('[data-lead-open]')) {
     show('manual');
+    return;
+  }
+  if (clicked.closest('[data-lead-demo]')) {
+    withForm((form) => form.fillDemo(dialog, false));
+    return;
+  }
+  if (clicked.closest('[data-lead-new-person]')) {
+    withForm((form) => form.fillDemo(dialog, true));
     return;
   }
   const closer = clicked.closest<HTMLElement>('[data-lead-close]');
@@ -236,6 +274,16 @@ export function initLeadPopup(): void {
     closeReason = 'escape';
   });
   dialog.addEventListener('close', whenClosed);
+  // The form is sent by script, never the browser's own way (which would send a POST to the page itself).
+  dialog.addEventListener('submit', (event) => {
+    event.preventDefault();
+    withForm((form) => form.submitForm(dialog));
+  });
+  // The code has been shown, so the note says it was taken. Closing the popup afterwards does not change that.
+  document.addEventListener('lead-popup:submitted', () => {
+    const note = readNote();
+    if (note) writeNote(noteWhenEnded(note, 'claimed'));
+  });
 
   if (dialog.hasAttribute('data-lead-auto')) armAutoOpen();
 }
