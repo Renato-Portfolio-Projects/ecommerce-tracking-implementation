@@ -1,4 +1,4 @@
-import { COUNTRIES, PROVINCES } from '../store/destinations';
+import { COUNTRIES, PROVINCES } from '../store/destinations.js';
 
 /**
  * The tax rate for a destination, in percent, or undefined when the store cannot ship there.

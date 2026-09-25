@@ -1,6 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
+import { DISPOSABLE_EMAIL_DOMAINS_TEXT } from '../../src/engine/disposable-email-domains';
 import {
   checkEmailDomain,
   emailDomainOf,
@@ -125,7 +125,7 @@ describe('checkEmailDomain', () => {
 });
 
 describe('the list of temporary email domains kept in the repo', () => {
-  const text = readFileSync(new URL('../../src/engine/disposable-email-domains.txt', import.meta.url), 'utf8');
+  const text = DISPOSABLE_EMAIL_DOMAINS_TEXT;
   const lines = text.split(/\r?\n/);
   const comments = lines.filter((line) => line.startsWith('#'));
   const domains = lines.filter((line) => line !== '' && !line.startsWith('#'));

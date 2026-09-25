@@ -1,4 +1,4 @@
-import { LEAD_POPUP_INTERVAL_DAYS, LEAD_POPUP_SCROLL_PERCENT } from '../store/policy';
+import { LEAD_POPUP_INTERVAL_DAYS, LEAD_POPUP_SCROLL_PERCENT } from '../store/policy.js';
 
 /**
  * The lead popup's memory. All it keeps, in the browser, is when the popup was last shown and how

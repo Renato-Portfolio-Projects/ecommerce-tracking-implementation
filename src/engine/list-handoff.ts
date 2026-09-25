@@ -1,4 +1,4 @@
-import type { ListContext } from './catalog';
+import type { ListContext } from './catalog.js';
 
 /**
  * Where a product page learns which list it was picked from. A product card writes its list

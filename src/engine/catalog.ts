@@ -1,5 +1,5 @@
-import { SKU_PATTERN } from '../store/policy';
-import { CATALOG, type Collection, type Colour, type Product, type Variant } from '../store/products';
+import { SKU_PATTERN } from '../store/policy.js';
+import { CATALOG, type Collection, type Colour, type Product, type Variant } from '../store/products.js';
 
 /**
  * Where a product sits on a page: which list it was shown in, and its place in that list.
