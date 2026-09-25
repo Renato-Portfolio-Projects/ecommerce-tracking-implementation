@@ -58,6 +58,16 @@ describe('the script that starts a visitor in their own currency', () => {
     expect(asking).toHaveLength(1);
   });
 
+  it('asks with the browser\'s usual cookies, since a Preview behind Vercel\'s login sends the request to the sign-in page without them', () => {
+    const assets = new URL('_astro/', OPEN);
+    const asking = readdirSync(assets).filter(
+      (name) => name.endsWith('.js') && readFileSync(new URL(name, assets), 'utf8').includes('/api/currency'),
+    );
+    expect(asking).toHaveLength(1);
+    const code = readFileSync(new URL(asking[0], assets), 'utf8');
+    expect(code).not.toMatch(/credentials\s*:\s*["'`]omit["'`]/);
+  });
+
   it('is not loaded by any page of the store built closed, which has no functions to ask', () => {
     for (const file of htmlFiles(CLOSED)) {
       expect(scriptOf(CLOSED, readPage(CLOSED, file)), file).not.toContain('/api/currency');

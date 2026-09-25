@@ -40,7 +40,10 @@ export async function fetchDefault(): Promise<CurrencyCode | undefined> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GIVE_UP_AFTER_MS);
   try {
-    const response = await fetch(ENDPOINT, { signal: controller.signal, credentials: 'omit', cache: 'no-store' });
+    // The browser's usual cookies for this site are sent, as for any request to the same address. The store sets none
+    // itself. On a Preview behind Vercel's login the login cookie is the only thing that lets the request through, and
+    // asking for `credentials: 'omit'` here sent it to the sign-in page instead, so the function could not be reached.
+    const response = await fetch(ENDPOINT, { signal: controller.signal, cache: 'no-store' });
     if (!response.ok) return undefined;
     const currency = currencyFromAnswer(await response.json());
     if (currency === undefined) return undefined;
