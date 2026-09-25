@@ -158,6 +158,9 @@ a {
 
 .tools {
   display: flex;
+  /* On a screen as narrow as 320 px the currency picker and the cart link do not fit side by side, and without this
+     they push the whole page wider than the screen. The cart link drops to its own row instead. */
+  flex-wrap: wrap;
   gap: var(--space-3);
   align-items: center;
 }
