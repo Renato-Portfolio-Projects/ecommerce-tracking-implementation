@@ -25,11 +25,13 @@ import { LEAD_POPUP_DELAY_SECONDS } from '../store/policy';
  * arrived yet, so that no press is lost and the form is never sent the browser's own way. If it cannot be
  * loaded at all, the popup says so, since the browser will not try that load again until the page is reloaded.
  *
- * It announces what happens, on the document, and sends nothing anywhere:
- * - `lead-popup:shown`, with `source`: `auto` if the page opened it, `manual` if the visitor did;
+ * It announces what happens, on the document, and sends nothing anywhere itself (the form sends the lead, in
+ * lead-popup-form.ts and submit-lead.ts):
+ * - `lead-popup:shown`, with `source`: `auto` if the page opened it, `manual` if the visitor did. The source is also
+ *   kept on the dialog (`data-lead-source`), so the form can say how the lead came to be asked for;
  * - `lead-popup:closed`, with `reason`: how the visitor closed it;
- * - `lead-popup:submitted`, from the form, when the code is shown. This script hears it to note that the
- *   code was taken.
+ * - `lead-popup:submitted`, from the form, when the code is shown for a lead the server kept. This script hears it
+ *   to note that the code was taken.
  */
 
 /** How the popup came to open. The page's own timing is `auto`, a click on the footer link or the corner tab is `manual`. */
@@ -134,6 +136,7 @@ function show(source: LeadPopupSource): void {
   const dialog = popup();
   if (!dialog || dialog.open) return;
   disarmAuto?.();
+  dialog.dataset.leadSource = source;
   dialog.showModal();
   writeNote(noteWhenShown(Date.now()));
   withForm(() => undefined);

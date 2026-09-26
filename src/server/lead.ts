@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 import { checkLead } from '../engine/checkout-form.js';
 import { welcomeCoupon } from '../engine/coupons.js';
 import { checkEmailDomain, emailDomainOf, isDisposableDomain, type MailService } from '../engine/email-domain.js';
-import { LEAD_ATTEMPTS_PER_HOUR, LEAD_RECORD_LIFETIME_DAYS } from '../store/policy.js';
+import { LEAD_ATTEMPTS_PER_HOUR, LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../store/policy.js';
 import type { Environment } from './gate.js';
 import { answer, guarded } from './http.js';
 import { RATE_LIMIT_KEY_PREFIX, type LeadRecord, type Store } from './store.js';
@@ -34,8 +34,8 @@ const HOUR_SECONDS = 60 * 60;
 const HOUR_MILLISECONDS = HOUR_SECONDS * 1000;
 const RECORD_LIFETIME_SECONDS = LEAD_RECORD_LIFETIME_DAYS * 24 * HOUR_SECONDS;
 
-/** The name of the hidden field that no person ever fills. A bot that fills every field it finds gives itself away. */
-export const TRAP_FIELD = 'website';
+/** The name of the hidden field that no person ever fills. A bot that fills every field it finds gives itself away. The popup writes the same name (policy.ts). */
+export const TRAP_FIELD = LEAD_TRAP_FIELD;
 
 /**
  * The address of the visitor's connection, as Vercel says it (`x-forwarded-for` is the public address of the client,
