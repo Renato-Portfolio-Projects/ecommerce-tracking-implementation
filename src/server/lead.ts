@@ -49,8 +49,9 @@ export function clientAddress(request: Request): string {
 
 /**
  * The name of the counter for one visitor in one hour: `rl:` and a hash of their address and the hour, made with
- * a secret. The address cannot be read back from it, and it means nothing to anyone without the secret. It changes
- * with the hour, so a counter is only ever about one hour, and the store deletes it soon after.
+ * a secret. It means nothing to anyone without the secret, and it cannot be turned back into an address: someone who
+ * held the secret could only test a guess of an address against it. It changes with the hour, so a counter is only
+ * ever about one hour, and the store deletes it soon after.
  */
 export function visitorKey(address: string, secret: string, now: number): string {
   const hour = Math.floor(now / HOUR_MILLISECONDS);
