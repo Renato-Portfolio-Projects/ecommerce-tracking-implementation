@@ -40,6 +40,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A visitor who has chosen no currency now starts in the one for their country. The answer is kept for the tab only, is never taken for the visitor's own choice, is dropped if they choose while it is on its way, and gives way to Canadian dollars if the function cannot be reached. The browser storage page lists the new key.
 - Built-page tests for the starting currency, and a helper that reads a page's script together with the files it imports.
 - Two rows in the production guide: the starting currency by country, and the server functions.
+- `/api/lead`: the store's second server function. It checks the name and email again, refuses a temporary email domain or one with no mail service (found by a real look-up at send time, given two seconds and let through if it is too slow), limits one visitor to 10 tries an hour, and keeps an accepted lead in Upstash Redis for 7 days before the database deletes it by itself. A hidden field that no visitor can see, reach with the keyboard or hear with a screen reader catches a simple robot: it is shown the welcome code, so it cannot tell it was caught, but nothing it sends is kept. `docs/server-data.md` says what is kept and what is sent to the database, and `docs/server-answers.md` says what every function answers and which parts are the HTTP standard and which are this store's own choice; a test keeps each page in step with the running code.
+- `submitLead` now really asks the server. The popup shows the welcome code only once the server answers that it has the lead, and announces it for tracking to count (v0.2d) only when it was really saved. A failed save and too many tries each have their own shopper-facing message, and the popup keeps a visitor's typed draft through either one.
+- `npm run smoke:lead`, run by hand against the real database, which keeps one demo lead, reads it back, checks its expiry and deletes it, printing results only.
 
 ### Changed
 
@@ -61,6 +64,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The design spec's Cart section now describes the cart's screens, the production guide's rows on prices and currency say that the cart is priced in the browser, and the README's status line says that the cart works.
 - `npm run lighthouse` now serves the store with its functions running, pretending to be in France. A plain file server made every page log a failed request for the starting currency, which lowered Best Practices to 96 for something a visitor never sees. The README's figures are updated, and the brand notes say that a product page with the popup's form loaded now carries about 30 KB of script, almost the whole 30 KB budget.
 - The design spec's currency and back-end lines, and the production guide's currency and security summaries, now describe the starting currency and the functions.
+- Relative imports across `src/engine`, `src/store`, `src/server` and `src/demo` now end in `.js`, so every server function starts the way Vercel runs it: file by file, unbundled. The temporary-email-domain list moved from a text file to a module for the same reason.
+- The lead popup's demo note, the browser-storage page's "Records on the server" row, and the tracking plan's lines about `generate_lead` and the popup's announcements, now describe the lead back end as built rather than planned. The production guide's "Order and lead storage", "Lead capture" and "Security and operations" areas say the same, and gain two new rows: the rate limit and the hidden trap field.
+- The popup's form grew from 5.7 to 7.0 KB once it began talking to the real server. A product page with the form loaded is now 30.85 KB of script, a little over the house budget of 30 KB; the brand notes and the README's figures are updated to say so.
 
 ### Fixed
 
