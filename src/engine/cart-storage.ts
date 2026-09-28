@@ -1,6 +1,6 @@
-import { CART_LIFETIME_DAYS } from '../store/policy';
-import { addToCart, emptyCart, isValidListContext, type Cart, type CartProblem } from './cart';
-import type { LineInput } from './pricing';
+import { CART_LIFETIME_DAYS } from '../store/policy.js';
+import { addToCart, emptyCart, isValidListContext, type Cart, type CartProblem } from './cart.js';
+import type { LineInput } from './pricing.js';
 
 /**
  * Saving the cart in the browser. What is saved is only what and how many, where each item was

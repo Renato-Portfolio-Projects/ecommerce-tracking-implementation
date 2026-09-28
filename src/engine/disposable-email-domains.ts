@@ -1,4 +1,14 @@
-# Temporary ("disposable") email domains. A visitor who gives an address on one of these is asked for another one.
+/**
+ * The list of temporary ("disposable") email domains, as text: comment lines that say where it came from, then one
+ * domain per line. `parseDomainList` in email-domain.ts reads it. It is text inside a module, and not a file of its
+ * own, so that a server function, which contains only the code it imports, carries the list with it, and so that
+ * a test can run the function under plain Node and see that it does. It must not be imported by code that runs in
+ * the browser (it is about 127 KB), and a test checks that.
+ *
+ * To refresh it: download the source file again, keep the comment lines at the top of the text below, and update
+ * the date and the count in them. A test checks that they are there and that the count is right.
+ */
+export const DISPOSABLE_EMAIL_DOMAINS_TEXT = `# Temporary ("disposable") email domains. A visitor who gives an address on one of these is asked for another one.
 # Source: https://github.com/disposable-email-domains/disposable-email-domains (the file disposable_email_blocklist.conf)
 # Licence: CC0 1.0, public domain. See https://github.com/disposable-email-domains/disposable-email-domains/blob/main/LICENSE.txt
 # Copied on 2026-09-21. It has 8915 domains, one on each line below.
@@ -8920,3 +8930,4 @@ zzzzzzzzzzzzzz-8874.dynv6.net
 zzzzzzzzzzzzzz-969.dynv6.net
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.loseyourip.com
 zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.ooguy.com
+`;

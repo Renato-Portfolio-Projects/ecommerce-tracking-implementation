@@ -1,6 +1,6 @@
-import { MAX_CART_LINES, MAX_QUANTITY_PER_LINE } from '../store/policy';
-import { variantSku, type ListContext } from './catalog';
-import { checkLine, type ItemsInput, type LineInput, type PricingProblemCode } from './pricing';
+import { MAX_CART_LINES, MAX_QUANTITY_PER_LINE } from '../store/policy.js';
+import { variantSku, type ListContext } from './catalog.js';
+import { checkLine, type ItemsInput, type LineInput, type PricingProblemCode } from './pricing.js';
 
 /**
  * The cart is a plain value with plain functions that each return a new cart and never change

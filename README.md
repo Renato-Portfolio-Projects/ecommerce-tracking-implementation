@@ -2,7 +2,7 @@
 
 A fictional online store, Second Impression, built to demonstrate production-style tracking: Google Tag Manager, GA4, Meta Pixel and Conversions API through a server container, consent handling, and a live page where you can check every event yourself.
 
-> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page, the six product pages, a working cart (an Add to cart button, a cart drawer and a cart page) and the lead popup (an offer that opens by itself on the home page, or by hand from the footer, checks a name and an email and shows a welcome code) are built and can be seen in a preview build. Each visitor starts in the currency for their country, worked out by the store's first server function; checkout, the orders and the rest of the back end are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
+> **Status:** version 0.1, foundations, is released, and version 0.2 (the storefront and web tracking) is under way. The site is live at [secondimpression.ca](https://secondimpression.ca) as a placeholder page (a temporary page that shows the store name and a demo notice until the real store is ready), because a switch keeps the storefront off in production until it is ready. Behind that switch, the home page, the six product pages, a working cart (an Add to cart button, a cart drawer and a cart page) and the lead popup (an offer that opens by itself on the home page, or by hand from the footer, checks a name and an email again on the server, keeps it for seven days, and only then shows a welcome code) are built and can be seen in a preview build. Each visitor starts in the currency for their country, worked out by a server function; checkout, the orders and the rest of the back end are still to come. Today the repo holds the design, the tracking plan, the shop rules, the tested code that prices an order, keeps a cart and checks what a shopper types at checkout, and those pages. The code is organised in three folders: a reusable engine, this store's own data, and the parts that exist only for the demo.
 
 ## What this will show
 
@@ -36,6 +36,8 @@ A fictional online store, Second Impression, built to demonstrate production-sty
 - [Tracking plan](docs/tracking-plan.md)
 - [Shop rules](docs/shop-rules.md)
 - [Browser storage and sessions](docs/browser-storage.md)
+- [What the server keeps](docs/server-data.md)
+- [What the server functions answer](docs/server-answers.md)
 - [Taking this to production](docs/production-guide.md)
 - [Brand notes](docs/brand.md)
 - [Accounts and domain checklist](docs/setup/accounts-and-domain.md)
@@ -62,6 +64,8 @@ npm run serve:store
 
 That serves the built store and the functions in `api/` together at `http://localhost:4700`. Add `-- --country FR` to pretend to be visiting from France, or `-- --closed` to run the functions as production does, with the store closed. `npm run dev` and `npm run dev:store` do not run the functions.
 
+The lead function keeps leads in memory while that server runs, unless the database's two settings are present, and it never does on Vercel. To try the real database once, by hand, put `KV_REST_API_URL` and `KV_REST_API_TOKEN` in a file called `.env.local` (git does not keep it, and it holds a key that allows writing, so it is never pasted, printed or shared) and run `npm run smoke:lead`. It keeps one demo lead, reads it back, checks that it expires by itself, and deletes it, printing results only.
+
 ## Speed and accessibility
 
 Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://developer.chrome.com/docs/lighthouse) against the built store on a phone-sized screen, served with its functions running and pretending to be in France, so the page switches to euros while it loads. The budgets are in `docs/brand.md`. Scores from 2026-09-25:
@@ -77,7 +81,7 @@ Checked by hand with `npm run lighthouse`, which runs [Lighthouse](https://devel
 
 The JavaScript column adds up the script files a page loads, as the local test server sends them, without compression. Every store page carries the cart, the currency selector, the drawing code and the lead popup's timing and buttons, and a product page adds its colour and size picker. The style guide is not part of the store and loads none. A score can move by a point or so from one run to the next.
 
-The popup's form has its own file, loaded only when the popup is first shown, so this test does not count it. It is 5.7 KB (2.5 KB compressed). With it loaded, a store page carries about 28 KB and a product page about 30 KB (29.6 KB, counted as the files are sent), which is under the 30 KB budget with almost no room. The currency switch adds no measurable layout shift: it is 0.0002 on the home page and the product pages with or without it.
+The popup's form has its own file, loaded only when the popup is first shown, so this test does not count it. It grew from 5.7 to 7.0 KB (3.0 KB compressed) once it started sending the lead to the server (v0.2c-2). With it loaded, a store page carries about 29 KB and a product page about 31 KB (30.85 KB, counted as the files are sent), which is a little over the 30 KB budget; `docs/brand.md` has the details. The currency switch adds no measurable layout shift: it is 0.0002 on the home page and the product pages with or without it.
 
 ### What was checked in a browser, and what was not
 

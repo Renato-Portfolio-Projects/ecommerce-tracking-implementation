@@ -1,10 +1,10 @@
-import type { CurrencyCode } from '../store/currencies';
+import type { CurrencyCode } from '../store/currencies.js';
 import {
   FREE_SHIPPING_FROM_CAD,
   SHIPPING_METHODS,
   type ShippingMethod,
-} from '../store/shipping-methods';
-import { convertFromCad } from './money';
+} from '../store/shipping-methods.js';
+import { convertFromCad } from './money.js';
 
 export function findShippingMethod(id: string): ShippingMethod | undefined {
   return SHIPPING_METHODS.find((method) => method.id === id);

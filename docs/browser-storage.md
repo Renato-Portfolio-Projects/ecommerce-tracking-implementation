@@ -10,7 +10,7 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | `sessionStorage` | For the life of one tab. It survives a reload and is cleared when the tab is closed | No, each tab has its own. A page opened from another page can start with a copy of the opener's, and the two are separate after that | Never | The demo person, which list a product was picked from, and the starting currency |
 | Cookies | Set by whoever writes them: until the browser session ends, or until a date | Yes | Yes, with requests to the site that set them | None. The store's own code sets no cookies. Google's tags will set their own from v0.2d if the visitor agrees (v0.3). Google lists its `_ga` cookie as lasting 2 years |
 | A variable in the page | Until the page is left | No | Never | What each script falls back on when the browser will not keep something |
-| Records on the server | 7 days, then the database deletes them itself | Not held in the browser | Not applicable | Planned (v0.2c): leads and orders |
+| Records on the server | 7 days, then the database deletes them itself | Not held in the browser | Not applicable | Built for leads (v0.2c-2, see [What the server keeps](server-data.md)); planned for orders (v0.2c-4) |
 
 ## What this store keeps, exactly
 
@@ -23,7 +23,7 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | `second-impression:default-currency` | `sessionStorage` | The currency the store started this tab in, worked out on the server from the visitor's country: CAD, USD, GBP or EUR. Never the country itself, and never a choice the visitor made | Until the tab is closed | It is asked for again on the next page, one small request each time, and holds for that page only |
 | `second-impression:list-handoff:<sku>` | `sessionStorage` | Which list a product card was clicked from: its id, its name and its position | From the click until the product page reads it, which removes it | The product page has no list to report |
 
-Nothing a visitor types is kept in the browser. The lead form's fields are never saved, and a half-typed form lives only in the open page. The one record made from what a visitor types is the lead, which the server will hold for 7 days from v0.2c.
+Nothing a visitor types is kept in the browser. The lead form's fields are never saved, and a half-typed form lives only in the open page. The one record made from what a visitor types is the lead, which the server holds for 7 days (built, v0.2c-2; see [What the server keeps](server-data.md)).
 
 ## When each thing comes into play
 

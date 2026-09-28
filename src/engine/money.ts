@@ -1,4 +1,4 @@
-import { CURRENCIES, type CurrencyCode } from '../store/currencies';
+import { CURRENCIES, type CurrencyCode } from '../store/currencies.js';
 
 /**
  * Money is stored as a whole number of cents, never as a decimal: a price of $38.00 is stored

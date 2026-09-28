@@ -141,6 +141,8 @@ export const WORDS = {
   'popup.noThanks': 'No thanks',
   'popup.reopen': 'Get {percent}% off',
   'popup.loadFailed': 'The form could not be loaded. Please reload the page and try again.',
+  'popup.saveFailed': 'We could not save your details. Please try again in a moment.',
+  'popup.tooManyTries': 'That is too many tries for now. Please wait a while and try again.',
 
   // About
   'about.title': 'About',

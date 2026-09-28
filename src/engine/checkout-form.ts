@@ -1,5 +1,5 @@
-import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations';
-import { checkPostalCode, postalCodeHelp } from './postal-codes';
+import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations.js';
+import { checkPostalCode, postalCodeHelp } from './postal-codes.js';
 
 // These checks look at the shape of what was typed and nothing else. Nothing is looked up, and a
 // postal code is not compared with a city or a province. The same code runs in the shopper's browser,

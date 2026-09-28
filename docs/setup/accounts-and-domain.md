@@ -23,7 +23,7 @@ The same personal Google login can stay in use. What keeps this project separate
 | Google Tag Manager | A new account named "Second Impression Portfolio". | Your personal Google login | 5 |
 | Google Analytics 4 | A new account with two properties, Live and Test. | Your personal Google login | 6 |
 | Meta | Two datasets in your existing business portfolio. No ad account. | Your regular Meta login | 7 |
-| Upstash | A new account on the Free plan. | Personal email or GitHub | Later (v0.2) |
+| Upstash | A new account on the Free plan. | Personal email or GitHub | Done (2026-09-25) |
 | Stape | A new account on the Free plan. It can later hold a second container for another site. | Personal email | Later (v0.4) |
 
 Because this project has its own GTM and GA4 accounts, an interviewer can be given read-only access to them without seeing anything else.
@@ -61,7 +61,7 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 - [x] Sign in with GitHub.
 - [x] Add a new project and import the repository. Framework preset: Astro. Leave the build settings on their defaults.
 - [x] Add the environment variable `PUBLIC_SITE_URL` with the final `https://` address of the domain.
-- [ ] Add the environment variable `PUBLIC_STORE_OPEN` with the value `true`, for the **Preview** environment only. Leave Production and Development unticked. Preview builds then show the whole store, and production keeps building only the placeholder page until v0.3 (consent) is merged and you decide to open it. Nothing about the switch is secret, and it costs nothing.
+- [x] Add the environment variable `PUBLIC_STORE_OPEN` with the value `true`, for the **Preview** environment only. Leave Production and Development unticked. Preview builds then show the whole store, and production keeps building only the placeholder page until v0.3 (consent) is merged and you decide to open it. Nothing about the switch is secret, and it costs nothing. Done: confirmed 2026-09-25 when a Preview of v0.2c-1 answered its function with 200, while Production, which has no such variable, still answers 404.
 - [x] Deploy, and confirm the `*.vercel.app` address loads the placeholder page. Done: the project is `second-impression`.
 - [x] In the project's Domains settings, add the domain. Use the DNS records Vercel shows for this project. Do not copy record values from another project. Done for `secondimpression.ca`, and for `www.secondimpression.ca`, which redirects permanently to it.
 - [x] Add those records under Advanced DNS in Namecheap. Wait for Vercel to show the domain as valid, and confirm HTTPS works. Done: an A record for `@` and a CNAME record for `www`. The live site passed every check on 2026-09-19.
@@ -93,4 +93,5 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 These come later. Do not create them now.
 
 - Stape, in v0.4.
-- Upstash, in v0.2, when the back end is built.
+
+Upstash was on this list; it is done (see the table above).

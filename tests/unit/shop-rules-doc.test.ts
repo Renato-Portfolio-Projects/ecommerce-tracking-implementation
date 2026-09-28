@@ -28,6 +28,7 @@ import {
   type FormField,
 } from '../../src/engine/checkout-form';
 import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
+import { DISPOSABLE_EMAIL_DOMAINS_TEXT } from '../../src/engine/disposable-email-domains';
 import { checkEmailDomain, parseDomainList, type MailService } from '../../src/engine/email-domain';
 import { PERSONAS } from '../../src/demo/personas';
 import { POSTAL_CODE_FORMATS } from '../../src/engine/postal-codes';
@@ -226,7 +227,7 @@ describe('docs/shop-rules.md', () => {
   });
 
   it('says how many temporary email domains the list holds, when it was copied, and which domains are the demo ones, the way the code does', () => {
-    const file = readFileSync(new URL('../../src/engine/disposable-email-domains.txt', import.meta.url), 'utf8');
+    const file = DISPOSABLE_EMAIL_DOMAINS_TEXT;
     const copied = file.match(/Copied on (\d{4}-\d{2}-\d{2})/)?.[1];
     expect(copied).toBeDefined();
     expect(rules).toContain(`copied on ${copied} and holds ${parseDomainList(file).size} domains`);

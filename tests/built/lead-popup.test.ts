@@ -4,7 +4,7 @@ import { welcomeCoupon } from '../../src/engine/coupons';
 import { LEAD_POPUP_KEY } from '../../src/engine/lead-popup';
 import { PERSONA_STORAGE_KEY } from '../../src/components/demo-persona';
 import { fill } from '../../src/engine/fill';
-import { CART_LIFETIME_DAYS } from '../../src/store/policy';
+import { LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
 import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, scriptOf } from '../helpers/built';
 
@@ -75,7 +75,7 @@ describe('the lead popup, before any script has opened it', () => {
     expect(popup).toContain(`>${WORDS['popup.demoButton']}</button>`);
     expect(popup).toContain(`>${WORDS['popup.newPerson']}</button>`);
     expect(popup).toContain(`>${WORDS['popup.noThanks']}</button>`);
-    expect(popup).toContain(`<p class="lead-note">${fill(WORDS['popup.demoNote'], { days: CART_LIFETIME_DAYS })}</p>`);
+    expect(popup).toContain(`<p class="lead-note">${fill(WORDS['popup.demoNote'], { days: LEAD_RECORD_LIFETIME_DAYS })}</p>`);
   });
 
   it('can be closed by its own button and by No thanks, and says which was used', () => {
@@ -103,6 +103,8 @@ describe('the lead popup, before any script has opened it', () => {
       demoAnnounce: WORDS['popup.demoAnnounce'],
       success: WORDS['popup.success'],
       loadFailed: WORDS['popup.loadFailed'],
+      saveFailed: WORDS['popup.saveFailed'],
+      tooManyTries: WORDS['popup.tooManyTries'],
       percent: String(percent),
     });
     expect(words.success).toContain('{code}');
@@ -119,6 +121,40 @@ describe('the lead popup, before any script has opened it', () => {
       expect(ask, file).toBeLessThan(button);
       expect(message, file).toBeGreaterThan(button);
       expect(message, file).toBeLessThan(success);
+    }
+  });
+
+  it('has a place for the message that the server could not take the lead, hidden, under the main button and after the message about loading', () => {
+    for (const file of pages) {
+      const popup = popupOf(readPage(OPEN, file));
+      expect(popup, file).toContain('<p class="lead-error" role="alert" data-lead-send-error hidden></p>');
+      expect(popup.match(/data-lead-send-error/g), file).toHaveLength(1);
+      const button = popup.indexOf('data-lead-submit');
+      const loadMessage = popup.indexOf('data-lead-load-error');
+      const sendMessage = popup.indexOf('data-lead-send-error');
+      const success = popup.indexOf('data-lead-success');
+      expect(sendMessage, file).toBeGreaterThan(button);
+      expect(sendMessage, file).toBeGreaterThan(loadMessage);
+      expect(sendMessage, file).toBeLessThan(success);
+    }
+  });
+
+  // The trap is for a robot that fills every field it finds. A person must never meet it, so it is clipped to a point, out of the
+  // tab order, hidden from a screen reader and asked not to be filled in by the browser, and it is never required or given focus.
+  it('has the hidden trap field once, inside the form, that no person can see, reach or hear', () => {
+    for (const file of pages) {
+      const popup = popupOf(readPage(OPEN, file));
+      const form = popup.match(/<form class="lead-form"[\s\S]*?<\/form>/)![0];
+      expect(popup.match(new RegExp(`name="${LEAD_TRAP_FIELD}"`, 'g')), file).toHaveLength(1);
+      expect(form, file).toContain(`name="${LEAD_TRAP_FIELD}"`);
+      const wrapper = form.match(/<div class="visually-hidden" aria-hidden="true">[\s\S]*?<\/div>/)![0];
+      const input = wrapper.match(/<input[^>]*>/)![0];
+      expect(input, file).toContain('type="text"');
+      expect(input, file).toContain('tabindex="-1"');
+      expect(input, file).toContain('autocomplete="off"');
+      expect(input, file).not.toMatch(/\s(required|autofocus|checked)[\s=>/]/);
+      expect(input, file).not.toMatch(/\svalue=/);
+      expect(input, file).not.toMatch(/\sid=/);
     }
   });
 
@@ -184,6 +220,7 @@ describe('the script that opens and closes the lead popup', () => {
       const script = scriptOf(OPEN, readPage(OPEN, file));
       expect(script, file).toContain('lead-popup:shown');
       expect(script, file).toContain('lead-popup:closed');
+      expect(script, file).toContain('leadSource');
       expect(script, file).toContain(LEAD_POPUP_KEY);
     }
   });
@@ -206,6 +243,15 @@ describe('the code for the popup\'s form', () => {
     const code = readFileSync(new URL(formFiles[0], assets), 'utf8');
     expect(code).toContain('lead-popup:submitted');
     expect(code).toContain('data-lead-error');
+  });
+
+  // The code comes from the server, with its answer, for a lead it has taken. If it were also written into the browser's
+  // code, it could be shown without a server having taken anything.
+  it('sends the lead to the server, and does not carry the welcome code', () => {
+    const code = readFileSync(new URL(formFiles[0], assets), 'utf8');
+    expect(code).toContain('/api/lead');
+    expect(code).toContain('data-lead-send-error');
+    expect(code).not.toContain(welcome.code);
   });
 
   it('is not what any page loads with it, and is asked for by import() only', () => {

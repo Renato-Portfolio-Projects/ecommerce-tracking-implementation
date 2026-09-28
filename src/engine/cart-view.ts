@@ -1,9 +1,9 @@
-import type { CurrencyCode } from '../store/currencies';
-import { cartQuantity, cartToItemsInput, type Cart } from './cart';
-import { findProduct } from './catalog';
-import { formatMoney } from './money';
-import { priceItems } from './pricing';
-import { freeShippingProgress } from './shipping';
+import type { CurrencyCode } from '../store/currencies.js';
+import { cartQuantity, cartToItemsInput, type Cart } from './cart.js';
+import { findProduct } from './catalog.js';
+import { formatMoney } from './money.js';
+import { priceItems } from './pricing.js';
+import { freeShippingProgress } from './shipping.js';
 
 /**
  * What a cart panel needs to show, worked out from a cart and a currency: every price already

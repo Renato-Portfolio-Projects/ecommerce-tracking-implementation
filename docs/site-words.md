@@ -191,6 +191,8 @@ Built in the fourth part of this work. On the home page it opens by itself after
 | `popup.noThanks` | No thanks | A text button under the form that closes the popup |
 | `popup.reopen` | Get {percent}% off | The button, styled as a link, in the footer and the small tab in the corner of the page, which open the same form by hand. It shows the offer, never the code |
 | `popup.loadFailed` | The form could not be loaded. Please reload the page and try again. | A message under the main button, shown only if the form's code cannot be loaded, which is rare. The browser does not try again by itself, so the visitor has to reload the page |
+| `popup.saveFailed` | We could not save your details. Please try again in a moment. | A message under the main button, shown when the server could not keep the lead: it did not answer in six seconds, could not be reached, or had a fault. No code is shown, and the visitor can press the button again |
+| `popup.tooManyTries` | That is too many tries for now. Please wait a while and try again. | A message under the main button, shown when the server says this visitor has sent the form more often than its hourly limit (`docs/server-data.md` gives the number). No code is shown |
 
 ## About
 

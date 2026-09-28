@@ -1,4 +1,4 @@
-import { COUPONS, type Coupon } from '../store/coupon-codes';
+import { COUPONS, type Coupon } from '../store/coupon-codes.js';
 
 /**
  * The result of checking a typed code. `valid`, `expired` and `invalid` line up with the

@@ -41,6 +41,34 @@ function folderOf(file: string, specifier: string): string | undefined {
   return relative(srcRoot, resolve(dirname(file), specifier)).split(/[\\/]/)[0];
 }
 
+/**
+ * The relative imports, among some specifiers, that would fail in a native ES module: those that do not end in
+ * `.js` (or `.json`). TypeScript, Vite and esbuild do not mind, but Node, which is how Vercel runs a function, needs
+ * the extension, so any file that a function reaches has to name it.
+ */
+function withoutExtension(specifiers: string[]): string[] {
+  return specifiers.filter((specifier) => specifier.startsWith('.') && !/\.(js|json)$/.test(specifier));
+}
+
+/** Every file under src that is not in one of the four shared and server folders: the browser's code and pages. */
+function browserSideFiles(): string[] {
+  const found: string[] = [];
+  const shared = ['engine', 'store', 'demo', 'server'];
+  const walk = (directory: string) => {
+    for (const name of readdirSync(directory)) {
+      const full = join(directory, name);
+      if (statSync(full).isDirectory()) {
+        if (directory === srcRoot.replace(/[\\/]$/, '') && shared.includes(name)) continue;
+        walk(full);
+      } else if (/\.(ts|astro)$/.test(name)) {
+        found.push(full);
+      }
+    }
+  };
+  walk(srcRoot.replace(/[\\/]$/, ''));
+  return found;
+}
+
 /** Every import in a folder that lands outside the folders it is allowed to depend on. */
 function offenders(folder: string, allowed: string[]): string[] {
   const found: string[] = [];
@@ -80,6 +108,25 @@ describe('how the code is organised', () => {
   it('has code in each folder, so the checks above are not passing on empty folders', () => {
     for (const folder of ['engine', 'store', 'demo', 'server']) expect(sourceFiles(folder).length, folder).toBeGreaterThan(0);
   });
+
+  it('names .js on every relative import in the four folders, since a server function reaches them and Vercel runs it as a native module', () => {
+    const found: string[] = [];
+    for (const folder of ['engine', 'store', 'demo', 'server']) {
+      for (const file of sourceFiles(folder)) {
+        for (const specifier of withoutExtension(importSpecifiers(readFileSync(file, 'utf8')))) {
+          found.push(`${relative(srcRoot, file)} imports ${specifier}`);
+        }
+      }
+    }
+    expect(found).toEqual([]);
+  });
+
+  it('keeps browser code from importing the list of temporary email domains, which is about 127 KB and belongs on the server', () => {
+    const files = browserSideFiles();
+    expect(files.length, 'the browser-side files were found').toBeGreaterThan(10);
+    const importers = files.filter((file) => readFileSync(file, 'utf8').includes('disposable-email-domains'));
+    expect(importers.map((file) => relative(srcRoot, file))).toEqual([]);
+  });
 });
 
 describe('the checks that keep the boundaries', () => {
@@ -100,6 +147,12 @@ describe('the checks that keep the boundaries', () => {
       'const text = "from \'../demo/not-an-import\'";',
     ].join('\n');
     expect(importSpecifiers(code)).toEqual(['./a', '../store/b', '../demo/c', './e', 'node:fs', '../demo/only-runs-a-file']);
+  });
+
+  it('finds the relative imports that leave out the extension, and leaves packages and named extensions alone', () => {
+    expect(
+      withoutExtension(['./a', '../store/b.js', '../demo/c', './data.json', 'node:fs', 'esbuild', './d.js', '../e']),
+    ).toEqual(['./a', '../demo/c', '../e']);
   });
 
   it('says which folder an import lands in, and ignores packages', () => {

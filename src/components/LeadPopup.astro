@@ -1,6 +1,6 @@
 ---
 import { fill } from '../engine/fill';
-import { CART_LIFETIME_DAYS } from '../store/policy';
+import { LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../store/policy';
 import { WORDS } from '../store/words';
 import { welcomeOffer } from './welcome-offer';
 
@@ -13,12 +13,14 @@ const { auto = false } = Astro.props;
 const percent = welcomeOffer().percentOff;
 
 // The sentences the popup's script fills in later, written into the page so that it does not have to carry
-// the words file. The code is deliberately not here: the script adds it only when the form is accepted, so
-// it is not in the page's source, and it is in one place only.
+// the words file. The code is deliberately not here, and not in the script either: the server sends it with its
+// answer, only for a lead it has taken, so it is in one place only.
 const words = {
   demoAnnounce: WORDS['popup.demoAnnounce'],
   success: WORDS['popup.success'],
   loadFailed: WORDS['popup.loadFailed'],
+  saveFailed: WORDS['popup.saveFailed'],
+  tooManyTries: WORDS['popup.tooManyTries'],
   percent: String(percent),
 };
 ---
@@ -52,6 +54,13 @@ const words = {
         <p class="lead-error" id="lead-email-error" data-lead-error="email" hidden></p>
       </div>
 
+      {/* The trap for a robot that fills in every field it finds. A person never sees it, reaches it with the keyboard,
+           or hears it: it is clipped to a single point, taken out of the tab order, hidden from screen readers and told
+           not to be filled in by the browser. The lead function keeps nothing from a form where it is filled. */}
+      <div class="visually-hidden" aria-hidden="true">
+        <label>Website <input type="text" name={LEAD_TRAP_FIELD} tabindex="-1" autocomplete="off" /></label>
+      </div>
+
       {/* Never ticked for the visitor, and no demo button ticks it: agreeing to marketing is always deliberate. */}
       <label class="lead-check">
         <input type="checkbox" name="marketing" />
@@ -61,6 +70,8 @@ const words = {
       <button type="submit" class="btn lead-submit" data-lead-submit>{WORDS['popup.submit']}</button>
       {/* Shown by the script only if the form's code cannot be loaded, which is rare. The browser does not try a failed load again by itself, so the visitor is asked to reload the page. */}
       <p class="lead-error" role="alert" data-lead-load-error hidden></p>
+      {/* Shown by the form's code when the server says too many tries, or could not keep the lead. */}
+      <p class="lead-error" role="alert" data-lead-send-error hidden></p>
 
       <div class="lead-demo">
         <button type="button" class="link-button" data-lead-demo data-cta="Demo Data - Lead popup">{WORDS['popup.demoButton']}</button>
@@ -68,7 +79,7 @@ const words = {
              convenience, not something the business wants to count. */}
         <button type="button" class="link-button" data-lead-new-person hidden>{WORDS['popup.newPerson']}</button>
       </div>
-      <p class="lead-note">{fill(WORDS['popup.demoNote'], { days: CART_LIFETIME_DAYS })}</p>
+      <p class="lead-note">{fill(WORDS['popup.demoNote'], { days: LEAD_RECORD_LIFETIME_DAYS })}</p>
       <p class="visually-hidden" role="status" data-lead-announce></p>
     </form>
 

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startDevServer } from '../../scripts/dev-server.mjs';
+import { welcomeCoupon } from '../../src/engine/coupons';
 
 // scripts/dev-server.mjs serves the built store and runs the functions in api/, on this machine, for the browser
 // checks. These tests start it on a small folder of their own and ask it things over a real connection.
@@ -24,6 +25,8 @@ writeFileSync(join(root, 'a file with spaces.html'), '<h1>spaces</h1>');
 let server: Awaited<ReturnType<typeof startDevServer>>;
 let base = '';
 const previous = process.env.PUBLIC_STORE_OPEN;
+const previousDatabase = { url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN, memory: process.env.SECOND_IMPRESSION_MEMORY_STORE };
+const restore = (name: string, value: string | undefined) => (value === undefined ? delete process.env[name] : (process.env[name] = value));
 
 /** A request with the path sent exactly as written, since fetch would tidy a path like /../x before sending it. */
 function raw(path: string, method = 'GET', headers: Record<string, string> = {}): Promise<{ status: number; body: string; headers: Record<string, string | string[] | undefined> }> {
@@ -39,6 +42,9 @@ function raw(path: string, method = 'GET', headers: Record<string, string> = {})
 }
 
 beforeAll(async () => {
+  // These tests are about the server with no database to use, whatever the machine they run on has set.
+  delete process.env.KV_REST_API_URL;
+  delete process.env.KV_REST_API_TOKEN;
   server = await startDevServer({ root, port: 0 });
   base = `http://127.0.0.1:${server.port}`;
 });
@@ -46,8 +52,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
   rmSync(parent, { recursive: true, force: true });
-  if (previous === undefined) delete process.env.PUBLIC_STORE_OPEN;
-  else process.env.PUBLIC_STORE_OPEN = previous;
+  restore('PUBLIC_STORE_OPEN', previous);
+  restore('KV_REST_API_URL', previousDatabase.url);
+  restore('KV_REST_API_TOKEN', previousDatabase.token);
+  restore('SECOND_IMPRESSION_MEMORY_STORE', previousDatabase.memory);
 });
 
 describe('the built store, as the server gives it', () => {
@@ -130,6 +138,16 @@ describe('the functions in api/', () => {
   it('gives a function the method the browser used', async () => {
     expect((await fetch(`${base}/api/currency`, { method: 'POST', body: '{}' })).status).toBe(405);
   });
+
+  it('runs the lead function with leads kept in memory, since there is no database, and answers as the real one does', async () => {
+    const lead = { firstName: 'Maya', email: 'maya@example.com', marketing: false, source: 'auto', website: '' };
+    const post = (body: unknown) => fetch(`${base}/api/lead`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const saved = await post(lead);
+    expect(saved.status).toBe(200);
+    expect(await saved.json()).toEqual({ ok: true, saved: true, code: welcomeCoupon()!.code });
+    expect((await post({ ...lead, email: 'not an email' })).status).toBe(400);
+    expect((await fetch(`${base}/api/lead`)).status).toBe(405);
+  });
 });
 
 describe('the country it is asked to pretend to be in, and a closed store', () => {
@@ -150,9 +168,31 @@ describe('the country it is asked to pretend to be in, and a closed store', () =
       const response = await fetch(`http://127.0.0.1:${closed.port}/api/currency`, { headers: { 'x-vercel-ip-country': 'CA' } });
       expect(response.status).toBe(404);
       expect(await response.json()).toEqual({ error: 'not found' });
+      const lead = await fetch(`http://127.0.0.1:${closed.port}/api/lead`, { method: 'POST', body: '{}' });
+      expect(lead.status).toBe(404);
     } finally {
       await closed.close();
       process.env.PUBLIC_STORE_OPEN = 'true';
+    }
+  });
+
+  it('keeps leads in memory only when there is no database to use, and leaves the setting off when there is one', async () => {
+    delete process.env.SECOND_IMPRESSION_MEMORY_STORE;
+    process.env.KV_REST_API_URL = 'https://example-database.upstash.io';
+    process.env.KV_REST_API_TOKEN = 'a-token-for-the-test';
+    const withDatabase = await startDevServer({ root, port: 0 });
+    try {
+      expect(process.env.SECOND_IMPRESSION_MEMORY_STORE).toBeUndefined();
+    } finally {
+      await withDatabase.close();
+    }
+    delete process.env.KV_REST_API_URL;
+    delete process.env.KV_REST_API_TOKEN;
+    const without = await startDevServer({ root, port: 0 });
+    try {
+      expect(process.env.SECOND_IMPRESSION_MEMORY_STORE).toBe('true');
+    } finally {
+      await without.close();
     }
   });
 

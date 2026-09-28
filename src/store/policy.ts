@@ -32,3 +32,22 @@ export const LEAD_POPUP_DELAY_SECONDS = 5;
 
 /** How far down the page, as a percentage of the way, the visitor must scroll to open the lead popup by itself. */
 export const LEAD_POPUP_SCROLL_PERCENT = 40;
+
+/**
+ * How long the server keeps a lead, after which the database deletes it by itself. The design promises seven
+ * days for every record, and it matches CART_LIFETIME_DAYS and LEAD_POPUP_INTERVAL_DAYS on purpose.
+ */
+export const LEAD_RECORD_LIFETIME_DAYS = 7;
+
+/**
+ * How many times one visitor may send the lead form in an hour before the server asks them to wait. It is generous,
+ * so that a reviewer who replays the demo is not stopped, and it is there to stop floods, not people.
+ */
+export const LEAD_ATTEMPTS_PER_HOUR = 10;
+
+/**
+ * The name of the hidden field in the lead popup that no person ever fills, which a robot that fills every field it
+ * finds gives itself away by. It is here, and not in one of the two places that use it, because the popup writes the
+ * field and the lead function looks for it, and the two must never disagree.
+ */
+export const LEAD_TRAP_FIELD = 'website';

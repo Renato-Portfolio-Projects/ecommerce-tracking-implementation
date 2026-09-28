@@ -1,4 +1,4 @@
-import type { FieldProblem } from './checkout-form';
+import type { FieldProblem } from './checkout-form.js';
 
 // The checks on an email's domain. They run on the server, after the shape of the address has been
 // accepted, because they need a list and a look at the domain's mail service. Only the domain, the
