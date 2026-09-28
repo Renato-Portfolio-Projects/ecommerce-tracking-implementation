@@ -181,6 +181,16 @@ a {
   padding: 0.3rem 0.5rem;
 }
 
+.currency-picker select:disabled {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.currency-locked-note {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
 .cart-indicator {
   font-size: 0.9rem;
   font-weight: 600;
@@ -1113,4 +1123,65 @@ body:has(.cart-drawer[open]) {
 
 .lead-tab[hidden] {
   display: none;
+}
+
+/* The checkout page's three steps. Each is a native <details>, so the browser gives the disclosure triangle,
+   the keyboard handling and the open state for free; only the collapsing to a summary is scripted. */
+.checkout-step {
+  margin: var(--space-4) 0;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
+}
+
+.checkout-step-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkout-step-value {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.checkout-step-value[hidden] {
+  display: none;
+}
+
+.checkout-step-edit {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.checkout-form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+/* Fields that share a line on a wide enough screen (first and last name; city, province and postal code; expiry
+   and the security code), and stack on a narrow one. Each field is at least 8rem wide before another joins it. */
+.checkout-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-3);
+}
+
+.checkout-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+}
+
+.checkout-test-mode {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+  background: var(--paper-shade);
+  border-radius: 2px;
 }

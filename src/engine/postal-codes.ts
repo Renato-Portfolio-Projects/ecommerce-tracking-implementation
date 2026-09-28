@@ -107,6 +107,12 @@ export function postalCodeHelp(country: unknown): string {
   return format ? `Enter a valid ${format.name}, like ${format.example}.` : 'Enter a valid postal code.';
 }
 
+/** What to call the field itself, capitalised for a label: "Postal code", "ZIP code", "Postcode" or "Eircode". */
+export function postalCodeLabel(country: unknown): string {
+  const name = formatFor(country)?.name ?? 'postal code';
+  return name[0].toUpperCase() + name.slice(1);
+}
+
 /**
  * Checks a typed postal code for a country. Capitals, spaces around the code and a missing or
  * doubled inner space do not matter, and the code that comes back is always in its standard form.

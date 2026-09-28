@@ -4,6 +4,7 @@ import {
   POSTAL_CODE_FORMATS,
   checkPostalCode,
   postalCodeHelp,
+  postalCodeLabel,
 } from '../../src/engine/postal-codes';
 
 /** Each row: what is typed, then how it is kept. */
@@ -153,6 +154,20 @@ describe('postalCodeHelp', () => {
   it('falls back to a plain sentence for a country the store does not ship to', () => {
     expect(postalCodeHelp('JP')).toBe('Enter a valid postal code.');
     expect(postalCodeHelp(undefined)).toBe('Enter a valid postal code.');
+  });
+});
+
+describe('postalCodeLabel', () => {
+  it("gives what the country calls its code, capitalised for a field's label", () => {
+    expect(postalCodeLabel('CA')).toBe('Postal code');
+    expect(postalCodeLabel('us')).toBe('ZIP code');
+    expect(postalCodeLabel('GB')).toBe('Postcode');
+    expect(postalCodeLabel(' IE ')).toBe('Eircode');
+  });
+
+  it('falls back to a plain label for a country the store does not ship to, or for something that is not text', () => {
+    expect(postalCodeLabel('JP')).toBe('Postal code');
+    expect(postalCodeLabel(undefined)).toBe('Postal code');
   });
 });
 

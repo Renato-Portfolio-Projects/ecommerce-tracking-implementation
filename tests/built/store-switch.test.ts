@@ -43,6 +43,7 @@ describe('the site built with the store open', () => {
       '404.html',
       'about/index.html',
       'cart/index.html',
+      'checkout/index.html',
       'contact/index.html',
       'index.html',
       'policies/returns/index.html',

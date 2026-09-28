@@ -2,7 +2,6 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { welcomeCoupon } from '../../src/engine/coupons';
 import { LEAD_POPUP_KEY } from '../../src/engine/lead-popup';
-import { PERSONA_STORAGE_KEY } from '../../src/components/demo-persona';
 import { fill } from '../../src/engine/fill';
 import { LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
@@ -11,7 +10,9 @@ import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, scriptOf } from '../
 const welcome = welcomeCoupon()!;
 const percent = welcome.percentOff;
 const built = htmlFiles(OPEN);
-const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">'));
+// Checkout is the one page with the header that never carries the popup (decision 10 of v0.2c-3): a shopper
+// already checking out is never invited to start over. It has its own tests, in tests/built/checkout-page.test.ts.
+const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">') && file !== 'checkout/index.html');
 
 /** What the footer link and the tab say, as the store's words fill it in for the welcome code. */
 const offer = fill(WORDS['popup.reopen'], { percent });
@@ -236,7 +237,10 @@ describe('the script that opens and closes the lead popup', () => {
 // its own, that no page names as a script, and that the popup script asks for with import() and never imports the ordinary way.
 describe('the code for the popup\'s form', () => {
   const assets = new URL('_astro/', OPEN);
-  const formFiles = readdirSync(assets).filter((name) => name.endsWith('.js') && readFileSync(new URL(name, assets), 'utf8').includes(PERSONA_STORAGE_KEY));
+  // Found by a selector only this file writes, not by the persona storage key or the event name it announces: the
+  // checkout page (v0.2c-3) reads and writes that key too, eagerly, and every page's own eager script listens for
+  // the event, so both now sit in a chunk shared with this file rather than only inside it.
+  const formFiles = readdirSync(assets).filter((name) => name.endsWith('.js') && readFileSync(new URL(name, assets), 'utf8').includes('data-lead-send-error'));
 
   it('is one file of its own, which carries the form\'s checks, its demo person and its announcement', () => {
     expect(formFiles).toHaveLength(1);
@@ -259,7 +263,6 @@ describe('the code for the popup\'s form', () => {
       const html = readPage(OPEN, file);
       expect(html, file).not.toContain(formFiles[0]);
       const script = scriptOf(OPEN, html);
-      expect(script, file).not.toContain(PERSONA_STORAGE_KEY);
       // The build writes a string with double quotes, single quotes or backticks, so all three are allowed.
       expect(script, file).not.toMatch(new RegExp(`(?:from|import)\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));
       expect(script, file).toMatch(new RegExp(`import\\(\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));

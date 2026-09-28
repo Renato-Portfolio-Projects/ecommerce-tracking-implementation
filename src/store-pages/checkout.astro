@@ -1,0 +1,160 @@
+---
+import StorePage from '../layouts/StorePage.astro';
+import { WORDS } from '../store/words';
+import { COUNTRIES, PROVINCES } from '../store/destinations';
+import { postalCodeLabel } from '../engine/postal-codes';
+
+// The lead popup never appears here (decision 10 of the v0.2c-3 proposals): a shopper who is already
+// checking out should never be interrupted by an offer to start over. The currency selector is locked
+// here too, by Header.astro, which reads the same URL this page does.
+
+// The country selector has no blank option, so it starts on the first one, Canada, the way the currency
+// selector always starts on a real value. The postal code field's label starts matching that, so it is
+// never empty before checkout-steps.ts runs, and is only ever updated by it, never set from nothing.
+const DEFAULT_COUNTRY = COUNTRIES[0].code;
+---
+
+<StorePage title={WORDS['checkout.title']} description={WORDS['checkout.description']} leadPopup={false}>
+  <h1>{WORDS['checkout.heading']}</h1>
+
+  {/* Three steps, each a native <details>: the browser gives the disclosure triangle, the keyboard handling
+       and the open/closed state for free. Completing one (checkout-steps.ts) collapses it to a one-line
+       summary and opens the next. Any step can still be opened by hand at any time, which is what makes
+       them "editable": a shopper who spots a typo in their address after reaching payment can reopen it
+       without losing what payment they had already typed. */}
+
+  <details class="checkout-step" data-checkout-step="contact" open>
+    <summary class="checkout-step-summary">
+      <span class="checkout-step-title">{WORDS['checkout.contactHeading']}</span>
+      <span class="checkout-step-value" data-checkout-summary hidden></span>
+      <span class="checkout-step-edit link-button" data-checkout-edit hidden>{WORDS['checkout.edit']}</span>
+    </summary>
+    <form class="checkout-form" data-checkout-form="contact" novalidate>
+      <div class="lead-field">
+        <label for="checkout-email">{WORDS['popup.email']}</label>
+        <input id="checkout-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required />
+        <p class="lead-error" id="checkout-email-error" data-checkout-error="email" hidden></p>
+      </div>
+      <div class="lead-field">
+        <label for="checkout-phone">{WORDS['checkout.phone']}</label>
+        <input id="checkout-phone" name="phone" type="tel" autocomplete="tel" />
+        <p class="lead-error" id="checkout-phone-error" data-checkout-error="phone" hidden></p>
+      </div>
+      <div class="checkout-demo">
+        <button type="button" class="link-button" data-checkout-demo="contact">{WORDS['checkout.demoButton']}</button>
+        <button type="button" class="link-button" data-checkout-new-person="contact" hidden>{WORDS['checkout.newPerson']}</button>
+      </div>
+      <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
+    </form>
+  </details>
+
+  <details class="checkout-step" data-checkout-step="address">
+    <summary class="checkout-step-summary">
+      <span class="checkout-step-title">{WORDS['checkout.addressHeading']}</span>
+      <span class="checkout-step-value" data-checkout-summary hidden></span>
+      <span class="checkout-step-edit link-button" data-checkout-edit hidden>{WORDS['checkout.edit']}</span>
+    </summary>
+    <form class="checkout-form" data-checkout-form="address" novalidate>
+      <div class="lead-field">
+        <label for="checkout-country">{WORDS['checkout.country']}</label>
+        <select id="checkout-country" name="country">
+          {COUNTRIES.map((country) => <option value={country.code}>{country.name}</option>)}
+        </select>
+        <p class="lead-error" id="checkout-country-error" data-checkout-error="country" hidden></p>
+      </div>
+      <div class="checkout-row">
+        <div class="lead-field">
+          <label for="checkout-first-name">{WORDS['popup.firstName']}</label>
+          <input id="checkout-first-name" name="firstName" type="text" autocomplete="given-name" required />
+          <p class="lead-error" id="checkout-first-name-error" data-checkout-error="firstName" hidden></p>
+        </div>
+        <div class="lead-field">
+          <label for="checkout-last-name">{WORDS['checkout.lastName']}</label>
+          <input id="checkout-last-name" name="lastName" type="text" autocomplete="family-name" required />
+          <p class="lead-error" id="checkout-last-name-error" data-checkout-error="lastName" hidden></p>
+        </div>
+      </div>
+      <div class="lead-field">
+        <label for="checkout-address1">{WORDS['checkout.address1']}</label>
+        <input id="checkout-address1" name="address1" type="text" autocomplete="address-line1" required />
+        <p class="lead-error" id="checkout-address1-error" data-checkout-error="address1" hidden></p>
+      </div>
+      <div class="lead-field">
+        <label for="checkout-address2">{WORDS['checkout.address2']}</label>
+        <input id="checkout-address2" name="address2" type="text" autocomplete="address-line2" />
+        <p class="lead-error" id="checkout-address2-error" data-checkout-error="address2" hidden></p>
+      </div>
+      <div class="checkout-row">
+        <div class="lead-field">
+          <label for="checkout-city">{WORDS['checkout.city']}</label>
+          <input id="checkout-city" name="city" type="text" autocomplete="address-level2" required />
+          <p class="lead-error" id="checkout-city-error" data-checkout-error="city" hidden></p>
+        </div>
+        {/* Shown only for Canada (checkout-steps.ts), since the store only asks a province where tax needs it. */}
+        <div class="lead-field" data-checkout-province-field>
+          <label for="checkout-province">{WORDS['checkout.province']}</label>
+          <select id="checkout-province" name="province">
+            {PROVINCES.map((province) => <option value={province.code}>{province.name}</option>)}
+          </select>
+          <p class="lead-error" id="checkout-province-error" data-checkout-error="province" hidden></p>
+        </div>
+        <div class="lead-field">
+          {/* The word for this label changes with the country (Postal code, ZIP code, Postcode, Eircode), so
+               checkout-steps.ts writes it, from postalCodeLabel in src/engine/postal-codes.ts. */}
+          <label for="checkout-postal-code" data-checkout-postal-label>{postalCodeLabel(DEFAULT_COUNTRY)}</label>
+          <input id="checkout-postal-code" name="postalCode" type="text" autocomplete="postal-code" required />
+          <p class="lead-error" id="checkout-postal-code-error" data-checkout-error="postalCode" hidden></p>
+        </div>
+      </div>
+      <div class="checkout-demo">
+        <button type="button" class="link-button" data-checkout-demo="address">{WORDS['checkout.demoButton']}</button>
+        <button type="button" class="link-button" data-checkout-new-person="address" hidden>{WORDS['checkout.newPerson']}</button>
+      </div>
+      <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
+    </form>
+  </details>
+
+  <details class="checkout-step" data-checkout-step="payment">
+    <summary class="checkout-step-summary">
+      <span class="checkout-step-title">{WORDS['checkout.paymentHeading']}</span>
+      <span class="checkout-step-value" data-checkout-summary hidden></span>
+      <span class="checkout-step-edit link-button" data-checkout-edit hidden>{WORDS['checkout.edit']}</span>
+    </summary>
+    <form class="checkout-form" data-checkout-form="payment" novalidate>
+      <p class="checkout-test-mode">{WORDS['checkout.testModeNote']}</p>
+      <div class="lead-field">
+        <label for="checkout-card-number">{WORDS['checkout.cardNumber']}</label>
+        <input id="checkout-card-number" name="number" type="text" inputmode="numeric" autocomplete="cc-number" required />
+        <p class="lead-error" id="checkout-card-number-error" data-checkout-error="number" hidden></p>
+      </div>
+      <div class="checkout-row">
+        <div class="lead-field">
+          <label for="checkout-card-expiry">{WORDS['checkout.cardExpiry']}</label>
+          <input id="checkout-card-expiry" name="expiry" type="text" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" required />
+          <p class="lead-error" id="checkout-card-expiry-error" data-checkout-error="expiry" hidden></p>
+        </div>
+        <div class="lead-field">
+          <label for="checkout-card-code">{WORDS['checkout.cardCode']}</label>
+          <input id="checkout-card-code" name="securityCode" type="text" inputmode="numeric" autocomplete="cc-csc" required />
+          <p class="lead-error" id="checkout-card-code-error" data-checkout-error="securityCode" hidden></p>
+        </div>
+      </div>
+      {/* A card that is shaped right but is the one designated to always decline. Not a field problem, so
+           it is not tied to one field, the way the lead popup shows a failed save under its button. */}
+      <p class="lead-error" role="alert" data-checkout-declined hidden></p>
+      <div class="checkout-demo">
+        <button type="button" class="link-button" data-checkout-demo="payment">{WORDS['checkout.testCardButton']}</button>
+      </div>
+      <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
+    </form>
+  </details>
+
+  {/* The one word this page's script needs is handed to it here, rather than importing the whole words file,
+       so the eagerly-loaded checkout script does not carry every word on the site (docs/brand.md's script budget). */}
+  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'] })}></p>
+</StorePage>
+
+<script>
+  import { initCheckoutSteps } from '../components/checkout-steps';
+  initCheckoutSteps();
+</script>
