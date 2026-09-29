@@ -1,4 +1,4 @@
-import { addToCart, removeFromCart, setQuantity, type Cart, type CartResult, type VariantKey } from '../engine/cart';
+import { addToCart, emptyCart, removeFromCart, setQuantity, type Cart, type CartResult, type VariantKey } from '../engine/cart';
 import { parseStoredCart, serializeCart, type StoredCartResult } from '../engine/cart-storage';
 import type { ListContext } from '../engine/catalog';
 import type { LineInput } from '../engine/pricing';
@@ -86,5 +86,11 @@ export function changeQuantity(target: VariantKey, quantity: number): void {
 /** Takes a line out of the cart altogether. */
 export function removeItem(target: VariantKey): void {
   saveCart(removeFromCart(loadCart().cart, target));
+  announce();
+}
+
+/** Empties the cart, the way placing an order really would: there is nothing left to check out with again. */
+export function clearCart(): void {
+  saveCart(emptyCart());
   announce();
 }

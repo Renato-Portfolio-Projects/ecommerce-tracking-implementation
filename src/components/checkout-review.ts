@@ -6,8 +6,9 @@ import { cartToItemsInput } from '../engine/cart';
 import { shippingCost } from '../engine/shipping';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 import type { CurrencyCode } from '../store/currencies';
-import { loadCart } from './cart-client';
+import { clearCart, loadCart } from './cart-client';
 import { currentCurrency } from './currency-switcher';
+import { placeOrder } from './place-order';
 
 /**
  * The order summary: shown only once the three steps above are all complete, priced for real from the same
@@ -23,11 +24,24 @@ import { currentCurrency } from './currency-switcher';
 const section = () => document.querySelector<HTMLElement>('[data-checkout-review]')!;
 const linesList = () => document.querySelector<HTMLElement>('[data-checkout-review-lines]')!;
 const lineTemplate = () => document.querySelector<HTMLTemplateElement>('[data-checkout-review-line]')!;
+const couponForm = () => document.querySelector<HTMLFormElement>('[data-checkout-coupon-form]')!;
 const couponMessage = () => document.querySelector<HTMLElement>('[data-checkout-coupon-message]')!;
 const couponInput = () => document.querySelector<HTMLInputElement>('[data-checkout-coupon-form] [name=coupon]')!;
+const shippingMethodsField = () => document.querySelector<HTMLElement>('.checkout-shipping-methods')!;
+const placeOrderButton = () => document.querySelector<HTMLButtonElement>('[data-checkout-place-order]')!;
+const reviewHeading = () => document.querySelector<HTMLElement>('[data-checkout-review-heading]')!;
+const confirmedHeading = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-heading]')!;
+const confirmedBody = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-body]')!;
+const confirmedAddress = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-address]')!;
+const confirmedAddressLine = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-address-line]')!;
+const keepShoppingLink = () => document.querySelector<HTMLElement>('[data-checkout-keep-shopping]')!;
 
 /** The coupon last sent for pricing: the empty string once nothing has been applied, or an "Apply" gave nothing usable. */
 let appliedCoupon = '';
+
+/** Set once "Place order" succeeds, so nothing still on the page (a stray coupon submit, the cart emptying
+ * itself) redraws the review over top of the confirmation it has just become. */
+let placed = false;
 
 function allStepsComplete(): boolean {
   return [...document.querySelectorAll<HTMLDetailsElement>('[data-checkout-step]')].every((step) => {
@@ -98,13 +112,17 @@ interface ReviewWords {
   couponValid: string;
   couponInvalid: string;
   couponExpired: string;
+  confirmedBody: string;
 }
 
 const wordsOf = () => JSON.parse(section().dataset.words ?? '{}') as ReviewWords;
 
 /** Re-prices and redraws the whole review, if it is showing. Does nothing otherwise, so nothing is computed for a
- * shopper who has not reached it yet. */
+ * shopper who has not reached it yet, and does nothing once the order is placed, so the confirmation is never
+ * redrawn back into a review (the cart emptying itself, which placing an order does, would otherwise trigger
+ * exactly that). */
 function redraw(): void {
+  if (placed) return;
   section().hidden = !allStepsComplete();
   if (section().hidden) return;
   const words = wordsOf();
@@ -121,6 +139,7 @@ function redraw(): void {
 
 function applyCoupon(event: SubmitEvent): void {
   event.preventDefault();
+  if (placed) return;
   const typed = couponInput().value;
   const checked = checkCoupon(typed);
   const words = wordsOf();
@@ -135,6 +154,50 @@ function applyCoupon(event: SubmitEvent): void {
     showCouponMessage(checked.status === 'expired' ? words.couponExpired : words.couponInvalid);
   }
   redraw();
+}
+
+/** Told once "Place order" succeeds, so checkout-steps.ts can stop the three steps above being reopened:
+ * editing a step after the order it belongs to has been placed does not make sense. The two files know
+ * nothing else about each other, the same way checkout-steps.ts's own event works the other way round. */
+function announceOrderPlaced(): void {
+  document.dispatchEvent(new CustomEvent('checkout:order-placed'));
+}
+
+/** The address step's own already-formatted summary line ("Liam Okafor, 310 Alder Street, ..."), read rather
+ * than built a second time, so the confirmation can never say something different from what the shopper
+ * already confirmed by completing that step. */
+function addressSummaryText(): string {
+  return document.querySelector<HTMLElement>('[data-checkout-step="address"] [data-checkout-summary]')!.textContent ?? '';
+}
+
+async function handlePlaceOrder(): Promise<void> {
+  if (placed) return;
+  const words = wordsOf();
+  const { result } = priceNow();
+  if (!result.ok) return; // Same unreachable-in-practice guard as redraw(): the steps already checked this.
+
+  const button = placeOrderButton();
+  button.disabled = true;
+  const email = document.querySelector<HTMLInputElement>('[data-checkout-form="contact"] [name=email]')!.value;
+  const firstName = document.querySelector<HTMLInputElement>('[data-checkout-form="address"] [name=firstName]')!.value;
+  const address = addressSummaryText();
+  const { orderNumber } = await placeOrder({ order: result.order, email, firstName, address });
+
+  placed = true;
+  confirmedBody().textContent = fill(words.confirmedBody, { firstName, orderNumber });
+  confirmedBody().hidden = false;
+  reviewHeading().hidden = true;
+  confirmedHeading().hidden = false;
+  confirmedAddressLine().textContent = address;
+  confirmedAddress().hidden = false;
+  shippingMethodsField().hidden = true;
+  couponForm().hidden = true;
+  couponMessage().hidden = true;
+  button.hidden = true;
+  keepShoppingLink().hidden = false;
+
+  clearCart();
+  announceOrderPlaced();
 }
 
 export function initCheckoutReview(): void {
@@ -152,6 +215,7 @@ export function initCheckoutReview(): void {
   for (const radio of document.querySelectorAll<HTMLInputElement>('[data-checkout-shipping-method]')) {
     radio.addEventListener('change', redraw);
   }
-  document.querySelector<HTMLFormElement>('[data-checkout-coupon-form]')!.addEventListener('submit', applyCoupon);
+  couponForm().addEventListener('submit', applyCoupon);
+  placeOrderButton().addEventListener('click', handlePlaceOrder);
   redraw();
 }

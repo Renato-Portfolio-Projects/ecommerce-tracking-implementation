@@ -122,7 +122,7 @@ describe('the checkout page, before any script has run', () => {
     expect(script).not.toContain(WORDS['about.p1']);
   });
 
-  it('has the review section hidden by default, holding the four words its script needs', () => {
+  it('has the review section hidden by default, holding the five words its script needs', () => {
     // Matched against the raw, undecoded html: its own quotes are HTML entities, so decoding first would
     // truncate the match at the JSON's own quotes (the same reason the demo-announce words above do this).
     const match = html.match(/<section class="checkout-review" data-checkout-review hidden data-words="([^"]*)">/);
@@ -132,12 +132,19 @@ describe('the checkout page, before any script has run', () => {
       couponValid: WORDS['coupon.valid'],
       couponInvalid: WORDS['coupon.invalid'],
       couponExpired: WORDS['coupon.expired'],
+      confirmedBody: WORDS['checkout.confirmedBody'],
     });
   });
 
-  it('names the review section, and gives it a line-item template with a quantity, name, variant and price', () => {
+  it('names the review section, with the confirmed heading and body ready but hidden until the order is placed', () => {
     const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
-    expect(section).toContain(`<h2>${WORDS['checkout.reviewHeading']}</h2>`);
+    expect(section).toContain(`<h2 data-checkout-review-heading>${WORDS['checkout.reviewHeading']}</h2>`);
+    expect(section).toContain(`<h2 data-checkout-confirmed-heading hidden>${WORDS['checkout.confirmedHeading']}</h2>`);
+    expect(section).toMatch(/<p data-checkout-confirmed-body hidden><\/p>/);
+  });
+
+  it('gives the review a line-item template with a quantity, name, variant and price', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
     const template = section.match(/<template data-checkout-review-line>[\s\S]*?<\/template>/)![0];
     expect(template).toContain('data-checkout-review-qty');
     expect(template).toContain('data-checkout-review-name');
@@ -180,6 +187,15 @@ describe('the checkout page, before any script has run', () => {
     }
     expect(section).toMatch(/<div data-checkout-discount-row hidden><dt>/);
   });
+
+  it('has a hidden shipping-address line and a Place order button, ready for the order to be placed', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    expect(section).toContain(`<strong>${WORDS['checkout.addressHeading']}</strong>`);
+    expect(section).toMatch(/<p class="checkout-confirmed-address" data-checkout-confirmed-address hidden>/);
+    expect(section).toContain('data-checkout-confirmed-address-line');
+    expect(section).toContain(`<button type="button" class="btn" data-checkout-place-order>${WORDS['checkout.placeOrder']}</button>`);
+    expect(section).toContain(`<a class="btn" href="/" data-checkout-keep-shopping hidden>${WORDS['cart.keepShopping']}</a>`);
+  });
 });
 
 describe('the script that runs the checkout steps', () => {
@@ -190,6 +206,8 @@ describe('the script that runs the checkout steps', () => {
     expect(script).toContain('second-impression:persona');
     expect(script).toContain('data-checkout-review');
     expect(script).toContain('checkout:step-changed');
+    expect(script).toContain('data-checkout-place-order');
+    expect(script).toContain('checkout:order-placed');
   });
 
   it('is not loaded by any other page', () => {

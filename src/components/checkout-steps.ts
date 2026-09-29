@@ -17,6 +17,10 @@ import { demoPersona } from './demo-persona';
 const STEP_ORDER = ['contact', 'address', 'payment'] as const;
 type Step = (typeof STEP_ORDER)[number];
 
+/** Set once the order is placed (checkout-review.ts's own `checkout:order-placed` event), so none of the
+ * three steps can be reopened afterwards: editing a step that belongs to a placed order does not make sense. */
+let locked = false;
+
 function find<T extends Element>(root: ParentNode, selector: string): T {
   return root.querySelector<T>(selector)!;
 }
@@ -229,6 +233,14 @@ function fillPaymentDemo(): void {
   announceDemoFilled();
 }
 
+/** A step's <summary> is what the browser toggles the <details> from; blocking its click once locked is
+ * what stops the toggle before it happens, since the "toggle" event itself only fires after the state has
+ * already changed. */
+function lockAllSteps(): void {
+  locked = true;
+  for (const step of STEP_ORDER) find<HTMLElement>(details(step), '[data-checkout-edit]').hidden = true;
+}
+
 export function initCheckoutSteps(): void {
   for (const step of STEP_ORDER) form(step).addEventListener('submit', SUBMIT_HANDLERS[step]);
 
@@ -236,7 +248,12 @@ export function initCheckoutSteps(): void {
     details(step).addEventListener('toggle', () => {
       if (details(step).open) reopenStep(step);
     });
+    find<HTMLElement>(details(step), 'summary').addEventListener('click', (event) => {
+      if (locked) event.preventDefault();
+    });
   }
+
+  document.addEventListener('checkout:order-placed', lockAllSteps);
 
   updateForCountry();
   control(form('address'), 'country').addEventListener('change', updateForCountry);

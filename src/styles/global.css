@@ -1269,6 +1269,12 @@ body:has(.cart-drawer[open]) {
   margin: var(--space-4) 0 var(--space-2);
 }
 
+/* Without this, the coupon form's own hidden attribute, set once an order is placed, would lose to the
+   display: flex rule just above, the same way the discount row's did. */
+.checkout-coupon[hidden] {
+  display: none;
+}
+
 .checkout-coupon .lead-field {
   flex: 1;
 }
@@ -1301,4 +1307,22 @@ body:has(.cart-drawer[open]) {
   border-top: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.checkout-confirmed-address {
+  margin: var(--space-4) 0 0;
+}
+
+[data-checkout-place-order],
+[data-checkout-keep-shopping] {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+/* Without this, the Place order button's own hidden attribute, set once it has done its job, would lose to
+   the display: block rule just above, the same way the discount row's did. */
+[data-checkout-place-order][hidden],
+[data-checkout-keep-shopping][hidden] {
+  display: none;
 }
