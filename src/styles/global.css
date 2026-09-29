@@ -1185,3 +1185,120 @@ body:has(.cart-drawer[open]) {
   background: var(--paper-shade);
   border-radius: 2px;
 }
+
+/* The order summary: the line items, the shipping method choice, the coupon field and the totals. */
+.checkout-review {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--ink);
+}
+
+.checkout-review-lines {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkout-review-line {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  gap: 0 var(--space-2);
+  align-items: baseline;
+}
+
+/* Every cell is placed explicitly, rather than left to auto-placement: the price's own row span otherwise
+   gets it auto-placed ahead of the name and variant, pulling it into their narrow first column instead of
+   its own last one. */
+.checkout-review-line-qty {
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--ink-soft);
+}
+
+.checkout-review-line-qty::after {
+  content: '×';
+}
+
+.checkout-review-line-name {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.checkout-review-line-variant {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.checkout-review-line-price {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  font-weight: 600;
+}
+
+.checkout-shipping-methods {
+  margin: var(--space-4) 0;
+  padding: 0;
+  border: 0;
+}
+
+.checkout-shipping-methods legend {
+  padding: 0 0 var(--space-2);
+  font-weight: 600;
+}
+
+.checkout-shipping-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.checkout-shipping-option span:last-child {
+  margin-left: auto;
+  color: var(--ink-soft);
+}
+
+.checkout-coupon {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.checkout-coupon .lead-field {
+  flex: 1;
+}
+
+.checkout-totals {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-4) 0 0;
+}
+
+.checkout-totals > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Without this, the discount row's own hidden attribute would lose to the display: flex rule just above. */
+.checkout-totals > div[hidden] {
+  display: none;
+}
+
+.checkout-totals dt,
+.checkout-totals dd {
+  margin: 0;
+  font-weight: 400;
+}
+
+.checkout-total-line {
+  padding-top: var(--space-2);
+  margin-top: var(--space-1);
+  border-top: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+  font-size: 1.125rem;
+  font-weight: 600;
+}

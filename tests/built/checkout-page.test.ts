@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { postalCodeLabel } from '../../src/engine/postal-codes';
 import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 import { WORDS } from '../../src/store/words';
 import { decodeEntities, OPEN, readPage, scriptOf } from '../helpers/built';
 
@@ -120,20 +121,82 @@ describe('the checkout page, before any script has run', () => {
     const script = scriptOf(OPEN, html);
     expect(script).not.toContain(WORDS['about.p1']);
   });
+
+  it('has the review section hidden by default, holding the four words its script needs', () => {
+    // Matched against the raw, undecoded html: its own quotes are HTML entities, so decoding first would
+    // truncate the match at the JSON's own quotes (the same reason the demo-announce words above do this).
+    const match = html.match(/<section class="checkout-review" data-checkout-review hidden data-words="([^"]*)">/);
+    expect(match).not.toBeNull();
+    expect(JSON.parse(decodeEntities(match![1]))).toEqual({
+      free: WORDS['checkout.freeShipping'],
+      couponValid: WORDS['coupon.valid'],
+      couponInvalid: WORDS['coupon.invalid'],
+      couponExpired: WORDS['coupon.expired'],
+    });
+  });
+
+  it('names the review section, and gives it a line-item template with a quantity, name, variant and price', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    expect(section).toContain(`<h2>${WORDS['checkout.reviewHeading']}</h2>`);
+    const template = section.match(/<template data-checkout-review-line>[\s\S]*?<\/template>/)![0];
+    expect(template).toContain('data-checkout-review-qty');
+    expect(template).toContain('data-checkout-review-name');
+    expect(template).toContain('data-checkout-review-variant');
+    expect(template).toContain('data-checkout-review-price');
+    expect(template).toContain(`aria-label="${WORDS['cart.quantity']}"`);
+  });
+
+  it('lists both shipping methods, in order, standard chosen by default', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    expect(section).toContain(`<legend>${WORDS['checkout.shippingMethodHeading']}</legend>`);
+    const radios = [...section.matchAll(/<input type="radio" name="shippingMethod" value="(\w+)"( checked)?/g)];
+    expect(radios.map((match) => match[1])).toEqual(SHIPPING_METHODS.map((method) => method.id));
+    expect(radios.map((match) => !!match[2])).toEqual(SHIPPING_METHODS.map((_, index) => index === 0));
+    for (const method of SHIPPING_METHODS) {
+      expect(section, method.id).toContain(`<span>${method.name}</span>`);
+      expect(section, method.id).toContain(`data-checkout-shipping-price="${method.id}"`);
+    }
+  });
+
+  it('has a coupon form in the store\'s words, its field styled like every other field, and a hidden message box beside it', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    const field = section.match(/<div class="lead-field">[\s\S]*?<\/div>/)![0];
+    expect(field).toContain(`<label for="checkout-coupon">${WORDS['coupon.label']}</label>`);
+    expect(field).toMatch(/<input id="checkout-coupon" name="coupon" type="text"/);
+    expect(section).toContain(`class="btn">${WORDS['coupon.apply']}</button>`);
+    expect(section).toContain('data-checkout-coupon-message hidden');
+  });
+
+  it('lists all five totals, the discount row hidden until a coupon earns it', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    for (const [name, word] of [
+      ['subtotal', WORDS['cart.subtotal']],
+      ['discount', WORDS['checkout.discount']],
+      ['shipping', WORDS['checkout.shipping']],
+      ['tax', WORDS['checkout.tax']],
+      ['total', WORDS['checkout.total']],
+    ] as const) {
+      expect(section, name).toContain(`<dt>${word}</dt><dd data-checkout-total="${name}"></dd>`);
+    }
+    expect(section).toMatch(/<div data-checkout-discount-row hidden><dt>/);
+  });
 });
 
 describe('the script that runs the checkout steps', () => {
-  it('is loaded by the checkout page, and carries the three checks and the demo people', () => {
+  it('is loaded by the checkout page, and carries the three checks, the demo people, and the review', () => {
     const script = scriptOf(OPEN, page);
     expect(script).toContain('data-checkout-form');
     expect(script).toContain('data-checkout-summary');
     expect(script).toContain('second-impression:persona');
+    expect(script).toContain('data-checkout-review');
+    expect(script).toContain('checkout:step-changed');
   });
 
   it('is not loaded by any other page', () => {
     for (const file of ['index.html', 'cart/index.html', 'about/index.html']) {
       const script = scriptOf(OPEN, readPage(OPEN, file));
       expect(script, file).not.toContain('data-checkout-form');
+      expect(script, file).not.toContain('data-checkout-review');
     }
   });
 });

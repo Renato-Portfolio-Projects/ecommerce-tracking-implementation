@@ -91,6 +91,15 @@ function announceDemoFilled(): void {
   }, 100);
 }
 
+/**
+ * Told whenever a step is completed or reopened, so the review (checkout-review.ts) can show or hide itself.
+ * The two files know nothing else about each other: the review works out whether every step is done by
+ * reading the page, the same way it is told to a shopper, rather than by asking this file directly.
+ */
+function announceStepsChanged(): void {
+  document.dispatchEvent(new CustomEvent('checkout:step-changed'));
+}
+
 /** Collapses a completed step to a one-line summary, shows Edit, and opens the next step if there is one and it is not open already. */
 function completeStep(step: Step, summary: string): void {
   const dialog = details(step);
@@ -102,6 +111,7 @@ function completeStep(step: Step, summary: string): void {
 
   const next = STEP_ORDER[STEP_ORDER.indexOf(step) + 1];
   if (next) details(next).open = true;
+  announceStepsChanged();
 }
 
 /** Reopening a step for editing hides its summary and Edit link again, so they are never shown at the same time as the form. */
@@ -109,6 +119,7 @@ function reopenStep(step: Step): void {
   const dialog = details(step);
   find<HTMLElement>(dialog, '[data-checkout-summary]').hidden = true;
   find<HTMLElement>(dialog, '[data-checkout-edit]').hidden = true;
+  announceStepsChanged();
 }
 
 function countryName(code: string): string {

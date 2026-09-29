@@ -139,6 +139,7 @@ export const WORDS = {
   'checkout.shipping': 'Shipping',
   'checkout.tax': 'Tax',
   'checkout.total': 'Total',
+  'checkout.freeShipping': 'Free',
   'checkout.placeOrder': 'Place order',
   'checkout.confirmedHeading': 'Order confirmed',
   'checkout.confirmedBody': 'Thank you, {firstName}. Your order number is {orderNumber}.',

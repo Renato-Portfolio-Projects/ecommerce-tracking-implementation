@@ -3,6 +3,7 @@ import StorePage from '../layouts/StorePage.astro';
 import { WORDS } from '../store/words';
 import { COUNTRIES, PROVINCES } from '../store/destinations';
 import { postalCodeLabel } from '../engine/postal-codes';
+import { SHIPPING_METHODS } from '../store/shipping-methods';
 
 // The lead popup never appears here (decision 10 of the v0.2c-3 proposals): a shopper who is already
 // checking out should never be interrupted by an offer to start over. The currency selector is locked
@@ -149,6 +150,59 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
     </form>
   </details>
 
+  {/* Shown only once all three steps above are complete (checkout-review.ts). It prices the order for real,
+       from the same pricing code the cart already uses, so the amount shown here is always the amount charged. */}
+  <section
+    class="checkout-review"
+    data-checkout-review
+    hidden
+    data-words={JSON.stringify({
+      free: WORDS['checkout.freeShipping'],
+      couponValid: WORDS['coupon.valid'],
+      couponInvalid: WORDS['coupon.invalid'],
+      couponExpired: WORDS['coupon.expired'],
+    })}
+  >
+    <h2>{WORDS['checkout.reviewHeading']}</h2>
+    <ul class="checkout-review-lines" data-checkout-review-lines></ul>
+    <template data-checkout-review-line>
+      <li class="checkout-review-line">
+        <span class="checkout-review-line-qty" data-checkout-review-qty aria-label={WORDS['cart.quantity']}></span>
+        <span class="checkout-review-line-name" data-checkout-review-name></span>
+        <span class="checkout-review-line-variant" data-checkout-review-variant></span>
+        <span class="checkout-review-line-price" data-checkout-review-price></span>
+      </li>
+    </template>
+
+    <fieldset class="checkout-shipping-methods">
+      <legend>{WORDS['checkout.shippingMethodHeading']}</legend>
+      {SHIPPING_METHODS.map((method, index) => (
+        <label class="checkout-shipping-option">
+          <input type="radio" name="shippingMethod" value={method.id} checked={index === 0} data-checkout-shipping-method />
+          <span>{method.name}</span>
+          <span data-checkout-shipping-price={method.id}></span>
+        </label>
+      ))}
+    </fieldset>
+
+    <form class="checkout-coupon" data-checkout-coupon-form novalidate>
+      <div class="lead-field">
+        <label for="checkout-coupon">{WORDS['coupon.label']}</label>
+        <input id="checkout-coupon" name="coupon" type="text" autocomplete="off" />
+      </div>
+      <button type="submit" class="btn">{WORDS['coupon.apply']}</button>
+    </form>
+    <p class="lead-error" role="status" data-checkout-coupon-message hidden></p>
+
+    <dl class="checkout-totals">
+      <div><dt>{WORDS['cart.subtotal']}</dt><dd data-checkout-total="subtotal"></dd></div>
+      <div data-checkout-discount-row hidden><dt>{WORDS['checkout.discount']}</dt><dd data-checkout-total="discount"></dd></div>
+      <div><dt>{WORDS['checkout.shipping']}</dt><dd data-checkout-total="shipping"></dd></div>
+      <div><dt>{WORDS['checkout.tax']}</dt><dd data-checkout-total="tax"></dd></div>
+      <div class="checkout-total-line"><dt>{WORDS['checkout.total']}</dt><dd data-checkout-total="total"></dd></div>
+    </dl>
+  </section>
+
   {/* The one word this page's script needs is handed to it here, rather than importing the whole words file,
        so the eagerly-loaded checkout script does not carry every word on the site (docs/brand.md's script budget). */}
   <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'] })}></p>
@@ -156,5 +210,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
 
 <script>
   import { initCheckoutSteps } from '../components/checkout-steps';
+  import { initCheckoutReview } from '../components/checkout-review';
   initCheckoutSteps();
+  initCheckoutReview();
 </script>
