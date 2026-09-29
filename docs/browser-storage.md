@@ -34,6 +34,7 @@ Nothing a visitor types is kept in the browser. The lead form's fields are never
 | Chooses a currency | It is saved, and every page loaded from then on starts in it, whatever the starting currency would have been |
 | Clicks a product card | The card writes the list hand-off and the product page reads it once and deletes it. A reload of the product page, a bookmark and a shared link have no list |
 | Adds to the cart | The cart is saved. Other open tabs of the store redraw their cart at once, because the browser tells them the saved cart changed. It does not tell the tab that made the change, which already knows |
+| Places an order | The cart is emptied, the way a real checkout would. Nothing about the order itself is saved anywhere, not even in the browser: reloading the confirmation loses it |
 | Uses "Use demo data" | The demo person is saved for this tab, and every demo button in the tab uses the same person |
 | Reloads the page | Everything stays except the list hand-off, which was read once |
 | Opens the store in a second tab | It sees the same cart, currency and popup note, because `localStorage` is shared. It starts with no demo person, because `sessionStorage` belongs to one tab |

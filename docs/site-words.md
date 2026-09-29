@@ -135,7 +135,7 @@ Built in the third part of this work. The drawer and the cart page share these w
 | `cart.quantity` | Quantity | Label for the quantity on a line |
 | `cart.subtotal` | Subtotal | The total of the items, before shipping and tax |
 | `cart.laterNote` | Shipping and tax are added at checkout. | A line under the subtotal |
-| `cart.checkout` | Checkout | The button under the subtotal. The checkout page arrives in a later part of the project |
+| `cart.checkout` | Checkout | The button under the subtotal, linking to the checkout page |
 | `cart.viewCart` | View cart | A link under the Checkout button on the cart drawer, to the cart page. The cart page does not have it, since it is the cart page |
 | `cart.freeAway` | You are {amount} away from free standard shipping. | The progress bar message while the items come to less than the threshold |
 | `cart.freeReached` | You have free standard shipping. | The progress bar message once the items reach the threshold |
@@ -144,9 +144,49 @@ Built in the third part of this work. The drawer and the cart page share these w
 | `cart.droppedMany` | {count} items in your cart are no longer available, so we removed them. | Shown when a saved cart is reopened and several lines are no longer valid |
 | `cart.saved` | Your cart is saved on this device for {days} days. | A small line at the bottom of the cart |
 
+## Checkout
+
+Built in the fourth part of this work. One page, `/checkout`, with three editable steps (contact, shipping address, payment) and a review that prices the order for real. The lead popup does not appear on this page.
+
+| Key | Wording | Where it appears |
+|---|---|---|
+| `checkout.title` | Checkout | The browser tab title |
+| `checkout.description` | Review your order, choose shipping, and pay with a test card. | The page description |
+| `checkout.heading` | Checkout | The page heading |
+| `checkout.contactHeading` | Contact | The first step |
+| `checkout.addressHeading` | Shipping address | The second step |
+| `checkout.paymentHeading` | Payment | The third step |
+| `checkout.reviewHeading` | Review your order | The order summary |
+| `checkout.lastName` | Last name | Shipping address step |
+| `checkout.phone` | Phone (optional) | Contact step |
+| `checkout.country` | Country | Shipping address step, label of the country selector |
+| `checkout.address1` | Address | Shipping address step |
+| `checkout.address2` | Apartment, suite, etc. (optional) | Shipping address step |
+| `checkout.city` | City | Shipping address step |
+| `checkout.province` | Province or territory | Shipping address step, shown only when the country is Canada |
+| `checkout.cardNumber` | Card number | Payment step |
+| `checkout.cardExpiry` | Expiry (MM/YY) | Payment step |
+| `checkout.cardCode` | Security code | Payment step |
+| `checkout.demoButton` | Use demo data | A small button on the contact and address steps that fills in a fictional person |
+| `checkout.testCardButton` | Use test card | A small button on the payment step that fills in an accepted test card |
+| `checkout.newPerson` | Try another person | A small button, shown once demo data has filled a step, that fills in a different fictional person |
+| `checkout.demoAnnounce` | Form filled with demo data. | Read out to screen readers after a demo button is pressed |
+| `checkout.continue` | Continue | The button that checks a step and, once it passes, collapses it to a summary |
+| `checkout.edit` | Edit | The button on a completed step's summary that reopens it |
+| `checkout.testModeNote` | This is a demo store. Only test cards work, and nothing is really charged. | A note above the payment fields |
+| `checkout.shippingMethodHeading` | Shipping method | Above the Standard and Express choice, in the order summary |
+| `checkout.discount` | Discount | A line in the order summary, shown only when a coupon is applied |
+| `checkout.shipping` | Shipping | A line in the order summary |
+| `checkout.tax` | Tax | A line in the order summary |
+| `checkout.total` | Total | The last line of the order summary |
+| `checkout.freeShipping` | Free | Shown in place of a price, both in the shipping method choice and the order summary's shipping line, whenever Standard shipping qualifies for free |
+| `checkout.placeOrder` | Place order | The main button, at the end of the order summary |
+| `checkout.confirmedHeading` | Order confirmed | Replaces the order summary once the order is placed |
+| `checkout.confirmedBody` | Thank you, {firstName}. Your order number is {orderNumber}. | Under the confirmed heading. The blanks are the shopper's own first name and the order reference made for this order |
+
 ## Discount code
 
-Used at checkout, which arrives in a later part of the project. The three results match the three outcomes the tracking plan records.
+Used in the checkout page's order summary, above. The three results match the three outcomes the tracking plan records.
 
 | Key | Wording | Where it appears |
 |---|---|---|
@@ -178,8 +218,8 @@ Built in the fourth part of this work. On the home page it opens by itself after
 |---|---|---|
 | `popup.title` | Get {percent}% off your first order | The popup heading |
 | `popup.body` | Add your name and email and we will show you the code. This is a demo, so demo details work fine. | The text under the heading |
-| `popup.firstName` | First name | Label of the first field |
-| `popup.email` | Email | Label of the second field |
+| `popup.firstName` | First name | Label of the first field. Reused for the same field on the checkout page's shipping address step |
+| `popup.email` | Email | Label of the second field. Reused for the same field on the checkout page's contact step |
 | `popup.marketing` | Email me offers and news. I can unsubscribe at any time. | The box under the fields. It is never ticked for the visitor, and no demo button ticks it |
 | `popup.submit` | Show my code | The main button |
 | `popup.demoButton` | Use demo data | A small button that fills the fields with a made-up person |

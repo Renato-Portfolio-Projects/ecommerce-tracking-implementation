@@ -16,9 +16,11 @@ interface Props {
   cartDrawer?: boolean;
   /** True only for the home page, where the lead popup opens by itself. On every other page it opens only when asked. */
   leadPopupAuto?: boolean;
+  /** False for checkout and thank-you, which the popup must never appear on. True everywhere else. */
+  leadPopup?: boolean;
 }
 
-const { title, description, wide = false, cartDrawer = true, leadPopupAuto = false } = Astro.props;
+const { title, description, wide = false, cartDrawer = true, leadPopupAuto = false, leadPopup = true } = Astro.props;
 ---
 
 <Base title={`${title} | ${WORDS['site.name']}`} description={description} store>
@@ -27,7 +29,7 @@ const { title, description, wide = false, cartDrawer = true, leadPopupAuto = fal
   <main id="content" class={wide ? 'page-wide' : 'page'}>
     <slot />
   </main>
-  <Footer />
+  <Footer leadPopup={leadPopup} />
   {/* The cart drawer, on every store page that has one. A native dialog is not on screen until
        cart-ui.ts opens it with showModal(), which is what makes the browser handle focus, the
        Escape key and the page behind it. It holds the same panel as the cart page. */}
@@ -38,13 +40,14 @@ const { title, description, wide = false, cartDrawer = true, leadPopupAuto = fal
       </dialog>
     )
   }
-  {/* The lead popup and its corner tab, on every store page (see LeadPopup.astro). */}
-  <LeadPopup auto={leadPopupAuto} />
+  {/* The lead popup and its corner tab, on every store page except checkout and thank-you (see LeadPopup.astro). */}
+  {leadPopup && <LeadPopup auto={leadPopupAuto} />}
 </Base>
 
 <script>
   import { initCartUi } from '../components/cart-ui';
   import { initLeadPopup } from '../components/lead-popup-ui';
   initCartUi();
+  // Does nothing when the page has no popup (leadPopup={false}): initLeadPopup finds none and returns at once.
   initLeadPopup();
 </script>
