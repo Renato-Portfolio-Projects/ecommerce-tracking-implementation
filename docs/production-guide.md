@@ -22,7 +22,7 @@ Sources checked on 2026-09-21. A row added after that day gives, in its source c
 | Shop code (`src/engine`) | Reusable as is | Pricing, the cart, the checks on what a shopper types and the email domain checks are tested and do not depend on this store. |
 | Hosting and terms | Needs replacing | The free plans are for personal projects and stop at fixed limits. A store needs plans whose terms allow commercial use. |
 | Payments | Needs adding | Test cards never reach a bank. A store needs a payment provider and the rules that come with taking cards. |
-| Orders and data | Needs adding | Records last 7 days, the cart lives in the shopper's browser, and sold-out is fixed when the site is built. A store needs a durable database, order numbers, an admin, live stock counts, a cart it keeps itself and backups. |
+| Orders and data | Needs adding | Records last 7 days, the cart lives in the shopper's browser, an order can be placed but nothing is saved anywhere, and sold-out is fixed when the site is built. A store needs a durable database, order numbers, an admin, live stock counts, a cart it keeps itself and backups. |
 | Tax | Needs replacing | The rates are fixed demo rates. A store looks rates up and registers where the law says it must. |
 | Currency | Needs replacing | The exchange rates are fixed demo rates, and the starting currency is a guess from the visitor's country. A store uses real rates, saves the rate on each order and keeps the currency selector in reach. |
 | Product content | Needs adding | Every product is a flat, line-drawn illustration. A store needs real photography, which Google requires for a product's structured data to be eligible for its richer search results at all. |
