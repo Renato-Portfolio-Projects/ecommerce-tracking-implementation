@@ -1030,6 +1030,12 @@ body:has(.cart-drawer[open]) {
   gap: var(--space-1);
 }
 
+/* Without this, a field hidden for the wrong country (the address step's own province field) would stay
+   visible: its own display: grid, above, outranks the browser's built-in hidden styling. */
+.lead-field[hidden] {
+  display: none;
+}
+
 .lead-field label {
   font-size: 0.9rem;
   font-weight: 600;

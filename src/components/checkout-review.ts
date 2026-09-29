@@ -86,7 +86,9 @@ function renderLines(order: PricedOrder): void {
     node.querySelector<HTMLElement>('[data-checkout-review-qty]')!.textContent = String(line.quantity);
     node.querySelector<HTMLElement>('[data-checkout-review-name]')!.textContent = line.name;
     node.querySelector<HTMLElement>('[data-checkout-review-variant]')!.textContent = line.variant;
-    node.querySelector<HTMLElement>('[data-checkout-review-price]')!.textContent = formatMoney(line.lineNet, order.currency);
+    // Before any coupon, the same basis as the Subtotal row: the coupon's whole effect is the one Discount
+    // row below, not a second copy of it quietly baked into each line's own price.
+    node.querySelector<HTMLElement>('[data-checkout-review-price]')!.textContent = formatMoney(line.unitPrice * line.quantity, order.currency);
     list.append(node);
   }
 }
