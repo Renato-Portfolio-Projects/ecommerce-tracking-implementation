@@ -56,6 +56,7 @@ describe('the site built with the store open', () => {
       'products/pleated-chino/index.html',
       'products/relaxed-chino/index.html',
       'style-guide/index.html',
+      'thank-you/index.html',
     ]);
   });
 

@@ -24,7 +24,7 @@ const areas = headings.slice(headings.indexOf('How to read this page') + 1, head
 const unquote = (cell: string) => cell.replace(/`/g, '');
 
 /** What the shopper's own choices are called. Every other blank must be listed in the blanks table. */
-const CHOICE_BLANKS = ['product', 'variant', 'count', 'size', 'colour', 'price', 'collection', 'amount', 'firstName', 'orderNumber'];
+const CHOICE_BLANKS = ['product', 'variant', 'count', 'size', 'colour', 'price', 'collection', 'amount', 'firstName', 'orderNumber', 'brand', 'last4'];
 
 describe('docs/site-words.md', () => {
   it('lists every word in src/store/words.ts, and only those, with the same wording', () => {

@@ -209,9 +209,9 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
     <button type="button" class="btn" data-checkout-place-order>{WORDS['checkout.placeOrder']}</button>
   </section>
 
-  {/* The one word this page's script needs is handed to it here, rather than importing the whole words file,
+  {/* The few words this page's script needs are handed to it here, rather than importing the whole words file,
        so the eagerly-loaded checkout script does not carry every word on the site (docs/brand.md's script budget). */}
-  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'] })}></p>
+  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'] })}></p>
 </StorePage>
 
 <script>

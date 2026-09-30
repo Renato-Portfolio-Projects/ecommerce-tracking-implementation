@@ -112,12 +112,12 @@ describe('the checkout page, before any script has run', () => {
     expect(page.match(new RegExp(`class="btn">${WORDS['checkout.continue']}</button>`, 'g'))).toHaveLength(3);
   });
 
-  it('gives its script the one word it needs, and not the whole words file', () => {
+  it('gives its script the few words it needs, and not the whole words file', () => {
     // Matched against the raw, undecoded html: its own quotes are HTML entities, so decoding first would
     // truncate the match at the JSON's own quotes.
     const match = html.match(/data-checkout-announce data-words="([^"]*)"/);
     expect(match).not.toBeNull();
-    expect(JSON.parse(decodeEntities(match![1]))).toEqual({ demoAnnounce: WORDS['checkout.demoAnnounce'] });
+    expect(JSON.parse(decodeEntities(match![1]))).toEqual({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'] });
     const script = scriptOf(OPEN, html);
     expect(script).not.toContain(WORDS['about.p1']);
   });

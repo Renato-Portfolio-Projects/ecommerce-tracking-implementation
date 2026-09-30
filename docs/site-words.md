@@ -7,7 +7,7 @@ The voice is in `docs/brand.md`: plain and short, honest that it is a demo, and 
 ## How to read this page
 
 - Each table lists a key, the wording, and where the wording appears. The key is how the code finds the wording.
-- A word in braces, like `{product}`, is filled in by the page. The table "Blanks filled from the code" shows the ones that come from the store's data, and the others are the shopper's own choices, such as the name of the product in the cart.
+- A word in braces, like `{product}`, is filled in by the page. The table "Blanks filled from the code" shows the ones that come from the store's data, and the others are the shopper's own choices, such as the name of the product in the cart. How a blank is actually filled in code, and how a script gets only the words it needs rather than this whole file, is [Word blanks, and how words reach a script](word-mechanics.md).
 - A test compares this page with `src/store/words.ts`, so the two cannot drift apart.
 
 ## Everywhere
@@ -167,6 +167,7 @@ Built in the fourth part of this work. One page, `/checkout`, with three editabl
 | `checkout.cardNumber` | Card number | Payment step |
 | `checkout.cardExpiry` | Expiry (MM/YY) | Payment step |
 | `checkout.cardCode` | Security code | Payment step |
+| `checkout.cardEnding` | {brand} ending {last4} | The payment step's own summary, once a card is accepted, and the payment line on the thank-you page. The blanks are the card's brand and the last four digits kept of it |
 | `checkout.demoButton` | Use demo data | A small button on the contact and address steps that fills in a fictional person |
 | `checkout.testCardButton` | Use test card | A small button on the payment step that fills in an accepted test card |
 | `checkout.newPerson` | Try another person | A small button, shown once demo data has filled a step, that fills in a different fictional person |
@@ -194,6 +195,22 @@ Used in the checkout page's order summary, above. The three results match the th
 | `coupon.valid` | {code} applied: {percent}% off. | Shown when the code works |
 | `coupon.invalid` | That code is not valid. | Shown when the code is not one we know |
 | `coupon.expired` | That code has expired. | Shown for a code we know but that no longer works |
+
+## Thank you
+
+Built in the fourth part of this work. One page, `/thank-you`, reached with a token in the URL once an order is placed. It fetches the order from the server and shows it, or one of two messages if it cannot. The lead popup does not appear on this page.
+
+| Key | Wording | Where it appears |
+|---|---|---|
+| `thankYou.title` | Thank you | The browser tab title |
+| `thankYou.description` | Your order is confirmed. | The page description |
+| `thankYou.loading` | Looking up your order. | Shown while the order is being fetched |
+| `thankYou.heading` | Order confirmed | The page heading, once the order is found |
+| `thankYou.body` | Thank you, {firstName}. Your order number is {orderNumber}. | Under the heading. The blanks are the shopper's own first name and the order reference made for this order |
+| `thankYou.notFoundHeading` | We couldn't find that order | Shown in place of the heading if the token in the URL is missing, wrong or expired |
+| `thankYou.notFoundBody` | That link may be wrong, or the order may no longer exist. | Under that heading, with a link home |
+| `thankYou.loadErrorHeading` | We couldn't load your order | Shown in place of the heading if the order could exist but the server could not be reached |
+| `thankYou.loadErrorBody` | Please refresh the page to try again. | Under that heading, with a link home |
 
 ## Currency
 

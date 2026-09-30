@@ -1,5 +1,6 @@
 import { checkAddress, checkContact, type FieldProblem } from '../engine/checkout-form';
 import { checkPayment, demoCard, formatCardNumber, type CardField } from '../demo/test-cards';
+import { fill } from '../engine/fill';
 import { demoAddress, demoContact } from '../demo/personas';
 import { COUNTRIES, PROVINCES } from '../store/destinations';
 import { postalCodeLabel } from '../engine/postal-codes';
@@ -81,11 +82,15 @@ function readFields(step: Step): Record<string, string> {
   return values;
 }
 
-/** The one word this script needs, written into the page as data by checkout.astro, so this eagerly-loaded
+/** The few words this script needs, written into the page as data by checkout.astro, so this eagerly-loaded
  * script does not carry the whole words file (see the comment on the element it reads from). */
-function demoAnnounceText(): string {
+function checkoutStepWords(): { demoAnnounce?: string; cardEnding?: string } {
   const box = find<HTMLElement>(document, '[data-checkout-announce]');
-  return (JSON.parse(box.dataset.words ?? '{}') as { demoAnnounce?: string }).demoAnnounce ?? '';
+  return JSON.parse(box.dataset.words ?? '{}');
+}
+
+function demoAnnounceText(): string {
+  return checkoutStepWords().demoAnnounce ?? '';
 }
 
 function announceDemoFilled(): void {
@@ -180,7 +185,7 @@ function submitPayment(event: SubmitEvent): void {
     declined.hidden = false;
     return;
   }
-  completeStep('payment', `${checked.card.brand} ending ${checked.card.last4}`);
+  completeStep('payment', fill(checkoutStepWords().cardEnding ?? '', { brand: checked.card.brand, last4: checked.card.last4 }));
 }
 
 const SUBMIT_HANDLERS: Record<Step, (event: SubmitEvent) => void> = {
