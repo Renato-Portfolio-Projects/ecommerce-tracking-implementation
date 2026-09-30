@@ -22,11 +22,11 @@ The same personal Google login can stay in use. What keeps this project separate
 | Vercel | A new project inside your existing account. | GitHub, as before | 4 |
 | Google Tag Manager | A new account named "Second Impression Portfolio". | Your personal Google login | 5 |
 | Google Analytics 4 | A new account with two properties, Live and Test. | Your personal Google login | 6 |
-| Meta | Two datasets in your existing business portfolio. No ad account. | Your regular Meta login | 7 |
+| Meta | A new Business Portfolio, with two datasets inside it. No ad account. | Your regular Meta login | 7 |
 | Upstash | A new account on the Free plan. | Personal email or GitHub | Done (2026-09-25) |
 | Stape | A new account on the Free plan. It can later hold a second container for another site. | Personal email | Later (v0.4) |
 
-Because this project has its own GTM and GA4 accounts, an interviewer can be given read-only access to them without seeing anything else.
+Because this project has its own GTM, GA4 and Meta accounts, an interviewer can be given read-only access to them without seeing anything else.
 
 Sections 5 to 7 are needed at the start of version 0.2, when the first tracking is built. They are not part of version 0.1.
 
@@ -84,8 +84,9 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 
 ## 7. Meta (needed for 0.2)
 
-- [ ] In Events Manager, create two datasets under the existing business portfolio: "Second Impression - Live" and "Second Impression - Test".
-- [ ] Do not create an ad account for this project, and never run ads to this domain.
+- [ ] Create a new Business Portfolio dedicated to this project, separate from any other business's, the same reason GTM and GA4 each get their own account above: an interviewer can be given read-only access to just this portfolio without seeing anything else.
+- [ ] Inside it, create two datasets: "Second Impression - Live" and "Second Impression - Test".
+- [ ] Do not create an ad account for this project, and never run ads to this domain. If Meta's own flow requires selecting or creating an ad account to finish setting up a dataset, an empty one with no payment method and no campaign is fine: existing does not mean spending, and nothing is charged until a campaign is actually launched.
 - [ ] Note both dataset IDs.
 
 ## 8. Not yet
