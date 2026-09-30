@@ -51,3 +51,16 @@ export const LEAD_ATTEMPTS_PER_HOUR = 10;
  * field and the lead function looks for it, and the two must never disagree.
  */
 export const LEAD_TRAP_FIELD = 'website';
+
+/**
+ * How long the server keeps an order, after which the database deletes it by itself. It matches
+ * LEAD_RECORD_LIFETIME_DAYS on purpose: this demo makes the same seven-day promise for every record.
+ */
+export const ORDER_RECORD_LIFETIME_DAYS = 7;
+
+/**
+ * How many times one visitor may send the order form in an hour before the server asks them to wait. It matches
+ * LEAD_ATTEMPTS_PER_HOUR on purpose, and it is its own counter: placing several orders in a demo session never
+ * uses up a visitor's budget for the lead form, or the other way round.
+ */
+export const ORDER_ATTEMPTS_PER_HOUR = 10;

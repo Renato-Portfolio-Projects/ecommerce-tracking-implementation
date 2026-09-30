@@ -7,6 +7,8 @@ import type { Environment } from './gate.js';
 import { leadHandler, type LeadDependencies } from './lead.js';
 import { mailServiceOf, type DnsResolver } from './mail-service.js';
 import { createMemoryStore } from './memory-store.js';
+import { orderHandler, type OrderDependencies } from './order.js';
+import { makeOrderNumber } from './order-number.js';
 import type { Store } from './store.js';
 import { createRedis, createUpstashStore, type RedisCommands } from './upstash-store.js';
 
@@ -35,6 +37,10 @@ const unavailableStore: Store = {
   increment: () => Promise.reject(new Error('the store is not set up')),
   saveLead: () => Promise.reject(new Error('the store is not set up')),
   readLead: () => Promise.reject(new Error('the store is not set up')),
+  saveOrder: () => Promise.reject(new Error('the store is not set up')),
+  readOrder: () => Promise.reject(new Error('the store is not set up')),
+  saveIdempotencyKey: () => Promise.reject(new Error('the store is not set up')),
+  readIdempotencyKey: () => Promise.reject(new Error('the store is not set up')),
 };
 
 /** The store to use, and the secret to hash visitors with, from the settings the function was given. */
@@ -77,4 +83,24 @@ export function liveDependencies(env: Environment, options: LiveOptions = {}): L
 export function liveLeadHandler(env: Environment, options: LiveOptions = {}): (request: Request) => Promise<Response> {
   let dependencies: LeadDependencies | undefined;
   return leadHandler(env, () => (dependencies ??= liveDependencies(env, options)));
+}
+
+export function liveOrderDependencies(env: Environment, options: LiveOptions = {}): OrderDependencies {
+  const { store, secret } = storeFor(env, options);
+  return {
+    store,
+    now: Date.now,
+    newOrderToken: () => randomBytes(16).toString('hex'),
+    newOrderNumber: () => makeOrderNumber(),
+    secret,
+  };
+}
+
+/**
+ * The handler that the function at /api/order hands its requests to. What it needs is made on the first request
+ * that gets past the store's gate, and kept for the ones after it, so a closed store never touches the database.
+ */
+export function liveOrderHandler(env: Environment, options: LiveOptions = {}): (request: Request) => Promise<Response> {
+  let dependencies: OrderDependencies | undefined;
+  return orderHandler(env, () => (dependencies ??= liveOrderDependencies(env, options)));
 }

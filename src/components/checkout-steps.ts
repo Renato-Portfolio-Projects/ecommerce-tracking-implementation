@@ -1,5 +1,6 @@
 import { checkAddress, checkContact, type FieldProblem } from '../engine/checkout-form';
 import { checkPayment, demoCard, formatCardNumber, type CardField } from '../demo/test-cards';
+import { fill } from '../engine/fill';
 import { demoAddress, demoContact } from '../demo/personas';
 import { COUNTRIES, PROVINCES } from '../store/destinations';
 import { postalCodeLabel } from '../engine/postal-codes';
@@ -17,8 +18,10 @@ import { demoPersona } from './demo-persona';
 const STEP_ORDER = ['contact', 'address', 'payment'] as const;
 type Step = (typeof STEP_ORDER)[number];
 
-/** Set once the order is placed (checkout-review.ts's own `checkout:order-placed` event), so none of the
- * three steps can be reopened afterwards: editing a step that belongs to a placed order does not make sense. */
+/** Set while an order is being placed (checkout-review.ts's own `checkout:order-submitting` event), so none
+ * of the three steps can be reopened while a request already carrying their old values is in flight. Cleared
+ * again if that request fails (`checkout:order-submit-failed`); left set on success, since the browser
+ * navigates away to the thank-you page at that point and there is nothing left on this page to protect. */
 let locked = false;
 
 function find<T extends Element>(root: ParentNode, selector: string): T {
@@ -79,11 +82,15 @@ function readFields(step: Step): Record<string, string> {
   return values;
 }
 
-/** The one word this script needs, written into the page as data by checkout.astro, so this eagerly-loaded
+/** The few words this script needs, written into the page as data by checkout.astro, so this eagerly-loaded
  * script does not carry the whole words file (see the comment on the element it reads from). */
-function demoAnnounceText(): string {
+function checkoutStepWords(): { demoAnnounce?: string; cardEnding?: string } {
   const box = find<HTMLElement>(document, '[data-checkout-announce]');
-  return (JSON.parse(box.dataset.words ?? '{}') as { demoAnnounce?: string }).demoAnnounce ?? '';
+  return JSON.parse(box.dataset.words ?? '{}');
+}
+
+function demoAnnounceText(): string {
+  return checkoutStepWords().demoAnnounce ?? '';
 }
 
 function announceDemoFilled(): void {
@@ -104,7 +111,19 @@ function announceStepsChanged(): void {
   document.dispatchEvent(new CustomEvent('checkout:step-changed'));
 }
 
-/** Collapses a completed step to a one-line summary, shows Edit, and opens the next step if there is one and it is not open already. */
+/** Closed, with a summary showing: what "done" looks like for a step, on the page, the same way
+ * checkout-review.ts works out whether every step is done. */
+function isStepComplete(step: Step): boolean {
+  const dialog = details(step);
+  const summary = dialog.querySelector<HTMLElement>('[data-checkout-summary]');
+  return !dialog.open && !!summary && !summary.hidden;
+}
+
+/** Collapses a completed step to a one-line summary, shows Edit, and opens the next step, but only if that
+ * next step is not already done. Without this check, re-confirming an earlier step after every step was
+ * already complete, address after payment was already filled in, say, would force payment open again and
+ * hide its own summary, even though nothing about it changed: setting a <details>'s open property fires the
+ * same toggle event a click would, and reopenStep() treats that exactly like a shopper reopening it by hand. */
 function completeStep(step: Step, summary: string): void {
   const dialog = details(step);
   dialog.open = false;
@@ -114,7 +133,7 @@ function completeStep(step: Step, summary: string): void {
   find<HTMLElement>(dialog, '[data-checkout-edit]').hidden = false;
 
   const next = STEP_ORDER[STEP_ORDER.indexOf(step) + 1];
-  if (next) details(next).open = true;
+  if (next && !isStepComplete(next)) details(next).open = true;
   announceStepsChanged();
 }
 
@@ -178,7 +197,7 @@ function submitPayment(event: SubmitEvent): void {
     declined.hidden = false;
     return;
   }
-  completeStep('payment', `${checked.card.brand} ending ${checked.card.last4}`);
+  completeStep('payment', fill(checkoutStepWords().cardEnding ?? '', { brand: checked.card.brand, last4: checked.card.last4 }));
 }
 
 const SUBMIT_HANDLERS: Record<Step, (event: SubmitEvent) => void> = {
@@ -241,6 +260,16 @@ function lockAllSteps(): void {
   for (const step of STEP_ORDER) find<HTMLElement>(details(step), '[data-checkout-edit]').hidden = true;
 }
 
+/** Undoes lockAllSteps, once a submission that locked the steps has failed. */
+function unlockAllSteps(): void {
+  locked = false;
+  for (const step of STEP_ORDER) {
+    const dialog = details(step);
+    const summary = find<HTMLElement>(dialog, '[data-checkout-summary]');
+    find<HTMLElement>(dialog, '[data-checkout-edit]').hidden = summary.hidden;
+  }
+}
+
 export function initCheckoutSteps(): void {
   for (const step of STEP_ORDER) form(step).addEventListener('submit', SUBMIT_HANDLERS[step]);
 
@@ -253,7 +282,8 @@ export function initCheckoutSteps(): void {
     });
   }
 
-  document.addEventListener('checkout:order-placed', lockAllSteps);
+  document.addEventListener('checkout:order-submitting', lockAllSteps);
+  document.addEventListener('checkout:order-submit-failed', unlockAllSteps);
 
   updateForCountry();
   control(form('address'), 'country').addEventListener('change', updateForCountry);

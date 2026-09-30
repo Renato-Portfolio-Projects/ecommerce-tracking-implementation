@@ -33,6 +33,7 @@ const KEYS = [
   { key: 'second-impression:persona', kind: 'sessionStorage', names: ['PERSONA_STORAGE_KEY'] },
   { key: 'second-impression:default-currency', kind: 'sessionStorage', names: ['DEFAULT_CURRENCY_KEY'] },
   { key: 'second-impression:list-handoff:<sku>', kind: 'sessionStorage', names: ['listHandoffKey'] },
+  { key: 'second-impression:checkout-idempotency', kind: 'sessionStorage', names: ['IDEMPOTENCY_STORAGE_KEY'] },
 ] as const;
 
 const rows = tableUnderHeading(doc, '## What this store keeps, exactly');

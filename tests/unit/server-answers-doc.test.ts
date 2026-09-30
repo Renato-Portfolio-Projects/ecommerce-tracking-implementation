@@ -10,9 +10,10 @@ import { currencyHandler } from '../../src/server/currency';
 import { guarded } from '../../src/server/http';
 import { leadHandler } from '../../src/server/lead';
 import { createMemoryStore } from '../../src/server/memory-store';
+import { orderHandler } from '../../src/server/order';
 import type { Store } from '../../src/server/store';
 import { CURRENCIES } from '../../src/store/currencies';
-import { LEAD_ATTEMPTS_PER_HOUR, LEAD_TRAP_FIELD } from '../../src/store/policy';
+import { LEAD_ATTEMPTS_PER_HOUR, LEAD_TRAP_FIELD, ORDER_ATTEMPTS_PER_HOUR } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
 import { tableUnderHeading } from '../helpers/markdown';
 
@@ -51,11 +52,22 @@ const standard = tableUnderHeading(doc, '## The numbers, and who decided what');
 const common = tableUnderHeading(doc, '## Rules every function follows').filter((row) => /^\d{3}$/.test(row[0])); // number, when, body
 const currencyRows = tableUnderHeading(doc, '## /api/currency'); // number, when, body
 const [sentFields, leadRows] = tablesUnder(doc, '## /api/lead'); // field, holds; and number, when, body, the popup
+const [orderPostRows, orderGetRows] = tablesUnder(doc, '## /api/order'); // number, when, body; and number, when, body
 const popupRows = tableUnderHeading(doc, '## How the popup reads each answer'); // number, body, result, what the visitor sees
 
 const OPEN = { PUBLIC_STORE_OPEN: 'true' };
 const code = welcomeCoupon()!.code;
 const GOOD = { firstName: 'Maya', email: 'maya@example.com', marketing: true, source: 'auto', [LEAD_TRAP_FIELD]: '' };
+
+const GOOD_ORDER = {
+  lines: [{ sku: 'SI-TEE-002', colour: 'Paper', size: 'XS', quantity: 1 }],
+  currency: 'CAD',
+  shippingMethod: 'standard',
+  contact: { email: 'liam.okafor@example.com', phone: '+1 416 555 0117' },
+  address: { country: 'CA', firstName: 'Liam', lastName: 'Okafor', address1: '310 Alder Street', city: 'Toronto', province: 'ON', postalCode: 'M6K 2P8' },
+  payment: { brand: 'Visa', last4: '4242' },
+  idempotencyKey: 'attempt-1',
+};
 
 /** The names the standard gives these numbers, as the IANA registry lists them (read on 2026-09-25). */
 const STANDARD_NAMES: Record<number, string> = {
@@ -122,8 +134,64 @@ async function everyLeadAnswer(): Promise<Seen[]> {
       throw new Error('the database is down');
     },
     readLead: async () => undefined,
+    saveOrder: async () => {
+      throw new Error('the database is down');
+    },
+    readOrder: async () => undefined,
+    saveIdempotencyKey: async () => {
+      throw new Error('the database is down');
+    },
+    readIdempotencyKey: async () => undefined,
   };
   out.push(await seen('a store that cannot save', leadFunction({ store: broken }).post(GOOD)));
+  return out;
+}
+
+/** The order function, with a store in memory. */
+function orderFunction(overrides: { store?: Store; env?: Record<string, string | undefined> } = {}) {
+  const clock = Date.UTC(2026, 8, 25, 12, 30, 0);
+  let tokens = 0;
+  const store = overrides.store ?? createMemoryStore(() => clock);
+  const handler = orderHandler(overrides.env ?? OPEN, () => ({
+    store,
+    now: () => clock,
+    newOrderToken: () => `token${(tokens += 1)}`,
+    newOrderNumber: () => 'SI-ABCD1234',
+    secret: 'a-secret-for-the-test',
+  }));
+  const post = (body: unknown, method = 'POST') =>
+    handler(new Request('https://example.test/api/order', { method, headers: { 'x-forwarded-for': '203.0.113.7' }, ...(method === 'POST' ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}) }));
+  const get = (token?: string) => handler(new Request(`https://example.test/api/order${token === undefined ? '' : `?token=${token}`}`));
+  return { post, get };
+}
+
+/** Every answer `/api/order` can give when placing an order, each produced by the real function. Line-level pricing
+ * problems (a bad product, colour, size or a sold-out item) are not exercised here, since their shape carries an
+ * extra `line` field the documented row does not, the same way a whole-order problem's does not; they are proven
+ * against `priceOrder`'s own output directly in order.test.ts instead. */
+async function everyOrderPostAnswer(): Promise<Seen[]> {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const out: Seen[] = [];
+  out.push(await seen('an order that is kept', orderFunction().post(GOOD_ORDER)));
+  out.push(await seen('a repeat of the same attempt', (async () => {
+    const f = orderFunction();
+    await f.post(GOOD_ORDER);
+    return f.post(GOOD_ORDER);
+  })()));
+  out.push(await seen('a bad contact', orderFunction().post({ ...GOOD_ORDER, contact: { email: 'not an email' } })));
+  out.push(await seen('a bad address', orderFunction().post({ ...GOOD_ORDER, address: { ...GOOD_ORDER.address, postalCode: 'nope' } })));
+  out.push(await seen('an unknown currency', orderFunction().post({ ...GOOD_ORDER, currency: 'JPY' })));
+  out.push(await seen('an unknown shipping method', orderFunction().post({ ...GOOD_ORDER, shippingMethod: 'overnight' })));
+  out.push(await seen('a body that is not JSON', orderFunction().post('not json')));
+  out.push(await seen('no idempotency key', orderFunction().post({ ...GOOD_ORDER, idempotencyKey: undefined })));
+  const limited = orderFunction();
+  for (let attempt = 0; attempt < ORDER_ATTEMPTS_PER_HOUR; attempt += 1) await limited.post({ ...GOOD_ORDER, idempotencyKey: `attempt-${attempt}` });
+  out.push(await seen('one try too many', limited.post({ ...GOOD_ORDER, idempotencyKey: 'one-more' })));
+  const broken: Store = {
+    ...createMemoryStore(),
+    saveOrder: async () => Promise.reject(new Error('the database is down')),
+  };
+  out.push(await seen('a store that cannot save', orderFunction({ store: broken }).post(GOOD_ORDER)));
   return out;
 }
 
@@ -133,8 +201,10 @@ async function everyCommonAnswer(): Promise<Seen[]> {
   const out: Seen[] = [];
   out.push(await seen('lead, store closed', leadFunction({ env: {} }).post(GOOD)));
   out.push(await seen('currency, store closed', currencyHandler({})(new Request('https://example.test/api/currency'))));
+  out.push(await seen('order, store closed', orderFunction({ env: {} }).post(GOOD_ORDER)));
   out.push(await seen('lead, wrong method', leadFunction().post(undefined, 'GET')));
   out.push(await seen('currency, wrong method', currencyHandler(OPEN)(new Request('https://example.test/api/currency', { method: 'POST', body: '{}' }))));
+  out.push(await seen('order, wrong method', orderFunction().post(undefined, 'PUT')));
   const fails = guarded(OPEN, ['GET'], () => {
     throw new Error('something the function did not expect');
   });
@@ -177,7 +247,13 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('the numbers, and who decided what', () => {
   it('lists every number the functions answer with, and no other, with the names the standard gives', async () => {
-    const answers = [...(await everyLeadAnswer()), ...(await everyCommonAnswer()), await seen('currency', currencyHandler(OPEN)(new Request('https://example.test/api/currency')))];
+    const answers = [
+      ...(await everyLeadAnswer()),
+      ...(await everyOrderPostAnswer()),
+      ...(await everyCommonAnswer()),
+      await seen('currency', currencyHandler(OPEN)(new Request('https://example.test/api/currency'))),
+      await seen('order, not found', orderFunction().get('not-a-real-token')),
+    ];
     const used = [...new Set(answers.map((a) => a.status))].sort();
     expect(standard.map(([number]) => Number(number)).sort()).toEqual(used);
     for (const [number, name, definedIn] of standard) {
@@ -216,11 +292,18 @@ describe('what every function does, in the same way', () => {
     const answers = await everyCommonAnswer();
     expect(answers.find((a) => a.label === 'lead, wrong method')!.headers.get('allow')).toBe('POST');
     expect(answers.find((a) => a.label === 'currency, wrong method')!.headers.get('allow')).toBe('GET');
+    expect(answers.find((a) => a.label === 'order, wrong method')!.headers.get('allow')).toBe('POST, GET');
     expect(doc).toContain('`Allow` header');
   });
 
   it('sends every answer as JSON that no shared cache may keep, every answer of every function', async () => {
-    const answers = [...(await everyLeadAnswer()), ...(await everyCommonAnswer()), await seen('currency', currencyHandler(OPEN)(new Request('https://example.test/api/currency')))];
+    const answers = [
+      ...(await everyLeadAnswer()),
+      ...(await everyOrderPostAnswer()),
+      ...(await everyCommonAnswer()),
+      await seen('currency', currencyHandler(OPEN)(new Request('https://example.test/api/currency'))),
+      await seen('order, not found', orderFunction().get('not-a-real-token')),
+    ];
     for (const answer of answers) {
       expect(answer.headers.get('cache-control'), answer.label).toBe('no-store');
       expect(answer.headers.get('content-type'), answer.label).toBe('application/json; charset=utf-8');
@@ -290,6 +373,46 @@ describe('/api/lead', () => {
     expect([...sent[0]].sort()).toEqual([...listed].sort());
     expect(listed).toContain(LEAD_TRAP_FIELD);
     expect(listed.filter((field) => field !== LEAD_TRAP_FIELD)).toEqual(['firstName', 'email', 'marketing', 'source']);
+  });
+});
+
+describe('/api/order', () => {
+  it('answers placing an order in every situation as the page says, and the page lists no answer the function no longer gives', async () => {
+    bothWays(await everyOrderPostAnswer(), orderPostRows);
+  });
+
+  it('gives the same order number and token for a repeat of the same attempt, and says how many seconds to wait with a 429', async () => {
+    const answers = await everyOrderPostAnswer();
+    const first = answers.find((a) => a.label === 'an order that is kept')!;
+    const repeat = answers.find((a) => a.label === 'a repeat of the same attempt')!;
+    expect(repeat.body).toEqual(first.body);
+    const wait = Number(answers.find((a) => a.label === 'one try too many')!.headers.get('retry-after'));
+    expect(wait).toBeGreaterThan(0);
+    expect(wait).toBeLessThanOrEqual(3600);
+  });
+
+  it('accepts a body of 16 KB, four times the lead form\'s own limit, since an order carries a full cart and address', async () => {
+    expect(orderPostRows.some((row) => row[1].includes('16 KB'))).toBe(true);
+  });
+
+  it('reads an order back by its token, with the fields the page says, and none of the payment step\'s raw fields', async () => {
+    const f = orderFunction();
+    const placedResponse = await f.post(GOOD_ORDER);
+    const { token } = (await placedResponse.json()) as { token: string };
+    const read = await seen('read back', f.get(token));
+    expect(read.status).toBe(200);
+    expect(Object.keys(read.body as object).sort()).toEqual(['address', 'contact', 'ok', 'order', 'orderNumber', 'payment']);
+    expect(JSON.stringify(read.body)).not.toMatch(/securityCode|expiry/i);
+    const missing = await seen('missing token', f.get('not-a-real-token'));
+    expect(missing.status).toBe(404);
+    expect(missing.body).toEqual({ error: 'not found' });
+    expect(orderGetRows.some((row) => row[0] === '200')).toBe(true);
+    expect(orderGetRows.some((row) => row[0] === '404')).toBe(true);
+  });
+
+  it('never asks the browser for the card number, its expiry or its security code', () => {
+    const section = doc.slice(doc.indexOf('## /api/order'), doc.indexOf('## How the popup reads each answer'));
+    expect(section).toContain('never reach this function');
   });
 });
 

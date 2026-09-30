@@ -5,11 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { DEMO_EMAIL_DOMAINS } from '../../src/demo/email-domains';
 import { parseDomainList } from '../../src/engine/email-domain';
 import { leadHandler, visitorKey } from '../../src/server/lead';
-import { DATABASE_TOKEN_SETTING, DATABASE_URL_SETTING, MEMORY_STORE_SETTING, liveDependencies } from '../../src/server/live';
+import { DATABASE_TOKEN_SETTING, DATABASE_URL_SETTING, MEMORY_STORE_SETTING, liveDependencies, liveOrderDependencies } from '../../src/server/live';
 import { createMemoryStore } from '../../src/server/memory-store';
-import { LEAD_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX } from '../../src/server/store';
+import { orderHandler } from '../../src/server/order';
+import { IDEMPOTENCY_KEY_PREFIX, LEAD_KEY_PREFIX, ORDER_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX } from '../../src/server/store';
 import { createUpstashStore, type RedisCommands, type RedisTransaction } from '../../src/server/upstash-store';
-import { LEAD_ATTEMPTS_PER_HOUR, LEAD_RECORD_LIFETIME_DAYS } from '../../src/store/policy';
+import { LEAD_ATTEMPTS_PER_HOUR, LEAD_RECORD_LIFETIME_DAYS, ORDER_ATTEMPTS_PER_HOUR, ORDER_RECORD_LIFETIME_DAYS } from '../../src/store/policy';
 import { tableUnderHeading } from '../helpers/markdown';
 
 // docs/server-data.md says what the server keeps in its database, and what is sent to it. These tests run the code that keeps
@@ -27,6 +28,15 @@ const settings = tableUnderHeading(doc, '## Where the settings live'); // settin
 const OPEN = { PUBLIC_STORE_OPEN: 'true' };
 const ADDRESS = '203.0.113.7';
 const GOOD = { firstName: 'Maya', email: 'maya@example.com', marketing: true, source: 'auto', website: '' };
+const GOOD_ORDER = {
+  lines: [{ sku: 'SI-TEE-002', colour: 'Paper', size: 'XS', quantity: 1 }],
+  currency: 'CAD',
+  shippingMethod: 'standard',
+  contact: { email: 'liam.okafor@example.com', phone: '+1 416 555 0117' },
+  address: { country: 'CA', firstName: 'Liam', lastName: 'Okafor', address1: '310 Alder Street', city: 'Toronto', province: 'ON', postalCode: 'M6K 2P8' },
+  payment: { brand: 'Visa', last4: '4242' },
+  idempotencyKey: 'attempt-1',
+};
 
 /** Every .ts file directly in a folder of the repository, without its comments, so a comment can say what it likes. */
 function codeIn(folder: string): { file: string; code: string }[] {
@@ -78,19 +88,46 @@ async function keepOneLead() {
   return { store, keys: store.keys(), now: clock };
 }
 
+/** One order placed through the real handler to a store in memory: what is kept, and for how long. */
+async function keepOneOrder() {
+  let clock = Date.UTC(2026, 8, 25, 12, 30, 0);
+  const store = createMemoryStore(() => clock);
+  const handler = orderHandler(OPEN, () => ({
+    store,
+    now: () => clock,
+    newOrderToken: () => 'b'.repeat(32),
+    newOrderNumber: () => 'SI-ABCD1234',
+    secret: 'a-secret-for-the-test',
+  }));
+  await handler(new Request('https://example.test/api/order', { method: 'POST', headers: { 'x-forwarded-for': ADDRESS }, body: JSON.stringify(GOOD_ORDER) }));
+  return { store, keys: store.keys(), now: clock };
+}
+
 describe('the keys the page lists, and the keys the code writes', () => {
   const tagOf = (cell: string) => cell.match(/^`([a-z-]+:)<[a-z]+>`$/)?.[1];
 
   it('lists every tag the code names its keys with, and no other', () => {
     const listed = kept.map(([key]) => tagOf(key));
     expect(listed.every((tag) => tag !== undefined), 'each key is written as `tag:<id>`').toBe(true);
-    expect([...listed].sort()).toEqual([LEAD_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX].sort());
+    expect([...listed].sort()).toEqual([LEAD_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX, ORDER_KEY_PREFIX, IDEMPOTENCY_KEY_PREFIX].sort());
   });
 
   it('lists the tags of the keys that really are written when a lead is kept', async () => {
     const { keys } = await keepOneLead();
     const written = keys.map((key) => key.match(/^[a-z-]+:/)![0]);
-    expect([...new Set(written)].sort()).toEqual(kept.map(([key]) => tagOf(key)).sort());
+    expect([...new Set(written)].sort()).toEqual([LEAD_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX].sort());
+  });
+
+  it('lists the tags of the keys that really are written when an order is placed', async () => {
+    const { keys } = await keepOneOrder();
+    const written = keys.map((key) => key.match(/^[a-z-]+:/)![0]);
+    expect([...new Set(written)].sort()).toEqual([ORDER_KEY_PREFIX, RATE_LIMIT_KEY_PREFIX, IDEMPOTENCY_KEY_PREFIX].sort());
+  });
+
+  it('writes no tag, across both forms, that the page does not list, and leaves none of the page\'s tags unwritten', async () => {
+    const lead = (await keepOneLead()).keys.map((key) => key.match(/^[a-z-]+:/)![0]);
+    const order = (await keepOneOrder()).keys.map((key) => key.match(/^[a-z-]+:/)![0]);
+    expect([...new Set([...lead, ...order])].sort()).toEqual(kept.map(([key]) => tagOf(key)).sort());
   });
 
   it('leaves the naming of keys to one file, so no other file in the server builds a key with a tag of its own', () => {
@@ -105,10 +142,13 @@ describe('the keys the page lists, and the keys the code writes', () => {
   it('says how long the ids are, as they are made', async () => {
     const lead = kept.find(([key]) => tagOf(key) === LEAD_KEY_PREFIX)!;
     const counter = kept.find(([key]) => tagOf(key) === RATE_LIMIT_KEY_PREFIX)!;
+    const order = kept.find(([key]) => tagOf(key) === ORDER_KEY_PREFIX)!;
     expect(liveDependencies({}).newId()).toMatch(/^[0-9a-f]{32}$/);
     expect(lead[1]).toContain('32 random hexadecimal characters');
     expect(visitorKey(ADDRESS, 'a-secret', Date.now())).toMatch(/^rl:[0-9a-f]{64}$/);
     expect(counter[1]).toContain('64 hexadecimal characters');
+    expect(liveOrderDependencies({}).newOrderToken()).toMatch(/^[0-9a-f]{32}$/);
+    expect(order[1]).toContain('32 random hexadecimal characters');
   });
 });
 
@@ -131,6 +171,27 @@ describe('the fields of a lead', () => {
   });
 });
 
+describe('the field of an order, and of an idempotency attempt', () => {
+  it('are the one field the page lists, in the request that keeps each, and no others', async () => {
+    const { store: memory, keys } = await keepOneOrder();
+    const orderRecord = (await memory.readOrder(keys.find((key) => key.startsWith(ORDER_KEY_PREFIX))!.slice(ORDER_KEY_PREFIX.length)))!;
+    const { redis, fields } = recordingClient();
+    const store = createUpstashStore(redis);
+    await store.saveOrder('tok', orderRecord, 60);
+    await store.saveIdempotencyKey('attempt-1', 'tok', 60);
+    const fieldNameOf = (tag: string) => kept.find(([key]) => key.startsWith(tag))![3].match(/^`([a-z]+)`/)![1];
+    expect(fields).toEqual([[fieldNameOf('`order:')], [fieldNameOf('`idem:')]]);
+  });
+
+  it('is never anything about the card beyond the brand and last four digits, whatever else the request carried', async () => {
+    const { store, keys } = await keepOneOrder();
+    const order = keys.find((key) => key.startsWith(ORDER_KEY_PREFIX))!;
+    const record = await store.readOrder(order.slice(ORDER_KEY_PREFIX.length));
+    expect(Object.keys(record!.payment).sort()).toEqual(['brand', 'last4']);
+    expect(JSON.stringify(record)).not.toMatch(/securityCode|expiry|4242.*4242.*4242/i);
+  });
+});
+
 describe('how long things are kept', () => {
   it('says the numbers of seconds the code really gives a lead and a counter, and the days and tries the store\'s rules name', async () => {
     const { store, keys } = await keepOneLead();
@@ -145,6 +206,17 @@ describe('how long things are kept', () => {
     expect(counterRow[5]).toContain(`limit of ${LEAD_ATTEMPTS_PER_HOUR} tries an hour`);
   });
 
+  it('says the numbers of seconds the code really gives an order and an idempotency attempt, and the days and tries the store\'s rules name', async () => {
+    const { store, keys } = await keepOneOrder();
+    const order = keys.find((key) => key.startsWith(ORDER_KEY_PREFIX))!;
+    const idem = keys.find((key) => key.startsWith(IDEMPOTENCY_KEY_PREFIX))!;
+    const orderRow = kept.find(([key]) => key.startsWith('`order:'))!;
+    const idemRow = kept.find(([key]) => key.startsWith('`idem:'))!;
+    expect(orderRow[4]).toContain(`${ORDER_RECORD_LIFETIME_DAYS} days (${store.secondsLeft(order)} seconds)`);
+    expect(idemRow[4]).toContain(`${ORDER_RECORD_LIFETIME_DAYS} days (${store.secondsLeft(idem)} seconds)`);
+    expect(doc).toContain(`limit of ${ORDER_ATTEMPTS_PER_HOUR}`);
+  });
+
   it('says the seven days on this page as the browser-storage page says them for records on the server', () => {
     const storage = readFileSync(join(root, 'docs', 'browser-storage.md'), 'utf8');
     expect(storage).toContain(`${LEAD_RECORD_LIFETIME_DAYS} days`);
@@ -153,12 +225,18 @@ describe('how long things are kept', () => {
 });
 
 describe('the commands sent to the database', () => {
-  it('are the ones the page lists, and no others, across everything the store does with a lead', async () => {
+  it('are the ones the page lists, and no others, across everything the store does with a lead, an order and an idempotency attempt', async () => {
     const { redis, sent } = recordingClient();
     const store = createUpstashStore(redis);
     await store.increment('rl:a', 3600);
     await store.saveLead('a', { firstName: 'Maya', email: 'maya@example.com', marketing: false, source: 'manual', createdAt: '2026-09-25T12:30:00.000Z' }, 60);
     await store.readLead('a');
+    const oneOrder = await keepOneOrder();
+    const orderRecord = (await oneOrder.store.readOrder(oneOrder.keys.find((key) => key.startsWith(ORDER_KEY_PREFIX))!.slice(ORDER_KEY_PREFIX.length)))!;
+    await store.saveOrder('tok', orderRecord, 60);
+    await store.readOrder('tok');
+    await store.saveIdempotencyKey('attempt-1', 'tok', 60);
+    await store.readIdempotencyKey('attempt-1');
     const listed = commands.flatMap(([command]) => [...command.matchAll(/`([A-Z]+)`/g)].map((match) => match[1]));
     expect([...new Set(sent)].sort()).toEqual([...new Set(listed)].sort());
   });

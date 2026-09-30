@@ -1,0 +1,72 @@
+---
+import StorePage from '../layouts/StorePage.astro';
+import { WORDS } from '../store/words';
+
+// Reached with a token in the URL once an order is placed (checkout-review.ts). The lead popup never appears
+// here either, the same as checkout: a shopper who has just ordered should never be invited to start over.
+---
+
+<StorePage title={WORDS['thankYou.title']} description={WORDS['thankYou.description']} leadPopup={false}>
+  <p data-thank-you-loading>{WORDS['thankYou.loading']}</p>
+
+  {/* Shown once the order is found. The words this section's script needs are handed to it as data, the same
+       way the checkout review does it, so the script does not carry the whole words file. */}
+  <section
+    data-thank-you-order
+    hidden
+    data-words={JSON.stringify({ body: WORDS['thankYou.body'], free: WORDS['checkout.freeShipping'], cardEnding: WORDS['checkout.cardEnding'] })}
+  >
+    <h1>{WORDS['thankYou.heading']}</h1>
+    <p data-thank-you-body></p>
+
+    <ul class="checkout-review-lines" data-thank-you-lines></ul>
+    <template data-thank-you-line>
+      <li class="checkout-review-line">
+        <span class="checkout-review-line-qty" data-thank-you-line-qty aria-label={WORDS['cart.quantity']}></span>
+        <span class="checkout-review-line-name" data-thank-you-line-name></span>
+        <span class="checkout-review-line-variant" data-thank-you-line-variant></span>
+        <span class="checkout-review-line-price" data-thank-you-line-price></span>
+      </li>
+    </template>
+
+    <dl class="checkout-totals">
+      <div><dt>{WORDS['cart.subtotal']}</dt><dd data-thank-you-total="subtotal"></dd></div>
+      <div data-thank-you-discount-row hidden><dt>{WORDS['checkout.discount']}</dt><dd data-thank-you-total="discount"></dd></div>
+      <div><dt>{WORDS['checkout.shipping']}</dt><dd data-thank-you-total="shipping"></dd></div>
+      <div><dt>{WORDS['checkout.tax']}</dt><dd data-thank-you-total="tax"></dd></div>
+      <div class="checkout-total-line"><dt>{WORDS['checkout.total']}</dt><dd data-thank-you-total="total"></dd></div>
+    </dl>
+
+    <h2>{WORDS['checkout.contactHeading']}</h2>
+    <p data-thank-you-contact></p>
+
+    <h2>{WORDS['checkout.addressHeading']}</h2>
+    <p data-thank-you-address></p>
+
+    <h2>{WORDS['checkout.paymentHeading']}</h2>
+    <p data-thank-you-payment></p>
+
+    <a class="btn" href="/" data-thank-you-keep-shopping>{WORDS['cart.keepShopping']}</a>
+  </section>
+
+  {/* A token that never existed, one that is missing, and one that has expired all answer the same way
+       (src/server/order.ts), so all three are shown as this one message. */}
+  <section data-thank-you-not-found hidden>
+    <h1>{WORDS['thankYou.notFoundHeading']}</h1>
+    <p>{WORDS['thankYou.notFoundBody']}</p>
+    <p><a href="/">{WORDS['notFound.home']}</a></p>
+  </section>
+
+  {/* The store being unreachable, unlike the case above, is a real fault: the order could well exist, so a
+       shopper is asked to try again rather than told there is nothing to find. */}
+  <section data-thank-you-load-error hidden>
+    <h1>{WORDS['thankYou.loadErrorHeading']}</h1>
+    <p>{WORDS['thankYou.loadErrorBody']}</p>
+    <p><a href="/">{WORDS['notFound.home']}</a></p>
+  </section>
+</StorePage>
+
+<script>
+  import { initThankYou } from '../components/thank-you';
+  initThankYou();
+</script>

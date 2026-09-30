@@ -161,15 +161,10 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
       couponValid: WORDS['coupon.valid'],
       couponInvalid: WORDS['coupon.invalid'],
       couponExpired: WORDS['coupon.expired'],
-      confirmedBody: WORDS['checkout.confirmedBody'],
+      orderFailed: WORDS['checkout.orderFailed'],
     })}
   >
     <h2 data-checkout-review-heading>{WORDS['checkout.reviewHeading']}</h2>
-    {/* Shown in place of the heading above, and the paragraph below it, once "Place order" succeeds
-         (checkout-review.ts). Kept as separate elements rather than text swapped in by script, so both
-         sentences stay in the store's own words file rather than half living in the script. */}
-    <h2 data-checkout-confirmed-heading hidden>{WORDS['checkout.confirmedHeading']}</h2>
-    <p data-checkout-confirmed-body hidden></p>
     <ul class="checkout-review-lines" data-checkout-review-lines></ul>
     <template data-checkout-review-line>
       <li class="checkout-review-line">
@@ -208,19 +203,15 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
       <div class="checkout-total-line"><dt>{WORDS['checkout.total']}</dt><dd data-checkout-total="total"></dd></div>
     </dl>
 
-    {/* Shown once "Place order" succeeds, reusing the address step's own already-formatted summary line
-         rather than building a second copy of it. */}
-    <p class="checkout-confirmed-address" data-checkout-confirmed-address hidden>
-      <strong>{WORDS['checkout.addressHeading']}</strong> <span data-checkout-confirmed-address-line></span>
-    </p>
-
+    {/* Shown if placing the order fails, whatever the reason: the button is enabled again right beside it,
+         so the same attempt (the same idempotency key) can be retried. */}
+    <p class="lead-error" role="alert" data-checkout-order-error hidden></p>
     <button type="button" class="btn" data-checkout-place-order>{WORDS['checkout.placeOrder']}</button>
-    <a class="btn" href="/" data-checkout-keep-shopping hidden>{WORDS['cart.keepShopping']}</a>
   </section>
 
-  {/* The one word this page's script needs is handed to it here, rather than importing the whole words file,
+  {/* The few words this page's script needs are handed to it here, rather than importing the whole words file,
        so the eagerly-loaded checkout script does not carry every word on the site (docs/brand.md's script budget). */}
-  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'] })}></p>
+  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'] })}></p>
 </StorePage>
 
 <script>

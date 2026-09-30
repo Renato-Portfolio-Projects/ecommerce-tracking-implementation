@@ -1,4 +1,4 @@
-import { leadKey, type LeadRecord, type Store } from './store.js';
+import { idempotencyKey, leadKey, orderKey, type LeadRecord, type OrderRecord, type Store } from './store.js';
 
 /** The store that lives in memory: used by the tests, and by the local server when it has no database to use. */
 export interface MemoryStore extends Store {
@@ -15,6 +15,8 @@ export interface MemoryStore extends Store {
 export function createMemoryStore(now: () => number = Date.now): MemoryStore {
   const counters = new Map<string, { count: number; expiresAt: number }>();
   const leads = new Map<string, { record: LeadRecord; expiresAt: number }>();
+  const orders = new Map<string, { record: OrderRecord; expiresAt: number }>();
+  const idempotency = new Map<string, { orderToken: string; expiresAt: number }>();
   const alive = (expiresAt: number) => expiresAt > now();
   const kept = <T extends { expiresAt: number }>(map: Map<string, T>, key: string): T | undefined => {
     const found = map.get(key);
@@ -23,6 +25,7 @@ export function createMemoryStore(now: () => number = Date.now): MemoryStore {
     map.delete(key);
     return undefined;
   };
+  const anyKept = (key: string) => kept(counters, key) ?? kept(leads, key) ?? kept(orders, key) ?? kept(idempotency, key);
 
   return {
     async increment(key, lifetimeSeconds) {
@@ -37,11 +40,24 @@ export function createMemoryStore(now: () => number = Date.now): MemoryStore {
       const found = kept(leads, leadKey(id));
       return found === undefined ? undefined : { ...found.record };
     },
+    async saveOrder(token, record, lifetimeSeconds) {
+      orders.set(orderKey(token), { record: { ...record }, expiresAt: now() + lifetimeSeconds * 1000 });
+    },
+    async readOrder(token) {
+      const found = kept(orders, orderKey(token));
+      return found === undefined ? undefined : { ...found.record };
+    },
+    async saveIdempotencyKey(key, orderToken, lifetimeSeconds) {
+      idempotency.set(idempotencyKey(key), { orderToken, expiresAt: now() + lifetimeSeconds * 1000 });
+    },
+    async readIdempotencyKey(key) {
+      return kept(idempotency, idempotencyKey(key))?.orderToken;
+    },
     keys() {
-      return [...counters.keys(), ...leads.keys()].filter((key) => kept(counters, key) ?? kept(leads, key));
+      return [...counters.keys(), ...leads.keys(), ...orders.keys(), ...idempotency.keys()].filter(anyKept);
     },
     secondsLeft(key) {
-      const found = kept(counters, key) ?? kept(leads, key);
+      const found = kept(counters, key) ?? kept(leads, key) ?? kept(orders, key) ?? kept(idempotency, key);
       return found === undefined ? undefined : Math.round((found.expiresAt - now()) / 1000);
     },
   };

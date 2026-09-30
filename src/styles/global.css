@@ -1315,20 +1315,8 @@ body:has(.cart-drawer[open]) {
   font-weight: 600;
 }
 
-.checkout-confirmed-address {
-  margin: var(--space-4) 0 0;
-}
-
-[data-checkout-place-order],
-[data-checkout-keep-shopping] {
+[data-checkout-place-order] {
   display: block;
   width: 100%;
   margin-top: var(--space-4);
-}
-
-/* Without this, the Place order button's own hidden attribute, set once it has done its job, would lose to
-   the display: block rule just above, the same way the discount row's did. */
-[data-checkout-place-order][hidden],
-[data-checkout-keep-shopping][hidden] {
-  display: none;
 }

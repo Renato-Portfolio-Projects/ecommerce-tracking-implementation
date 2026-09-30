@@ -1,4 +1,5 @@
 import { checkCoupon } from '../engine/coupons';
+import { checkPayment, type KeptCard } from '../demo/test-cards';
 import { fill } from '../engine/fill';
 import { formatMoney } from '../engine/money';
 import { priceOrder, type PricedOrder } from '../engine/pricing';
@@ -7,8 +8,8 @@ import { shippingCost } from '../engine/shipping';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 import type { CurrencyCode } from '../store/currencies';
 import { clearCart, loadCart } from './cart-client';
+import { clearIdempotencyKey, currentIdempotencyKey } from './checkout-idempotency';
 import { currentCurrency } from './currency-switcher';
-import { placeOrder } from './place-order';
 
 /**
  * The order summary: shown only once the three steps above are all complete, priced for real from the same
@@ -27,20 +28,14 @@ const lineTemplate = () => document.querySelector<HTMLTemplateElement>('[data-ch
 const couponForm = () => document.querySelector<HTMLFormElement>('[data-checkout-coupon-form]')!;
 const couponMessage = () => document.querySelector<HTMLElement>('[data-checkout-coupon-message]')!;
 const couponInput = () => document.querySelector<HTMLInputElement>('[data-checkout-coupon-form] [name=coupon]')!;
-const shippingMethodsField = () => document.querySelector<HTMLElement>('.checkout-shipping-methods')!;
 const placeOrderButton = () => document.querySelector<HTMLButtonElement>('[data-checkout-place-order]')!;
-const reviewHeading = () => document.querySelector<HTMLElement>('[data-checkout-review-heading]')!;
-const confirmedHeading = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-heading]')!;
-const confirmedBody = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-body]')!;
-const confirmedAddress = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-address]')!;
-const confirmedAddressLine = () => document.querySelector<HTMLElement>('[data-checkout-confirmed-address-line]')!;
-const keepShoppingLink = () => document.querySelector<HTMLElement>('[data-checkout-keep-shopping]')!;
+const orderErrorBox = () => document.querySelector<HTMLElement>('[data-checkout-order-error]')!;
 
 /** The coupon last sent for pricing: the empty string once nothing has been applied, or an "Apply" gave nothing usable. */
 let appliedCoupon = '';
 
 /** Set once "Place order" succeeds, so nothing still on the page (a stray coupon submit, the cart emptying
- * itself) redraws the review over top of the confirmation it has just become. */
+ * itself right before the browser navigates away) redraws the review in the moment before the page unloads. */
 let placed = false;
 
 function allStepsComplete(): boolean {
@@ -114,15 +109,14 @@ interface ReviewWords {
   couponValid: string;
   couponInvalid: string;
   couponExpired: string;
-  confirmedBody: string;
+  orderFailed: string;
 }
 
 const wordsOf = () => JSON.parse(section().dataset.words ?? '{}') as ReviewWords;
 
 /** Re-prices and redraws the whole review, if it is showing. Does nothing otherwise, so nothing is computed for a
- * shopper who has not reached it yet, and does nothing once the order is placed, so the confirmation is never
- * redrawn back into a review (the cart emptying itself, which placing an order does, would otherwise trigger
- * exactly that). */
+ * shopper who has not reached it yet, and does nothing once the order is placed, so the cart emptying itself
+ * right before the browser navigates to the thank-you page never re-prices an order that is already done. */
 function redraw(): void {
   if (placed) return;
   section().hidden = !allStepsComplete();
@@ -137,6 +131,13 @@ function redraw(): void {
   renderLines(result.order);
   renderTotals(result.order, { free: words.free });
   showShippingPrices(currency, result.order.itemsNet, { free: words.free });
+}
+
+/** A changed cart is honestly a new attempt at checking out, whatever caused the change: reusing a stale
+ * idempotency key here would be a bug, not a safety net. */
+function handleCartChanged(): void {
+  clearIdempotencyKey();
+  redraw();
 }
 
 function applyCoupon(event: SubmitEvent): void {
@@ -158,48 +159,110 @@ function applyCoupon(event: SubmitEvent): void {
   redraw();
 }
 
-/** Told once "Place order" succeeds, so checkout-steps.ts can stop the three steps above being reopened:
- * editing a step after the order it belongs to has been placed does not make sense. The two files know
- * nothing else about each other, the same way checkout-steps.ts's own event works the other way round. */
-function announceOrderPlaced(): void {
-  document.dispatchEvent(new CustomEvent('checkout:order-placed'));
+/** Told the moment "Place order" sends its request, so checkout-steps.ts stops the three steps above being
+ * reopened while it is in flight. A real request has real latency, unlike the stand-in this replaces, so
+ * there is now a genuine window where a step could be reopened and edited while a request already carrying
+ * its old values is on its way to the server. The two files know nothing else about each other, the same way
+ * checkout-steps.ts's own event works the other way round. */
+function announceOrderSubmitting(): void {
+  document.dispatchEvent(new CustomEvent('checkout:order-submitting'));
 }
 
-/** The address step's own already-formatted summary line ("Liam Okafor, 310 Alder Street, ..."), read rather
- * than built a second time, so the confirmation can never say something different from what the shopper
- * already confirmed by completing that step. */
-function addressSummaryText(): string {
-  return document.querySelector<HTMLElement>('[data-checkout-step="address"] [data-checkout-summary]')!.textContent ?? '';
+/** Told if that request fails, so the steps unlock again: a shopper who needs to fix something, or simply
+ * retry, would otherwise have no way to. */
+function announceOrderSubmitFailed(): void {
+  document.dispatchEvent(new CustomEvent('checkout:order-submit-failed'));
+}
+
+function showOrderError(text: string): void {
+  const box = orderErrorBox();
+  box.textContent = text;
+  box.hidden = false;
+}
+
+function hideOrderError(): void {
+  orderErrorBox().hidden = true;
+}
+
+/** Reads a step's own raw field values, exactly as typed, for the server to check again: nothing here is
+ * validated in the browser a second time, since /api/order's whole job is checking it for itself. */
+function fieldValue(formSelector: string, name: string): string {
+  return document.querySelector<HTMLInputElement | HTMLSelectElement>(`${formSelector} [name=${name}]`)!.value;
+}
+
+function contactFields(): { email: string; phone: string } {
+  return { email: fieldValue('[data-checkout-form="contact"]', 'email'), phone: fieldValue('[data-checkout-form="contact"]', 'phone') };
+}
+
+function addressFields(): Record<string, string> {
+  const form = '[data-checkout-form="address"]';
+  return {
+    country: fieldValue(form, 'country'),
+    firstName: fieldValue(form, 'firstName'),
+    lastName: fieldValue(form, 'lastName'),
+    address1: fieldValue(form, 'address1'),
+    address2: fieldValue(form, 'address2'),
+    city: fieldValue(form, 'city'),
+    province: fieldValue(form, 'province'),
+    postalCode: fieldValue(form, 'postalCode'),
+  };
+}
+
+/** The one thing about the card the server is ever told: the brand and last four digits checkPayment already
+ * kept, run again on the payment step's current fields. The card number itself never leaves this function. */
+function paymentSummary(): KeptCard | undefined {
+  const form = '[data-checkout-form="payment"]';
+  const checked = checkPayment({ number: fieldValue(form, 'number'), expiry: fieldValue(form, 'expiry'), securityCode: fieldValue(form, 'securityCode') }, Date.now());
+  return checked.status === 'accepted' ? checked.card : undefined;
 }
 
 async function handlePlaceOrder(): Promise<void> {
   if (placed) return;
   const words = wordsOf();
+  const { cart } = loadCart();
+  const currency = currentCurrency();
   const { result } = priceNow();
   if (!result.ok) return; // Same unreachable-in-practice guard as redraw(): the steps already checked this.
+  const payment = paymentSummary();
+  if (!payment) return; // Unreachable in practice: the payment step only completes once a card is accepted.
 
   const button = placeOrderButton();
   button.disabled = true;
-  const email = document.querySelector<HTMLInputElement>('[data-checkout-form="contact"] [name=email]')!.value;
-  const firstName = document.querySelector<HTMLInputElement>('[data-checkout-form="address"] [name=firstName]')!.value;
-  const address = addressSummaryText();
-  const { orderNumber } = await placeOrder({ order: result.order, email, firstName, address });
+  hideOrderError();
+  announceOrderSubmitting();
+
+  const body = {
+    lines: cart.lines.map(({ sku, colour, size, quantity }) => ({ sku, colour, size, quantity })),
+    currency,
+    shippingMethod: chosenShippingMethod(),
+    coupon: appliedCoupon || undefined,
+    contact: contactFields(),
+    address: addressFields(),
+    payment,
+    idempotencyKey: currentIdempotencyKey(),
+  };
+
+  let token: string | undefined;
+  try {
+    const response = await fetch('/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const answer = (await response.json()) as { ok: boolean; token?: string };
+    if (answer.ok) token = answer.token;
+  } catch {
+    // Falls through to the same failure handling below: a network fault answers no differently than the
+    // server turning the order down.
+  }
+
+  if (token === undefined) {
+    button.disabled = false;
+    announceOrderSubmitFailed();
+    showOrderError(words.orderFailed);
+    return;
+  }
 
   placed = true;
-  confirmedBody().textContent = fill(words.confirmedBody, { firstName, orderNumber });
-  confirmedBody().hidden = false;
-  reviewHeading().hidden = true;
-  confirmedHeading().hidden = false;
-  confirmedAddressLine().textContent = address;
-  confirmedAddress().hidden = false;
-  shippingMethodsField().hidden = true;
-  couponForm().hidden = true;
-  couponMessage().hidden = true;
-  button.hidden = true;
-  keepShoppingLink().hidden = false;
-
+  clearIdempotencyKey();
   clearCart();
-  announceOrderPlaced();
+  location.href = `/thank-you?token=${encodeURIComponent(token)}`;
 }
 
 export function initCheckoutReview(): void {
@@ -212,7 +275,7 @@ export function initCheckoutReview(): void {
     return;
   }
   document.addEventListener('checkout:step-changed', redraw);
-  document.addEventListener('cart:changed', redraw);
+  document.addEventListener('cart:changed', handleCartChanged);
   document.addEventListener('currency:changed', redraw);
   for (const radio of document.querySelectorAll<HTMLInputElement>('[data-checkout-shipping-method]')) {
     radio.addEventListener('change', redraw);

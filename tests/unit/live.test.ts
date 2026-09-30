@@ -1,9 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { welcomeCoupon } from '../../src/engine/coupons';
 import { visitorKey } from '../../src/server/lead';
-import { DATABASE_TOKEN_SETTING, DATABASE_URL_SETTING, MEMORY_STORE_SETTING, liveLeadHandler } from '../../src/server/live';
+import { DATABASE_TOKEN_SETTING, DATABASE_URL_SETTING, MEMORY_STORE_SETTING, liveLeadHandler, liveOrderHandler } from '../../src/server/live';
 import type { DnsResolver } from '../../src/server/mail-service';
 import type { RedisCommands } from '../../src/server/upstash-store';
+
+const GOOD_ORDER = {
+  lines: [{ sku: 'SI-TEE-002', colour: 'Paper', size: 'XS', quantity: 1 }],
+  currency: 'CAD',
+  shippingMethod: 'standard',
+  contact: { email: 'liam.okafor@example.com', phone: '+1 416 555 0117' },
+  address: { country: 'CA', firstName: 'Liam', lastName: 'Okafor', address1: '310 Alder Street', city: 'Toronto', province: 'ON', postalCode: 'M6K 2P8' },
+  payment: { brand: 'Visa', last4: '4242' },
+  idempotencyKey: 'attempt-1',
+};
 
 const URL_VALUE = 'https://example-database.upstash.io';
 const TOKEN = 'a-token-for-the-test';
@@ -193,3 +203,54 @@ describe('the look-up and the list of temporary domains, as the function really 
 function visitorKeyHash(): string {
   return visitorKey(ADDRESS, TOKEN, Date.now()).slice('rl:'.length);
 }
+
+const postOrder = (handler: (request: Request) => Promise<Response>, body: unknown = GOOD_ORDER) =>
+  handler(new Request('https://example.test/api/order', { method: 'POST', headers: { 'x-forwarded-for': ADDRESS }, body: JSON.stringify(body) }));
+
+describe('the order function', () => {
+  it('makes the client for the database\'s address and key, once, and keeps an order through it', async () => {
+    const db = database();
+    const handler = liveOrderHandler(WITH_DATABASE, { redis: db.factory });
+    const response = await postOrder(handler);
+    expect(response.status).toBe(200);
+    await postOrder(handler, { ...GOOD_ORDER, idempotencyKey: 'attempt-2' });
+    expect(db.made).toEqual([[URL_VALUE, TOKEN]]);
+  });
+
+  it('gives each order a token of its own, as long as 32 hexadecimal characters, and an order number in the store\'s own format', async () => {
+    const db = database();
+    const handler = liveOrderHandler(WITH_DATABASE, { redis: db.factory });
+    const first = (await (await postOrder(handler)).json()) as { orderNumber: string; token: string };
+    const second = (await (await postOrder(handler, { ...GOOD_ORDER, idempotencyKey: 'attempt-2' })).json()) as { orderNumber: string; token: string };
+    expect(first.token).toMatch(/^[0-9a-f]{32}$/);
+    expect(second.token).not.toBe(first.token);
+    expect(first.orderNumber).toMatch(/^SI-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/);
+    expect(second.orderNumber).not.toBe(first.orderNumber);
+  });
+
+  it('says it could not save, and does not pretend to, when neither database setting is there', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await postOrder(liveOrderHandler(OPEN));
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ ok: false, error: 'could not save' });
+    expect(JSON.stringify(spy.mock.calls)).not.toContain('Liam');
+  });
+
+  it('keeps orders in memory when it is asked to, which is how the local server runs', async () => {
+    const response = await postOrder(liveOrderHandler({ ...OPEN, [MEMORY_STORE_SETTING]: 'true' }));
+    expect(response.status).toBe(200);
+  });
+
+  it('refuses to keep orders in memory on Vercel, where they would be lost while the shopper was told they were saved', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const response = await postOrder(liveOrderHandler({ ...OPEN, [MEMORY_STORE_SETTING]: 'true', VERCEL: '1' }));
+    expect(response.status).toBe(503);
+  });
+
+  it('answers 404 and never makes the client while the store is closed', async () => {
+    const db = database();
+    const response = await postOrder(liveOrderHandler({ [DATABASE_URL_SETTING]: URL_VALUE, [DATABASE_TOKEN_SETTING]: TOKEN }, { redis: db.factory }));
+    expect(response.status).toBe(404);
+    expect(db.made).toEqual([]);
+  });
+});

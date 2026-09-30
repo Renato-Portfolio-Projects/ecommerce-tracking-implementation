@@ -127,6 +127,7 @@ export const WORDS = {
   'checkout.cardNumber': 'Card number',
   'checkout.cardExpiry': 'Expiry (MM/YY)',
   'checkout.cardCode': 'Security code',
+  'checkout.cardEnding': '{brand} ending {last4}',
   'checkout.demoButton': 'Use demo data',
   'checkout.testCardButton': 'Use test card',
   'checkout.newPerson': 'Try another person',
@@ -141,8 +142,7 @@ export const WORDS = {
   'checkout.total': 'Total',
   'checkout.freeShipping': 'Free',
   'checkout.placeOrder': 'Place order',
-  'checkout.confirmedHeading': 'Order confirmed',
-  'checkout.confirmedBody': 'Thank you, {firstName}. Your order number is {orderNumber}.',
+  'checkout.orderFailed': "We couldn't place your order. Please try again.",
 
   // Discount code
   'coupon.label': 'Discount code',
@@ -150,6 +150,17 @@ export const WORDS = {
   'coupon.valid': '{code} applied: {percent}% off.',
   'coupon.invalid': 'That code is not valid.',
   'coupon.expired': 'That code has expired.',
+
+  // Thank you
+  'thankYou.title': 'Thank you',
+  'thankYou.description': 'Your order is confirmed.',
+  'thankYou.loading': 'Looking up your order.',
+  'thankYou.heading': 'Order confirmed',
+  'thankYou.body': 'Thank you, {firstName}. Your order number is {orderNumber}.',
+  'thankYou.notFoundHeading': "We couldn't find that order",
+  'thankYou.notFoundBody': 'That link may be wrong, or the order may no longer exist.',
+  'thankYou.loadErrorHeading': "We couldn't load your order",
+  'thankYou.loadErrorBody': 'Please refresh the page to try again.',
 
   // Currency
   'currency.label': 'Currency',

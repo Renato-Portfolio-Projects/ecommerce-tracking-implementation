@@ -10,9 +10,11 @@ import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, scriptOf } from '../
 const welcome = welcomeCoupon()!;
 const percent = welcome.percentOff;
 const built = htmlFiles(OPEN);
-// Checkout is the one page with the header that never carries the popup (decision 10 of v0.2c-3): a shopper
-// already checking out is never invited to start over. It has its own tests, in tests/built/checkout-page.test.ts.
-const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">') && file !== 'checkout/index.html');
+// Checkout and thank-you are the two pages with the header that never carry the popup (decision 10 of
+// v0.2c-3, extended to thank-you in v0.2c-4): a shopper checking out, or who has just ordered, is never
+// invited to start over. Each has its own tests, in tests/built/checkout-page.test.ts and thank-you-page.test.ts.
+const NO_POPUP_PAGES = new Set(['checkout/index.html', 'thank-you/index.html']);
+const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">') && !NO_POPUP_PAGES.has(file));
 
 /** What the footer link and the tab say, as the store's words fill it in for the welcome code. */
 const offer = fill(WORDS['popup.reopen'], { percent });
