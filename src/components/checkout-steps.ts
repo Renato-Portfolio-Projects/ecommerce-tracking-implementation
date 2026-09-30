@@ -17,8 +17,10 @@ import { demoPersona } from './demo-persona';
 const STEP_ORDER = ['contact', 'address', 'payment'] as const;
 type Step = (typeof STEP_ORDER)[number];
 
-/** Set once the order is placed (checkout-review.ts's own `checkout:order-placed` event), so none of the
- * three steps can be reopened afterwards: editing a step that belongs to a placed order does not make sense. */
+/** Set while an order is being placed (checkout-review.ts's own `checkout:order-submitting` event), so none
+ * of the three steps can be reopened while a request already carrying their old values is in flight. Cleared
+ * again if that request fails (`checkout:order-submit-failed`); left set on success, since the browser
+ * navigates away to the thank-you page at that point and there is nothing left on this page to protect. */
 let locked = false;
 
 function find<T extends Element>(root: ParentNode, selector: string): T {
@@ -241,6 +243,16 @@ function lockAllSteps(): void {
   for (const step of STEP_ORDER) find<HTMLElement>(details(step), '[data-checkout-edit]').hidden = true;
 }
 
+/** Undoes lockAllSteps, once a submission that locked the steps has failed. */
+function unlockAllSteps(): void {
+  locked = false;
+  for (const step of STEP_ORDER) {
+    const dialog = details(step);
+    const summary = find<HTMLElement>(dialog, '[data-checkout-summary]');
+    find<HTMLElement>(dialog, '[data-checkout-edit]').hidden = summary.hidden;
+  }
+}
+
 export function initCheckoutSteps(): void {
   for (const step of STEP_ORDER) form(step).addEventListener('submit', SUBMIT_HANDLERS[step]);
 
@@ -253,7 +265,8 @@ export function initCheckoutSteps(): void {
     });
   }
 
-  document.addEventListener('checkout:order-placed', lockAllSteps);
+  document.addEventListener('checkout:order-submitting', lockAllSteps);
+  document.addEventListener('checkout:order-submit-failed', unlockAllSteps);
 
   updateForCountry();
   control(form('address'), 'country').addEventListener('change', updateForCountry);

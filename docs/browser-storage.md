@@ -7,10 +7,10 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | Kind | How long it lasts | Shared between tabs | Sent to the server | In this store today |
 |---|---|---|---|---|
 | `localStorage` | No expiry. It stays until the visitor clears it or the store's code removes it. In a private window it is cleared when the last private tab is closed | Yes, by every tab of the same site | Never | The cart, the chosen currency and the lead popup's note |
-| `sessionStorage` | For the life of one tab. It survives a reload and is cleared when the tab is closed | No, each tab has its own. A page opened from another page can start with a copy of the opener's, and the two are separate after that | Never | The demo person, which list a product was picked from, and the starting currency |
+| `sessionStorage` | For the life of one tab. It survives a reload and is cleared when the tab is closed | No, each tab has its own. A page opened from another page can start with a copy of the opener's, and the two are separate after that | Never | The demo person, which list a product was picked from, the starting currency, and the key that makes retrying a checkout attempt safe |
 | Cookies | Set by whoever writes them: until the browser session ends, or until a date | Yes | Yes, with requests to the site that set them | None. The store's own code sets no cookies. Google's tags will set their own from v0.2d if the visitor agrees (v0.3). Google lists its `_ga` cookie as lasting 2 years |
 | A variable in the page | Until the page is left | No | Never | What each script falls back on when the browser will not keep something |
-| Records on the server | 7 days, then the database deletes them itself | Not held in the browser | Not applicable | Built for leads (v0.2c-2, see [What the server keeps](server-data.md)); planned for orders (v0.2c-4) |
+| Records on the server | 7 days, then the database deletes them itself | Not held in the browser | Not applicable | Built for leads (v0.2c-2) and orders (v0.2c-4, see [What the server keeps](server-data.md)) |
 
 ## What this store keeps, exactly
 
@@ -22,6 +22,7 @@ This page says what the store keeps in a visitor's browser, for how long, and wh
 | `second-impression:persona` | `sessionStorage` | The id of the demo person, such as `maya` | Until the tab is closed | The person holds for that page only |
 | `second-impression:default-currency` | `sessionStorage` | The currency the store started this tab in, worked out on the server from the visitor's country: CAD, USD, GBP or EUR. Never the country itself, and never a choice the visitor made | Until the tab is closed | It is asked for again on the next page, one small request each time, and holds for that page only |
 | `second-impression:list-handoff:<sku>` | `sessionStorage` | Which list a product card was clicked from: its id, its name and its position | From the click until the product page reads it, which removes it | The product page has no list to report |
+| `second-impression:checkout-idempotency` | `sessionStorage` | One random key, made the first time "Place order" is pressed, that names the checkout attempt in progress | Until the order succeeds or the cart changes; the tab closing also clears it | The key lasts only for as long as the page stays open, which is enough for one attempt, so a reload mid-attempt still risks a second order if the browser will not keep it |
 
 Nothing a visitor types is kept in the browser. The lead form's fields are never saved, and a half-typed form lives only in the open page. The one record made from what a visitor types is the lead, which the server holds for 7 days (built, v0.2c-2; see [What the server keeps](server-data.md)).
 
@@ -34,7 +35,7 @@ Nothing a visitor types is kept in the browser. The lead form's fields are never
 | Chooses a currency | It is saved, and every page loaded from then on starts in it, whatever the starting currency would have been |
 | Clicks a product card | The card writes the list hand-off and the product page reads it once and deletes it. A reload of the product page, a bookmark and a shared link have no list |
 | Adds to the cart | The cart is saved. Other open tabs of the store redraw their cart at once, because the browser tells them the saved cart changed. It does not tell the tab that made the change, which already knows |
-| Places an order | The cart is emptied, the way a real checkout would. Nothing about the order itself is saved anywhere, not even in the browser: reloading the confirmation loses it |
+| Places an order | The first press of "Place order" makes the attempt's key; every press after that, including a retry after a failure, sends the same one, so a repeat is never turned into a second order. Once the server confirms it, the key is cleared, the cart is emptied the way a real checkout would, and the browser moves to the thank-you page with the order's own token. The order itself is saved on the server for 7 days (see [What the server keeps](server-data.md)), not in the browser |
 | Uses "Use demo data" | The demo person is saved for this tab, and every demo button in the tab uses the same person |
 | Reloads the page | Everything stays except the list hand-off, which was read once |
 | Opens the store in a second tab | It sees the same cart, currency and popup note, because `localStorage` is shared. It starts with no demo person, because `sessionStorage` belongs to one tab |

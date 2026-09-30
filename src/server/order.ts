@@ -93,7 +93,7 @@ function checkLines(input: unknown): LineInput[] | undefined {
 }
 
 /** A payment summary is never the raw card: only the brand and last four digits `checkPayment` already kept in the
- * browser, which `place-order.ts` sends on as the browser's own claim that the card was accepted. */
+ * browser, which `checkout-review.ts` sends on as the browser's own claim that the card was accepted. */
 function checkPaymentSummary(input: unknown): KeptCard | undefined {
   if (typeof input !== 'object' || input === null) return undefined;
   const { brand, last4 } = input as Record<string, unknown>;

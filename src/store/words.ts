@@ -141,8 +141,7 @@ export const WORDS = {
   'checkout.total': 'Total',
   'checkout.freeShipping': 'Free',
   'checkout.placeOrder': 'Place order',
-  'checkout.confirmedHeading': 'Order confirmed',
-  'checkout.confirmedBody': 'Thank you, {firstName}. Your order number is {orderNumber}.',
+  'checkout.orderFailed': "We couldn't place your order. Please try again.",
 
   // Discount code
   'coupon.label': 'Discount code',

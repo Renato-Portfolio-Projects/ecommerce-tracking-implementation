@@ -132,15 +132,13 @@ describe('the checkout page, before any script has run', () => {
       couponValid: WORDS['coupon.valid'],
       couponInvalid: WORDS['coupon.invalid'],
       couponExpired: WORDS['coupon.expired'],
-      confirmedBody: WORDS['checkout.confirmedBody'],
+      orderFailed: WORDS['checkout.orderFailed'],
     });
   });
 
-  it('names the review section, with the confirmed heading and body ready but hidden until the order is placed', () => {
+  it('names the review section, with its heading', () => {
     const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
     expect(section).toContain(`<h2 data-checkout-review-heading>${WORDS['checkout.reviewHeading']}</h2>`);
-    expect(section).toContain(`<h2 data-checkout-confirmed-heading hidden>${WORDS['checkout.confirmedHeading']}</h2>`);
-    expect(section).toMatch(/<p data-checkout-confirmed-body hidden><\/p>/);
   });
 
   it('gives the review a line-item template with a quantity, name, variant and price', () => {
@@ -188,13 +186,10 @@ describe('the checkout page, before any script has run', () => {
     expect(section).toMatch(/<div data-checkout-discount-row hidden><dt>/);
   });
 
-  it('has a hidden shipping-address line and a Place order button, ready for the order to be placed', () => {
+  it('has a hidden error message and a Place order button, ready for the order to be placed', () => {
     const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
-    expect(section).toContain(`<strong>${WORDS['checkout.addressHeading']}</strong>`);
-    expect(section).toMatch(/<p class="checkout-confirmed-address" data-checkout-confirmed-address hidden>/);
-    expect(section).toContain('data-checkout-confirmed-address-line');
+    expect(section).toMatch(/<p class="lead-error" role="alert" data-checkout-order-error hidden><\/p>/);
     expect(section).toContain(`<button type="button" class="btn" data-checkout-place-order>${WORDS['checkout.placeOrder']}</button>`);
-    expect(section).toContain(`<a class="btn" href="/" data-checkout-keep-shopping hidden>${WORDS['cart.keepShopping']}</a>`);
   });
 });
 
@@ -207,7 +202,9 @@ describe('the script that runs the checkout steps', () => {
     expect(script).toContain('data-checkout-review');
     expect(script).toContain('checkout:step-changed');
     expect(script).toContain('data-checkout-place-order');
-    expect(script).toContain('checkout:order-placed');
+    expect(script).toContain('checkout:order-submitting');
+    expect(script).toContain('checkout:order-submit-failed');
+    expect(script).toContain('/api/order');
   });
 
   it('is not loaded by any other page', () => {

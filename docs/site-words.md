@@ -181,8 +181,7 @@ Built in the fourth part of this work. One page, `/checkout`, with three editabl
 | `checkout.total` | Total | The last line of the order summary |
 | `checkout.freeShipping` | Free | Shown in place of a price, both in the shipping method choice and the order summary's shipping line, whenever Standard shipping qualifies for free |
 | `checkout.placeOrder` | Place order | The main button, at the end of the order summary |
-| `checkout.confirmedHeading` | Order confirmed | Replaces the order summary once the order is placed |
-| `checkout.confirmedBody` | Thank you, {firstName}. Your order number is {orderNumber}. | Under the confirmed heading. The blanks are the shopper's own first name and the order reference made for this order |
+| `checkout.orderFailed` | We couldn't place your order. Please try again. | Shown beside the Place order button if placing the order fails, whatever the reason; the button is enabled again so the same attempt can be retried |
 
 ## Discount code
 
