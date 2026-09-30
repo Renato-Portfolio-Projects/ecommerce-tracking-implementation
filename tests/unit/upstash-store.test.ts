@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { priceOrder } from '../../src/engine/pricing';
 import { createRedis, createUpstashStore, type RedisCommands, type RedisTransaction } from '../../src/server/upstash-store';
-import type { LeadRecord } from '../../src/server/store';
+import type { LeadRecord, OrderRecord } from '../../src/server/store';
 
 const RECORD: LeadRecord = {
   firstName: 'Maya',
@@ -10,6 +11,22 @@ const RECORD: LeadRecord = {
   createdAt: '2026-09-25T12:30:00.000Z',
 };
 const WEEK = 7 * 24 * 60 * 60;
+
+const priced = priceOrder({
+  lines: [{ sku: 'SI-TEE-002', colour: 'Paper', size: 'XS', quantity: 1 }],
+  currency: 'CAD',
+  shippingMethod: 'standard',
+  destination: { country: 'CA', province: 'ON' },
+});
+if (!priced.ok) throw new Error('the fixture order does not price');
+const ORDER: OrderRecord = {
+  orderNumber: 'SI-ABCD1234',
+  order: priced.order,
+  contact: { email: 'liam.okafor@example.com', phone: '+1 416 555 0117' },
+  address: { country: 'CA', firstName: 'Liam', lastName: 'Okafor', address1: '310 Alder Street', city: 'Toronto', province: 'ON', postalCode: 'M6K 2P8' },
+  payment: { brand: 'Visa', last4: '4242' },
+  createdAt: '2026-09-25T12:30:00.000Z',
+};
 
 /**
  * A client that records, in order, every command it is asked to send, and answers from a small database of its own,
@@ -174,12 +191,75 @@ describe('reading a lead back', () => {
   });
 });
 
+describe('keeping an order', () => {
+  it('sends the whole order as one JSON field, and the expiry, together as one transaction, and nothing else', async () => {
+    const { redis, sent } = fakeRedis();
+    await createUpstashStore(redis).saveOrder('tok', ORDER, WEEK);
+    expect(sent).toEqual(['MULTI', `HSET order:tok ${JSON.stringify({ data: JSON.stringify(ORDER) })}`, 'EXPIRE order:tok 604800', 'EXEC']);
+  });
+
+  it('is not kept, and is not answered as kept, when the store refuses', async () => {
+    const { redis } = fakeRedis({ exec: async () => Promise.reject(new Error('the store refused')) });
+    await expect(createUpstashStore(redis).saveOrder('tok', ORDER, WEEK)).rejects.toThrow('the store refused');
+  });
+});
+
+describe('reading an order back', () => {
+  it('sends only the one read, and gives the order as it was kept', async () => {
+    const { redis, sent } = fakeRedis();
+    const store = createUpstashStore(redis);
+    await store.saveOrder('tok', ORDER, WEEK);
+    sent.length = 0;
+    expect(await store.readOrder('tok')).toEqual(ORDER);
+    expect(sent).toEqual(['HGETALL order:tok']);
+  });
+
+  it('says there is none when there is none, however the store says it', async () => {
+    for (const nothing of [null, {}]) {
+      const { redis } = fakeRedis({ hgetall: async () => nothing });
+      expect(await createUpstashStore(redis).readOrder('gone'), JSON.stringify(nothing)).toBeUndefined();
+    }
+  });
+
+  it('says there is none when the field is missing, is not text, or is not JSON that shapes up as an order', async () => {
+    for (const held of [{}, { data: 5 }, { data: 'not json' }, { data: '"just a string"' }, { data: '{}' }, { data: JSON.stringify({ ...ORDER, order: undefined }) }]) {
+      const { redis } = fakeRedis({ hgetall: async () => held });
+      expect(await createUpstashStore(redis).readOrder('x'), JSON.stringify(held)).toBeUndefined();
+    }
+  });
+});
+
+describe('an idempotency attempt', () => {
+  it('sends the order token as one field, and the expiry, together as one transaction, and nothing else', async () => {
+    const { redis, sent } = fakeRedis();
+    await createUpstashStore(redis).saveIdempotencyKey('attempt-1', 'tok', WEEK);
+    expect(sent).toEqual(['MULTI', 'HSET idem:attempt-1 {"token":"tok"}', 'EXPIRE idem:attempt-1 604800', 'EXEC']);
+  });
+
+  it('reads the order token back, or nothing when there is none', async () => {
+    const { redis } = fakeRedis();
+    const store = createUpstashStore(redis);
+    await store.saveIdempotencyKey('attempt-1', 'tok', WEEK);
+    expect(await store.readIdempotencyKey('attempt-1')).toBe('tok');
+    expect(await store.readIdempotencyKey('never-sent')).toBeUndefined();
+  });
+});
+
 describe('a store that does not answer', () => {
   const never = () => new Promise<never>(() => {});
 
   it('gives up after the limit, for each kind of call, so a visitor is never held up by it', async () => {
     const store = createUpstashStore(fakeRedis({ exec: never, hgetall: never }).redis, 30);
-    for (const call of [() => store.increment('rl:a', 60), () => store.saveLead('a', RECORD, WEEK), () => store.readLead('a')]) {
+    const calls = [
+      () => store.increment('rl:a', 60),
+      () => store.saveLead('a', RECORD, WEEK),
+      () => store.readLead('a'),
+      () => store.saveOrder('a', ORDER, WEEK),
+      () => store.readOrder('a'),
+      () => store.saveIdempotencyKey('a', 'tok', WEEK),
+      () => store.readIdempotencyKey('a'),
+    ];
+    for (const call of calls) {
       const started = Date.now();
       await expect(call()).rejects.toThrow('took too long');
       expect(Date.now() - started).toBeLessThan(1000);

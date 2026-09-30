@@ -1,13 +1,18 @@
 import { Redis } from '@upstash/redis';
-import { leadKey, type LeadRecord, type Store } from './store.js';
+import { idempotencyKey, leadKey, orderKey, type LeadRecord, type OrderRecord, type Store } from './store.js';
 
 /**
  * The store that is a real database: Upstash Redis, reached over the web. This file, and nothing else, knows what the
- * commands sent to it look like, and `docs/server-data.md` lists every one. Two things are sent:
+ * commands sent to it look like, and `docs/server-data.md` lists every one. What is sent:
  * - for a try at the lead form: `INCR <counter>` and `EXPIRE <counter> <seconds>`, together;
- * - for a lead that is kept: `HSET <lead> <five named fields>` and `EXPIRE <lead> <seconds>`, together.
- * Both pairs go as one transaction (`MULTI`), so a lead can never be kept without its expiry, which would break the
- * promise that every record is deleted by itself. A lead is read with `HGETALL`. Nothing else is ever sent.
+ * - for a lead that is kept: `HSET <lead> <five named fields>` and `EXPIRE <lead> <seconds>`, together;
+ * - for an order that is kept: `HSET <order> <one field, the order as JSON>` and `EXPIRE <order> <seconds>`, together.
+ *   An order does not flatten into named fields the way a lead does, since it holds a variable number of lines and
+ *   several nested shapes, so it is kept as one block of text instead, the same way a whole object would be kept
+ *   under one name in any key-value store;
+ * - for an idempotency attempt: `HSET <attempt> <one field, the order token it produced>` and `EXPIRE`, together.
+ * Every pair goes as one transaction (`MULTI`), so nothing can be kept without its expiry, which would break the
+ * promise that every record is deleted by itself. Anything is read with `HGETALL`. Nothing else is ever sent.
  */
 
 /** What the store needs of a Redis client. The real client has these, and a test passes one that records them. */
@@ -84,6 +89,37 @@ function leadOf(found: Record<string, unknown>): LeadRecord | undefined {
   return { firstName, email, marketing: marketing === 'true', source, createdAt };
 }
 
+/**
+ * The one field an order is kept under: the whole record, as JSON. An order does not flatten into named fields
+ * the way a lead does (a variable number of lines, several nested shapes), so it is kept as one block of text.
+ */
+const orderFieldsOf = (record: OrderRecord): Record<string, string> => ({ data: JSON.stringify(record) });
+
+/**
+ * An order from what the database holds, or nothing if what it holds does not even shape up as one. This does not
+ * re-check every number `priceOrder` computed, the way `leadOf` checks each of a lead's five fields: an order was
+ * written by this same code moments or days earlier, never typed by a visitor, so it only has to prove it parses
+ * and has the parts a caller would reach for, not that every figure in it still adds up.
+ */
+function orderOf(found: Record<string, unknown>): OrderRecord | undefined {
+  const data = found.data;
+  if (typeof data !== 'string') return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(data);
+  } catch {
+    return undefined;
+  }
+  if (typeof parsed !== 'object' || parsed === null) return undefined;
+  const { orderNumber, order, contact, address, payment, createdAt } = parsed as Record<string, unknown>;
+  if (typeof orderNumber !== 'string' || typeof createdAt !== 'string') return undefined;
+  if (typeof order !== 'object' || order === null || !Array.isArray((order as { lines?: unknown }).lines)) return undefined;
+  if (typeof contact !== 'object' || contact === null) return undefined;
+  if (typeof address !== 'object' || address === null) return undefined;
+  if (typeof payment !== 'object' || payment === null) return undefined;
+  return parsed as OrderRecord;
+}
+
 export function createUpstashStore(redis: RedisCommands, timeoutMs = STORE_TIMEOUT_MS): Store {
   return {
     async increment(key, lifetimeSeconds) {
@@ -98,6 +134,23 @@ export function createUpstashStore(redis: RedisCommands, timeoutMs = STORE_TIMEO
     async readLead(id) {
       const fields = fieldsFrom(await within(redis.hgetall(leadKey(id)), timeoutMs));
       return fields === undefined ? undefined : leadOf(fields);
+    },
+    async saveOrder(token, record, lifetimeSeconds) {
+      const key = orderKey(token);
+      await within(redis.multi().hset(key, orderFieldsOf(record)).expire(key, lifetimeSeconds).exec(), timeoutMs);
+    },
+    async readOrder(token) {
+      const fields = fieldsFrom(await within(redis.hgetall(orderKey(token)), timeoutMs));
+      return fields === undefined ? undefined : orderOf(fields);
+    },
+    async saveIdempotencyKey(key, orderToken, lifetimeSeconds) {
+      const name = idempotencyKey(key);
+      await within(redis.multi().hset(name, { token: orderToken }).expire(name, lifetimeSeconds).exec(), timeoutMs);
+    },
+    async readIdempotencyKey(key) {
+      const fields = fieldsFrom(await within(redis.hgetall(idempotencyKey(key)), timeoutMs));
+      const token = fields?.token;
+      return typeof token === 'string' ? token : undefined;
     },
   };
 }

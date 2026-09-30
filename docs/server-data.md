@@ -1,6 +1,6 @@
 # What the server keeps
 
-This page says what the store's server keeps in its database, for how long, why, and what is sent to the database to do it. It also says what is never kept. The store keeps almost nothing: a visitor's cart, currency and other choices live in their own browser, which [Browser storage and sessions](browser-storage.md) describes. The server keeps a lead, which a visitor gives by typing a name and an email into the popup, and a small counter that stops floods. Orders come later (v0.2c-4), and a log of what tracking sent comes with v0.4. Each will be added to this page when it is built. What the functions answer to the browser, and what each status number means, is on [What the server functions answer](server-answers.md).
+This page says what the store's server keeps in its database, for how long, why, and what is sent to the database to do it. It also says what is never kept. The store keeps almost nothing: a visitor's cart, currency and other choices live in their own browser, which [Browser storage and sessions](browser-storage.md) describes. The server keeps a lead, which a visitor gives by typing a name and an email into the popup, an order, which a shopper places at checkout, and two small counters that stop floods and make a retry safe. A log of what tracking sent comes with v0.4, and will be added to this page when it is built. What the functions answer to the browser, and what each status number means, is on [What the server functions answer](server-answers.md).
 
 The database is [Upstash Redis](https://upstash.com/), on its Free plan, in Washington, D.C., next to the store's functions. Redis keeps things by name: a key, and something filed under it. It has no tables and no columns. What a lead looks like is decided by the store's code, which checks it again whenever it reads one back. Every key starts with a tag that says what it is, so a key names its own kind, and every key is deleted by the database itself when its time is up. Nothing needs cleaning up, and no record can outlive the promise made about it.
 
@@ -11,9 +11,11 @@ The functions can only reach the database from Vercel's Preview deployments, whe
 | Key | The rest of the name | What it holds | Fields | Expires | Why |
 |---|---|---|---|---|---|
 | `lead:<id>` | 32 random hexadecimal characters, made when the lead is kept | One lead | `firstName`, `email`, `marketing`, `source`, `createdAt` | 7 days (604800 seconds) after it is kept. The time is set once, and nothing extends it | The store's promise that a lead is deleted after 7 days. The lead is what `generate_lead` will later report, once the server has really kept it |
-| `rl:<hash>` | 64 hexadecimal characters: a hash of the visitor's address and the hour, made with a secret | A number: how many times one visitor has sent the form in that hour | None: it is a plain number | 1 hour (3600 seconds) after the last try | The limit of 10 tries an hour, which stops floods and not people |
+| `rl:<hash>` | 64 hexadecimal characters: a hash of the visitor's address and the hour, made with a secret | A number: how many times one visitor has sent a form in that hour | None: it is a plain number | 1 hour (3600 seconds) after the last try | The limit of 10 tries an hour, which stops floods and not people. The lead form and the order form keep separate counters under this same tag, hashed differently, so trying one never spends the other's budget |
+| `order:<token>` | 32 random hexadecimal characters, made the same way a lead's id is, and the same one that gates `/thank-you` | One order | `data`: the whole order, as one block of JSON, since it holds a variable number of lines and does not flatten into named fields the way a lead does | 7 days (604800 seconds) after it is kept, the same promise as a lead's | The store's promise that an order is deleted after 7 days. It is what a shopper's `/thank-you` page, and later `purchase`, will read |
+| `idem:<key>` | Whatever the browser sent: a key it makes once for one attempt at placing an order, and sends again on every retry of that same attempt | The order token that attempt produced | `token` | 7 days (604800 seconds), the same as the order it names | So a retry of the same attempt, even one that reaches the server again days later, is answered without placing a second order |
 
-Both keys have an id, and the two are made differently. A lead's id is random and new every time. The counter's name is worked out from the visitor's address and the hour, with a secret: the same visitor in the same hour always gets the same name, which is how their tries are counted together, and a new hour gives a new name. So it names a visitor's connection for one hour, not a person. Without the secret it means nothing and cannot be turned back into an address. Someone who held the secret could only test a guess of an address against it, which is why the secret is a sensitive setting, and why the counter is deleted an hour after the last try.
+All four keys have an id, and they are made two different ways. A lead's id, and an order's token, are random and new every time. A counter's name, whether it is counting the lead form or the order form, is worked out from the visitor's address and the hour, with a secret: the same visitor in the same hour always gets the same name, which is how their tries are counted together, and a new hour gives a new name. So it names a visitor's connection for one hour, not a person. Without the secret it means nothing and cannot be turned back into an address. Someone who held the secret could only test a guess of an address against it, which is why the secret is a sensitive setting, and why a counter is deleted an hour after the last try. An idempotency key's own name is simply whatever the browser sent: it identifies one attempt, not a person, and is thrown away with the order it names.
 
 What the five fields of a lead hold:
 
@@ -24,26 +26,28 @@ What the five fields of a lead hold:
 
 Every value is kept as text, and nothing is converted on the way in or out. (With conversion on, a first name of `1234` came back as the number 1234, which is why it is off.)
 
+What an order's one field, `data`, holds, once its JSON is read: the order itself, exactly as `priceOrder` computed it on the server (the items, the totals, the shipping method, the coupon), the shopper's own email, phone and shipping address, a summary of the card (brand and last four digits only), an order number in the store's own `SI-XXXXXXXX` format, and when it was kept. An idempotency attempt's one field, `token`, holds nothing but the order token that attempt produced.
+
 ## What is sent to the database
 
 These are all the commands the store's code sends, and they are sent by one file, `src/server/upstash-store.ts`. A test runs that file and fails if it sends a command that is not listed here.
 
 | Command | Sent when | Why |
 |---|---|---|
-| `MULTI` and `EXEC` | Around each pair of commands below | They make the two commands one transaction, so a lead can never be kept without its expiry, and a counter never without its |
-| `INCR` | A visitor sends the form, once the name and email have passed the checks | Adds one to that visitor's counter for the hour |
+| `MULTI` and `EXEC` | Around each pair of commands below | They make the two commands one transaction, so nothing kept can ever be left without its expiry |
+| `INCR` | A visitor sends a form, once its own checks have passed | Adds one to that visitor's counter for the hour, the lead form's and the order form's counted apart |
 | `EXPIRE` | Together with `INCR` (3600 seconds), and together with `HSET` (604800 seconds) | Sets the time after which the database deletes the key |
-| `HSET` | A lead has passed every check and is being kept | Writes the five fields of the lead under its key |
-| `HGETALL` | Only in tests and in `npm run smoke:lead`. The site itself never reads a lead back | Reads a lead's fields, to prove it was kept as written |
+| `HSET` | A lead has passed every check and is being kept; an order has been priced and checked again and is being kept; an idempotency attempt has just placed an order | Writes the lead's five fields, or the order's one JSON field, or the idempotency attempt's one field, under its key |
+| `HGETALL` | Only in tests and in `npm run smoke:lead`. The site itself never reads a lead back this way. An order is read back for real, by `/thank-you` and by a repeat of the same idempotency key | Reads a lead's fields, an order, or an idempotency attempt's token, to prove it was kept as written, or to show it again |
 
-A try that fails the name and email checks, or that fills the hidden trap field, sends nothing to the database at all.
+A try that fails its own checks, or that fills the lead form's hidden trap field, sends nothing to the database at all.
 
 ## What is never kept
 
 - The visitor's address on the network. It is used to tell one visitor from another for the rate limit, in the moment of the request, and only as an input to the hash in the counter's name. The hash is made with a secret, so it cannot be turned back into an address, only checked against a guess by someone who holds the secret, and the address is never written anywhere else.
 - Their browser or device details, their country, cookies, or anything about their cart or the pages they looked at.
-- Anything the visitor did not type into the popup. A lead holds the five fields above and nothing more, and a test says so.
-- Card numbers. There is no real payment in this store, and a card number never leaves the browser.
+- Anything the visitor did not type into the popup, or the shopper into checkout. A lead holds the five fields above and nothing more, and an order holds only what `docs/server-answers.md`'s `/api/order` section says it sends, and a test says so for both.
+- Card numbers, their expiry or their security code. There is no real payment in this store, and none of the three ever leaves the browser: `/api/order` receives only the brand and last four digits the browser's own check already kept.
 - Anything in a log. When the database cannot be used, the store logs only the kind of fault, never a name, an email or the fault's own message.
 
 ## When something goes wrong
@@ -77,4 +81,4 @@ Not verified: how Upstash treats a key that has expired but was still in memory 
 
 ## What this page does not cover yet
 
-Orders and their token (v0.2c-4), and tracking receipts (v0.4). Their keys, fields and expiry will be added to the tables above when they are built, and the test that keeps this page in step with the code will require it.
+Tracking receipts (v0.4). Their keys, fields and expiry will be added to the tables above when they are built, and the test that keeps this page in step with the code will require it.

@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
+import { priceOrder } from '../../src/engine/pricing';
 import { createMemoryStore } from '../../src/server/memory-store';
-import type { LeadRecord } from '../../src/server/store';
+import type { LeadRecord, OrderRecord } from '../../src/server/store';
 
 const RECORD: LeadRecord = { firstName: 'Maya', email: 'maya@example.com', marketing: false, source: 'auto', createdAt: '2026-09-25T12:30:00.000Z' };
+
+const priced = priceOrder({
+  lines: [{ sku: 'SI-TEE-002', colour: 'Paper', size: 'XS', quantity: 1 }],
+  currency: 'CAD',
+  shippingMethod: 'standard',
+  destination: { country: 'CA', province: 'ON' },
+});
+if (!priced.ok) throw new Error('the fixture order does not price');
+const ORDER: OrderRecord = {
+  orderNumber: 'SI-ABCD1234',
+  order: priced.order,
+  contact: { email: 'liam.okafor@example.com', phone: '+1 416 555 0117' },
+  address: { country: 'CA', firstName: 'Liam', lastName: 'Okafor', address1: '310 Alder Street', city: 'Toronto', province: 'ON', postalCode: 'M6K 2P8' },
+  payment: { brand: 'Visa', last4: '4242' },
+  createdAt: '2026-09-25T12:30:00.000Z',
+};
 
 function setup() {
   let clock = 1_000_000;
@@ -91,5 +108,55 @@ describe('the leads of the store in memory', () => {
     expect(store.keys().sort()).toEqual(['lead:abc', 'rl:a']);
     expect(store.secondsLeft('rl:a')).toBe(60);
     expect(store.secondsLeft('nothing')).toBeUndefined();
+  });
+});
+
+describe('the orders of the store in memory', () => {
+  it('are kept under their token, with the prefix the real store uses, and read back', async () => {
+    const { store } = setup();
+    await store.saveOrder('tok', ORDER, 100);
+    expect(await store.readOrder('tok')).toEqual(ORDER);
+    expect(store.keys()).toEqual(['order:tok']);
+    expect(await store.readOrder('other')).toBeUndefined();
+  });
+
+  it('are deleted when their time is up', async () => {
+    const { store, advance } = setup();
+    await store.saveOrder('tok', ORDER, 100);
+    expect(store.secondsLeft('order:tok')).toBe(100);
+    advance(99);
+    expect(await store.readOrder('tok')).toEqual(ORDER);
+    advance(1);
+    expect(await store.readOrder('tok')).toBeUndefined();
+    expect(store.keys()).toEqual([]);
+  });
+
+  it('cannot be changed by changing what was handed in or what was read out', async () => {
+    const { store } = setup();
+    const handed = { ...ORDER };
+    await store.saveOrder('tok', handed, 100);
+    handed.orderNumber = 'SI-CHANGED1';
+    const read = await store.readOrder('tok');
+    read!.orderNumber = 'SI-CHANGED2';
+    expect(await store.readOrder('tok')).toEqual(ORDER);
+  });
+});
+
+describe('the idempotency attempts of the store in memory', () => {
+  it('are kept under their key, with the prefix the real store uses, and point at the order token', async () => {
+    const { store } = setup();
+    await store.saveIdempotencyKey('attempt-1', 'tok', 100);
+    expect(await store.readIdempotencyKey('attempt-1')).toBe('tok');
+    expect(store.keys()).toEqual(['idem:attempt-1']);
+    expect(await store.readIdempotencyKey('other')).toBeUndefined();
+  });
+
+  it('are deleted when their time is up, the same as the order they name', async () => {
+    const { store, advance } = setup();
+    await store.saveIdempotencyKey('attempt-1', 'tok', 100);
+    advance(99);
+    expect(await store.readIdempotencyKey('attempt-1')).toBe('tok');
+    advance(1);
+    expect(await store.readIdempotencyKey('attempt-1')).toBeUndefined();
   });
 });

@@ -281,6 +281,14 @@ describe('submitLead against the real lead function', () => {
         throw new Error('the database is down');
       },
       readLead: async () => undefined,
+      saveOrder: async () => {
+        throw new Error('the database is down');
+      },
+      readOrder: async () => undefined,
+      saveIdempotencyKey: async () => {
+        throw new Error('the database is down');
+      },
+      readIdempotencyKey: async () => undefined,
     };
     connected({ store: broken });
     expect(await submitLead(lead)).toEqual({ status: 'failed' });
