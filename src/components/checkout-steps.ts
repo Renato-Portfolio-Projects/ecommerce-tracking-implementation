@@ -111,7 +111,19 @@ function announceStepsChanged(): void {
   document.dispatchEvent(new CustomEvent('checkout:step-changed'));
 }
 
-/** Collapses a completed step to a one-line summary, shows Edit, and opens the next step if there is one and it is not open already. */
+/** Closed, with a summary showing: what "done" looks like for a step, on the page, the same way
+ * checkout-review.ts works out whether every step is done. */
+function isStepComplete(step: Step): boolean {
+  const dialog = details(step);
+  const summary = dialog.querySelector<HTMLElement>('[data-checkout-summary]');
+  return !dialog.open && !!summary && !summary.hidden;
+}
+
+/** Collapses a completed step to a one-line summary, shows Edit, and opens the next step, but only if that
+ * next step is not already done. Without this check, re-confirming an earlier step after every step was
+ * already complete, address after payment was already filled in, say, would force payment open again and
+ * hide its own summary, even though nothing about it changed: setting a <details>'s open property fires the
+ * same toggle event a click would, and reopenStep() treats that exactly like a shopper reopening it by hand. */
 function completeStep(step: Step, summary: string): void {
   const dialog = details(step);
   dialog.open = false;
@@ -121,7 +133,7 @@ function completeStep(step: Step, summary: string): void {
   find<HTMLElement>(dialog, '[data-checkout-edit]').hidden = false;
 
   const next = STEP_ORDER[STEP_ORDER.indexOf(step) + 1];
-  if (next) details(next).open = true;
+  if (next && !isStepComplete(next)) details(next).open = true;
   announceStepsChanged();
 }
 
