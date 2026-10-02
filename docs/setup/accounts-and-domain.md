@@ -69,25 +69,29 @@ Do not create a second Vercel account for this project. Vercel links one GitHub 
 
 ## 5. Google Tag Manager (needed for 0.2)
 
-- [ ] Create an account named "Second Impression Portfolio". Country: Canada.
-- [ ] Create a web container named after the domain.
-- [ ] Do not add the snippet to the site and do not publish anything. That starts in v0.2.
-- [ ] Note the container ID (`GTM-` followed by letters and numbers).
+- [x] Create an account named "Second Impression Portfolio". Country: Canada. Done on 2026-10-02, under Renato's personal Google login. An account was first created by mistake under a business login; it was deleted once the mix-up was found.
+- [x] Create a web container named after the domain. Done: the container is named `secondimpression.ca`.
+- [x] Do not add the snippet to the site and do not publish anything. That starts in v0.2. Confirmed: nothing has been added to the site yet.
+- [x] Note the container ID (`GTM-` followed by letters and numbers). `GTM-K6HSZVKX`.
 
 ## 6. Google Analytics 4 (needed for 0.2)
 
-- [ ] Create an account named "Second Impression Portfolio".
-- [ ] Create two properties: "Second Impression - Live" and "Second Impression - Test". Time zone: Toronto. Currency: Canadian dollar.
-- [ ] Give each property a web data stream. Live uses the production domain. Test uses `http://localhost`.
-- [ ] In each property, find the event data retention setting and set it to 14 months.
-- [ ] Note both measurement IDs (`G-` followed by letters and numbers).
+- [x] Create an account named "Second Impression Portfolio". Done on 2026-10-02.
+- [x] Create two properties: "Second Impression - Live" and "Second Impression - Test". Time zone: Toronto. Currency: Canadian dollar. Done.
+- [x] Give each property a web data stream. Live uses the production domain. Test uses `http://localhost`. Done, with one change: GA4's stream-creation wizard rejects a bare `localhost` URL outright, with no documented reason found for it. The Test stream uses `http://localhost.example` instead, IANA's reserved placeholder domain, set through the stream's edit screen after creation so the stream ID stayed the same.
+- [x] In each property, find the event data retention setting and set it to 14 months. Done for both.
+- [x] Note both measurement IDs (`G-` followed by letters and numbers). Live: `G-QC6MN7HWJQ`. Test: `G-3Q7TZCEPSF`.
+
+Enhanced Measurement was left on for both properties, Renato's own choice against the recommendation to turn it off. It stays low-stakes before launch, since every event it adds automatically falls outside the site's own tracking plan either way.
 
 ## 7. Meta (needed for 0.2)
 
-- [ ] Create a new Business Portfolio dedicated to this project, separate from any other business's, the same reason GTM and GA4 each get their own account above: an interviewer can be given read-only access to just this portfolio without seeing anything else.
-- [ ] Inside it, create two datasets: "Second Impression - Live" and "Second Impression - Test".
-- [ ] Do not create an ad account for this project, and never run ads to this domain. If Meta's own flow requires selecting or creating an ad account to finish setting up a dataset, an empty one with no payment method and no campaign is fine: existing does not mean spending, and nothing is charged until a campaign is actually launched.
-- [ ] Note both dataset IDs.
+- [x] Create a new Business Portfolio dedicated to this project, separate from any other business's, the same reason GTM and GA4 each get their own account above: an interviewer can be given read-only access to just this portfolio without seeing anything else. Done on 2026-10-02.
+- [x] Inside it, create two datasets: "Second Impression - Live" and "Second Impression - Test". Done.
+- [x] Do not create an ad account for this project, and never run ads to this domain. If Meta's own flow requires selecting or creating an ad account to finish setting up a dataset, an empty one with no payment method and no campaign is fine: existing does not mean spending, and nothing is charged until a campaign is actually launched. Confirmed: no ad account was created or required.
+- [x] Note both dataset IDs. Live: `908973392296668`. Test: `1856352769041305`.
+
+Two more choices made at dataset creation, both to stay consistent with the hashing this project already does in its own code (see `docs/tracking-plan.md`): Advanced Matching was left off, and the "Connect all datasets to Conversions API" checkbox was unchecked.
 
 ## 8. Not yet
 
