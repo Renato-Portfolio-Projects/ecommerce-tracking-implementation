@@ -29,13 +29,14 @@ Sources checked on 2026-09-21. A row added after that day gives, in its source c
 | Shipping and fulfillment | Needs replacing | There are two flat methods and nothing is shipped. A store needs real rates, duties, packing and returns. |
 | Email | Needs adding | The emails are simulated. A store needs a sending service, sender authentication and consent it can prove. |
 | Lead capture | Needs replacing | The popup opens after 5 seconds and offers one shared code. A store waits longer, keeps clear of the search rules on popups, and limits or personalises its codes. |
+| Tracking | Needs adding | The announcements go through one tested door, and personal details become fingerprints in the browser. A store also needs consent before anything is sent (see Legal and privacy), a way to notice when announcements go missing, and a phone-number library. |
 | Legal and privacy | Needs adding | There is only a demo notice, and a draft policy is planned. A store needs terms, policies and a review by a professional. |
 | Security and operations | Needs adding | The input checks carry over, and the lead function is checked again on the server, rate-limited and documented. A store also needs monitoring, backups, a watch on its dependencies, and the same protection on every function that changes something. |
 
 ## What carries over unchanged
 
 - `src/engine` holds the pricing, the cart and its saved form, the checks on what a shopper types, the postal codes and the email domain checks. It reads one store's data from `src/store`, so a new store writes its own `src/store` folder. The section "Where the code lives" in `docs/shop-rules.md` says how, and lists what still carries this store's choices.
-- The event design and the data contract in `docs/tracking-plan.md`.
+- The event design and the data contract in `docs/tracking-plan.md`, and the code that keeps to them: `src/tracking/push-event.ts` and `src/tracking/hash.ts`.
 - The way the rules are kept: every rule is written in words in `docs/shop-rules.md`, and tests compare that page with the code.
 - The checks in `.github/workflows/ci.yml`: the type check, the tests, the build and a secret scan.
 
@@ -134,6 +135,14 @@ Every product a shopper can look at is a flat, line-drawn illustration. This is 
 | **Stopping simple robots.** Built (v0.2c-2): a hidden field in the lead form that no person can see, reach with the keyboard or hear with a screen reader. A robot that fills it is shown the welcome code, so it cannot tell it was caught, but nothing it sends is kept and nothing is announced for tracking. | A visible CAPTCHA, a managed bot-detection service, or the same kind of hidden field, chosen by how much a wrongly blocked person would cost the store next to how much a robot would. | `src/components/LeadPopup.astro`, `src/server/lead.ts` | Not verified: general practice |
 | **One person, more than one lead.** By design, not a gap: the server never checks whether it already has a lead for an email before saving another one, so using the popup twice makes two records. This is deliberate, decided when the popup was built and kept for the back end: the demo has to stay replayable, so a reviewer who uses the popup more than once sees `generate_lead` fire again each time (v0.2d), and the rate limit above, not deduplication, is what stops a flood. | A real store recognises a repeat within a window it chooses and updates the existing record, refuses a second one, or merges them in its reporting, so one person is never counted as several leads. | `src/server/lead.ts` | Not verified: general practice |
 
+## Tracking
+
+| What the demo does | What a real launch needs | Where in this repo | Source |
+|---|---|---|---|
+| **Announcements to the dataLayer.** Built (v0.2d-1), and not wired to any page yet (v0.2d-2 and v0.2d-3): every announcement goes through one function, which sends a real action even when a field is wrong, leaves out what is wrong, and reports it in the browser's console. A test fails if any other file touches the dataLayer or calls a platform. | Keep the one door and its checks, and add a way to see the reports. A line in a visitor's console is seen by nobody, so a store sends refused and incomplete announcements to a monitoring or error-tracking service, and watches the counts of its key events for a sudden drop. | `src/tracking/push-event.ts`, `tests/unit/datalayer-door.test.ts` | Not verified: general practice |
+| **Customer details sent to ad platforms.** Built (v0.2d-1), and not sent anywhere yet: an email or a phone number is prepared and turned into a SHA-256 fingerprint in the browser, and only fingerprints are allowed into `user_data`. The consent gate arrives in v0.3. | The same preparation and hashing, which both platforms specify, done once and not again by a later tag. Consent comes first (see "Cookies and consent"), because a fingerprint is not anonymous: anyone who already holds the email can compute the same one, which is how the platforms match it. | `src/tracking/hash.ts`, `docs/tracking-plan.md` | [Meta: customer information parameters](https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters) and [Google: enhanced conversions with the Google tag](https://support.google.com/sa360/answer/14218731) (both read 2026-10-20) |
+| **Phone numbers.** A number typed without a plus sign sends no fingerprint, because a number without its country code cannot be matched and a guessed code could be wrong. A country-code dropdown at checkout is planned as a step of its own. | A phone-number library that parses numbers by country, such as Google's libphonenumber, used when the number is typed, so that every number is kept in international form. | `src/tracking/hash.ts`, `src/engine/checkout-form.ts` | [GitHub: google/libphonenumber](https://github.com/google/libphonenumber) (checked 2026-10-21) |
+
 ## Legal and privacy
 
 | What the demo does | What a real launch needs | Where in this repo | Source |
@@ -155,7 +164,7 @@ Every product a shopper can look at is a flat, line-drawn illustration. This is 
 
 ## Still to come
 
-This page covers what exists or has been decided. The later parts of the project add their own rows when they are built, so that the page never claims something that is not built: the consent banner and the privacy policy (v0.3), server-side tracking (v0.4) and what was found not to work at low volume (v0.5). A section on tracking in production comes with them.
+This page covers what exists or has been decided. The later parts of the project add their own rows when they are built, so that the page never claims something that is not built: the consent banner and the privacy policy (v0.3), server-side tracking (v0.4) and what was found not to work at low volume (v0.5). The section on tracking in production is started above (v0.2d-1) and grows with them.
 
 ## What this page does not cover
 
