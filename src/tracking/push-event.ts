@@ -57,10 +57,7 @@ function fingerprintsOnly(
   return Object.keys(kept).length > 0 ? kept : undefined;
 }
 
-// A real action is never lost to a bad field: the announcement is sent without what is wrong, and
-// what was wrong is reported. Only an event that is not in the tracking plan is refused, since
-// there is nothing to send it as.
-export function pushEvent(name: string, params: Record<string, unknown>): PushResult {
+function announce(name: string, params: Record<string, unknown>): PushResult {
   const spec = EVENTS.find((event) => event.name === name);
   if (!spec) {
     const problems = [`${name} is not an event in the tracking plan, so nothing was sent.`];
@@ -110,4 +107,20 @@ export function pushEvent(name: string, params: Record<string, unknown>): PushRe
 
   if (problems.length > 0) console.error(`pushEvent(${name}): ${problems.join(' ')}`);
   return { pushed: true, problems };
+}
+
+// A real action is never lost to a bad field: the announcement is sent without what is wrong, and
+// what was wrong is reported. Only an event that is not in the tracking plan is refused, since
+// there is nothing to send it as. Tracking must also never break shopping, so whatever the page
+// does (a dataLayer that cannot be written to, or no crypto.randomUUID on a page that is not
+// secure), this reports it and returns, and never throws into the shopper's click.
+export function pushEvent(name: string, params: Record<string, unknown>): PushResult {
+  try {
+    return announce(name, params);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'something failed';
+    const problem = `The announcement was not sent, because ${reason}.`;
+    console.error(`pushEvent(${name}): ${problem}`);
+    return { pushed: false, problems: [problem] };
+  }
 }

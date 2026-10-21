@@ -16,6 +16,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('pushEvent, the basic push', () => {
@@ -228,9 +229,14 @@ describe('pushEvent, a broken announcement', () => {
     expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('never throws, even when the parameters are not an object', () => {
-    expect(() => pushEvent('cta_click', null as never)).not.toThrow();
-    expect(() => pushEvent('cta_click', 'footer' as never)).not.toThrow();
+  it('still sends the announcement when the parameters are not an object, and says so', () => {
+    for (const notAnObject of [null, 'footer', 42, ['footer']]) {
+      globalThis.dataLayer = undefined;
+      const result = pushEvent('cta_click', notAnObject as never);
+      expect(result.pushed, String(notAnObject)).toBe(true);
+      expect(layer()[0], String(notAnObject)).toMatchObject({ event: 'cta_click' });
+      expect(result.problems.join(' '), String(notAnObject)).toContain('parameters');
+    }
   });
 
   it('only excuses fields that the event really lists', () => {
@@ -340,5 +346,28 @@ describe('pushEvent, personal details', () => {
       if (event.params.includes('user_data')) expect(written, event.name).toContain(FINGERPRINT);
       else expect(written, event.name).not.toContain(FINGERPRINT);
     }
+  });
+});
+
+describe('pushEvent, when the page will not cooperate', () => {
+  it('does not throw when the dataLayer cannot be written to, and says nothing was sent', () => {
+    globalThis.dataLayer = Object.freeze([]) as unknown as unknown[];
+    let result: ReturnType<typeof pushEvent> | undefined;
+    expect(() => {
+      result = pushEvent('cta_click', { cta_location: 'footer' });
+    }).not.toThrow();
+    expect(result?.pushed).toBe(false);
+    expect(result?.problems).toHaveLength(1);
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw when the page has no crypto.randomUUID, as on a page that is not secure', () => {
+    vi.stubGlobal('crypto', {});
+    let result: ReturnType<typeof pushEvent> | undefined;
+    expect(() => {
+      result = pushEvent('cta_click', { cta_location: 'footer' });
+    }).not.toThrow();
+    expect(result?.pushed).toBe(false);
+    expect(globalThis.dataLayer).toBeUndefined();
   });
 });
