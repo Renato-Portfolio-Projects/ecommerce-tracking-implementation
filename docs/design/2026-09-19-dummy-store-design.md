@@ -61,9 +61,10 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 
 ### Rules
 
-- The site only announces facts to the dataLayer. It never calls `fbq()` or `gtag()`.
-- Every ecommerce push is preceded by `{ ecommerce: null }`.
-- Every event gets an `event_id` from `crypto.randomUUID()`, except `purchase`, whose ID derives from the order number.
+- The site only announces facts to the dataLayer. It never calls `fbq()` or `gtag()`. One function, `pushEvent`, is the only door to the dataLayer, and a test fails if any other file touches it.
+- Every ecommerce push is preceded by `{ ecommerce: null }`, and its shopping details sit inside an `ecommerce` object, as in Google's guide, with `event_id` and `user_data` beside the event.
+- Every event gets an `event_id` from `crypto.randomUUID()`, made by `pushEvent` itself, except `purchase`, whose ID is `purchase_` plus the order number.
+- A real action is never lost to a bad field: `pushEvent` sends an announcement without what is wrong and reports it, and refuses only an event that is not in the plan. It never throws into the page.
 - `page_type` is pushed before the GTM snippet on every page.
 - Nothing personal goes in a URL.
 
@@ -96,8 +97,8 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 - Meta events carry `content_ids`, `contents`, `content_type`, `value` and `currency`.
 - `value` is the net item total after discount, excluding tax and shipping (per Google's ecommerce guide). Tax and shipping are separate fields. Meta receives the same `value`, so revenue matches across platforms.
 - `currency` is the currency actually charged.
-- Discounts: `coupon` on `begin_checkout` and `purchase`, `discount` per item, `value` net of discount. The server validates the code, so `purchase.coupon` is confirmed. Chain: `generate_lead` (code issued), `apply_coupon`, `purchase`.
-- The browser hashes (SHA-256, normalised) any email or phone before it reaches the dataLayer, so no tag sees clear-text personal data. Hashed values are attached only to `generate_lead` and `purchase`, and only travel to the server. Stape's Facebook tag documentation says it hashes raw values and leaves already-hashed values alone. Confirmed with Test Events in v0.4.
+- Discounts: `coupon` on `begin_checkout` and `purchase`, `discount` per item, `value` net of discount. The server validates the code, so `purchase.coupon` is confirmed. Chain: `generate_lead` (code issued), `apply_coupon`, `purchase`. A `coupon` is only sent when a code was applied.
+- The browser hashes (SHA-256) any email or phone before it reaches the dataLayer, so no tag sees clear-text personal data. An email is first trimmed and lowercased, and a phone number is first turned into digits with its country code (one typed without a plus sign sends no fingerprint). `user_data` carries the fingerprints under Google's names for already-hashed values, `sha256_email_address` and `sha256_phone_number`, and `pushEvent` lets nothing else into it. Hashed values are attached only to `generate_lead` and `purchase`, and only travel to the server. Stape's Facebook tag documentation says it hashes raw values and leaves already-hashed values alone. Confirmed with Test Events in v0.4.
 
 ### GTM conventions
 
