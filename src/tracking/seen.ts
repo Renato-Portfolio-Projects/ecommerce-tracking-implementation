@@ -11,3 +11,15 @@ export function isSeen(visibleHeight: number, blockHeight: number, screenHeight:
   if (visibleHeight <= 0 || blockHeight <= 0 || screenHeight <= 0) return false;
   return visibleHeight >= Math.min(blockHeight, screenHeight) / 2;
 }
+
+/**
+ * The share of a block that has to be on screen for it to count as seen, so that the browser can be asked to tell
+ * the page at exactly that point. The browser reports a block only when it crosses one of the steps it was asked
+ * to watch, so with steps a fixed distance apart a block could be seen several pixels before the page was told.
+ * The share is a hair (0.1% of the block) above the exact value, so that when the browser reports it the block
+ * really is seen, and not a rounding error short of it.
+ */
+export function seenAtRatio(blockHeight: number, screenHeight: number): number {
+  if (!(blockHeight > 0) || !(screenHeight > 0)) return 0.5;
+  return Math.min(blockHeight, screenHeight) / 2 / blockHeight + 0.001;
+}

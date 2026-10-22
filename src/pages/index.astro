@@ -9,6 +9,8 @@ import { pricesInAllCurrencies } from '../engine/money';
 import { ART } from '../store/art';
 import type { Product } from '../store/products';
 import { WORDS } from '../store/words';
+import { trackableProduct } from '../tracking/items';
+import { HERO_PROMOTION } from '../tracking/promotions';
 
 const open = import.meta.env.PUBLIC_STORE_OPEN === 'true';
 
@@ -40,12 +42,14 @@ const heroArt = ART['SI-TEE-002'];
 {
   open ? (
     <StorePage title={WORDS['site.tagline']} description={WORDS['site.description']} wide leadPopupAuto>
-      <section class="hero">
+      {/* The hero is a promotion that tracking counts when it is seen, and its button is the way to select it. The
+           promotion is written in as data, like the products below, so the script never has to know it. */}
+      <section class="hero" data-track-seen="promotion" data-track-promotion={JSON.stringify(HERO_PROMOTION)}>
         <div>
           <p class="eyebrow">{WORDS['home.eyebrow']}</p>
           <h1>{WORDS['home.heroTitle']}</h1>
           <p>{WORDS['home.heroBody']}</p>
-          <a class="btn" href="#tees">{WORDS['home.heroButton']}</a>
+          <a class="btn" data-track-promotion-cta href="#tees">{WORDS['home.heroButton']}</a>
         </div>
         <Garment kind={heroArt.kind} colour="Paper" print={heroArt.print} label={WORDS['home.heroAlt']} />
       </section>
@@ -54,7 +58,7 @@ const heroArt = ART['SI-TEE-002'];
         { id: 'tees', heading: WORDS['nav.tees'], cards: teeCards },
         { id: 'pants', heading: WORDS['nav.pants'], cards: pantCards },
       ].map((section) => (
-        <section id={section.id} class="collection">
+        <section id={section.id} class="collection" data-track-seen="list">
           <h2>{section.heading}</h2>
           <ul class="product-grid">
             {section.cards.map((card) => (
@@ -63,6 +67,7 @@ const heroArt = ART['SI-TEE-002'];
                   href={`/products/${card.product.slug}`}
                   data-list-handoff-sku={card.product.sku}
                   data-list-handoff-context={JSON.stringify(card.context)}
+                  data-track-item={JSON.stringify(trackableProduct(card.product))}
                 >
                   <Garment
                     kind={card.art.kind}

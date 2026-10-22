@@ -3,7 +3,9 @@ import { listContextFor, productsIn, variantsOf } from '../../src/engine/catalog
 import { fill } from '../../src/engine/fill';
 import { pricesInAllCurrencies } from '../../src/engine/money';
 import { WORDS } from '../../src/store/words';
-import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites } from '../helpers/built';
+import { parseTrackable, trackableProduct } from '../../src/tracking/items';
+import { HERO_PROMOTION, parsePromotion } from '../../src/tracking/promotions';
+import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites, scriptOf } from '../helpers/built';
 
 const built = htmlFiles(OPEN);
 const html = readPage(OPEN, 'index.html');
@@ -36,7 +38,7 @@ describe('the home page', () => {
   });
 
   it.each(['tees', 'pants'] as const)('lists every product of the %s collection', (collectionId) => {
-    expect(html).toContain(`<section id="${collectionId}" class="collection">`);
+    expect(html).toContain(`<section id="${collectionId}" class="collection" data-track-seen="list">`);
     expect(text).toContain(`<h2>${WORDS[`nav.${collectionId}`]}</h2>`);
 
     for (const product of productsIn(collectionId)) {
@@ -82,5 +84,32 @@ describe('the home page', () => {
   it('keeps out of search engines and asks no other site for anything', () => {
     expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"\s*\/?>/);
     expect(requestsToOtherSites(html)).toEqual([]);
+  });
+});
+
+describe('the home page, for tracking', () => {
+  it('marks the hero as a promotion to count when it is seen, and its button as the way to select it', () => {
+    const hero = html.match(/<section class="hero"([^>]*)>/);
+    expect(hero, 'the hero section was found').not.toBeNull();
+    expect(hero![1]).toContain('data-track-seen="promotion"');
+    const raw = decodeEntities(hero![1].match(/data-track-promotion="([^"]*)"/)![1]);
+    expect(parsePromotion(raw)).toStrictEqual(HERO_PROMOTION);
+    expect(html).toContain('<a class="btn" data-track-promotion-cta href="#tees">');
+  });
+
+  it.each(['tees', 'pants'] as const)('carries every product of the %s collection to tracking as data, built by the same code as the tests', (collectionId) => {
+    for (const product of productsIn(collectionId)) {
+      const card = html.match(new RegExp(`<a\\s[^>]*data-list-handoff-sku="${product.sku}"[^>]*>`));
+      expect(card, `${product.name}'s card was found`).not.toBeNull();
+      const raw = decodeEntities(card![0].match(/data-track-item="([^"]*)"/)?.[1] ?? '');
+      expect(parseTrackable(raw), product.name).toStrictEqual(trackableProduct(product));
+    }
+  });
+
+  it('loads the code that announces what the home page does', () => {
+    const script = scriptOf(OPEN, html);
+    for (const event of ['view_promotion', 'select_promotion', 'view_item_list', 'select_item']) {
+      expect(script, event).toContain(event);
+    }
   });
 });

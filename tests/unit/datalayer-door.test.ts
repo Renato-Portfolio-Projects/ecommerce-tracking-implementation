@@ -15,10 +15,12 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 // layout pushes before the GTM snippet will be the first candidate.
 const MAY_TOUCH_THE_DATALAYER = ['src/tracking/push-event.ts'];
 
-// Reading or writing it by way of window, globalThis or self, or using it by its own name.
-// A sentence that only mentions the dataLayer, such as "every dataLayer event", does not match.
+// Reading or writing it by way of window, globalThis or self, or using it by its own name: a property taken
+// from it straight away (`dataLayer.push`, with no space, so a sentence that ends "the dataLayer." is not
+// one), or something assigned to it. A sentence that only mentions the dataLayer, such as "every dataLayer
+// event", does not match.
 const TOUCHES_THE_DATALAYER =
-  /\b(?:window|globalThis|self)\s*\.\s*dataLayer\b|\bdataLayer\s*(?:\.|\?\?=|\|\|=|=(?!=))/;
+  /\b(?:window|globalThis|self)\s*\.\s*dataLayer\b|\bdataLayer(?:\.[A-Za-z_$]|\s*(?:\?\?=|\|\|=|=(?!=)))/;
 const CALLS_A_PLATFORM = /\b(?:fbq|gtag)\s*\(/;
 
 function codeFiles(folder: string): string[] {
@@ -63,6 +65,8 @@ describe('the one door to the dataLayer', () => {
       'GA4 uses the dataLayer name.',
       'Top-level dataLayer parameters this event must carry.',
       'if (dataLayer == null)',
+      'Turns what a page does into announcements to the dataLayer. The pages already announce most of it.',
+      'It goes to the dataLayer.\n',
     ];
     for (const text of mentions) expect(TOUCHES_THE_DATALAYER.test(text), text).toBe(false);
   });

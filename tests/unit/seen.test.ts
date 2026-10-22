@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSeen } from '../../src/tracking/seen';
+import { isSeen, seenAtRatio } from '../../src/tracking/seen';
 
 // A block, such as a collection of products, counts as seen when half of it is visible, or when it fills
 // half the screen, whichever is smaller. The numbers below were measured on the real home page: the Tees list
@@ -56,5 +56,40 @@ describe('isSeen', () => {
     expect(isSeen(100, Number.NaN, 800)).toBe(false);
     expect(isSeen(Number.POSITIVE_INFINITY, 449, 800)).toBe(false);
     expect(isSeen(100, 449, Number.POSITIVE_INFINITY)).toBe(false);
+  });
+});
+
+// The browser tells a page that an element crossed one of the steps it was asked to watch, and only then. A step
+// every 2.5% left a gap: on the 1,410 px Tees list a phone needs 333.5 px, but the nearest steps were at 317 px and
+// 353 px, so the announcement came up to 19 px late. Asking for the exact share closes the gap.
+describe('seenAtRatio', () => {
+  it('is the share of the block at which it becomes seen, a hair above the exact value', () => {
+    expect(seenAtRatio(1410, 667)).toBeCloseTo(333.5 / 1410 + 0.001, 6);
+    expect(seenAtRatio(449, 800)).toBeCloseTo(0.501, 6);
+    expect(seenAtRatio(1000, 600)).toBeCloseTo(0.301, 6);
+  });
+
+  it('asks for half when the block or the screen has no measurable height, and never for more than half and a hair', () => {
+    expect(seenAtRatio(0, 800)).toBe(0.5);
+    expect(seenAtRatio(449, 0)).toBe(0.5);
+    expect(seenAtRatio(Number.NaN, 800)).toBe(0.5);
+    expect(seenAtRatio(10, 10_000)).toBeCloseTo(0.501, 6);
+  });
+
+  it('is just enough: the block is seen at that share, and not at a share that is 0.2% smaller', () => {
+    const measured = [
+      [1244, 568],
+      [1364, 640],
+      [1410, 667],
+      [781, 375],
+      [1456, 844],
+      [366, 1024],
+      [449, 800],
+    ];
+    for (const [block, screen] of measured) {
+      const ratio = seenAtRatio(block, screen);
+      expect(isSeen(ratio * block, block, screen), `${block} on ${screen} at ${ratio}`).toBe(true);
+      expect(isSeen((ratio - 0.002) * block, block, screen), `${block} on ${screen} just under`).toBe(false);
+    }
   });
 });

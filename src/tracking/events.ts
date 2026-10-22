@@ -96,7 +96,8 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'view_item_list',
-    firesWhen: 'A collection is at least 50% in view, once per list per page.',
+    firesWhen:
+      'A collection is seen, once per list per page: half of it is visible, or it fills half the screen, whichever is smaller.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'item_list_id', 'item_list_name', 'items'],
