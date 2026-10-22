@@ -5,6 +5,8 @@ import { parseListContext } from '../engine/list-handoff.js';
 import {
   cartChangeAnnouncements,
   cartParams,
+  ctaClickParams,
+  selectCurrencyParams,
   selectItemParams,
   selectPromotionParams,
   viewItemListParams,
@@ -13,6 +15,7 @@ import {
   type ListedProduct,
 } from './announcements.js';
 import { parseTrackable } from './items.js';
+import { createOnceGate, type OnceGate } from './once.js';
 import { parsePromotion } from './promotions.js';
 import { pushEvent } from './push-event.js';
 import { isSeen, seenAtRatio } from './seen.js';
@@ -107,6 +110,20 @@ function targetFor(element: HTMLElement): SeenTarget | undefined {
   return undefined;
 }
 
+/**
+ * A promotion that counts only the first press of its button each time it is shown (the lead popup, which says so
+ * with `data-track-select-once`) has a gate, which is opened again each time it is shown.
+ */
+const selectGates = new WeakMap<Element, OnceGate>();
+function selectGateFor(holder: Element): OnceGate {
+  let gate = selectGates.get(holder);
+  if (!gate) {
+    gate = createOnceGate();
+    selectGates.set(holder, gate);
+  }
+  return gate;
+}
+
 /** One listener for the whole page, so a click on anything that was added later is heard too. */
 function handleClick(event: MouseEvent): void {
   const target = event.target;
@@ -123,8 +140,35 @@ function handleClick(event: MouseEvent): void {
   if (callToAction) {
     const holder = callToAction.closest<HTMLElement>('[data-track-promotion]');
     const promotion = parsePromotion(holder?.dataset.trackPromotion);
-    if (promotion) pushEvent('select_promotion', selectPromotionParams(promotion));
+    if (holder && promotion && (!holder.hasAttribute('data-track-select-once') || selectGateFor(holder).take())) {
+      pushEvent('select_promotion', selectPromotionParams(promotion));
+    }
   }
+
+  // A link or button with a label that has no event of its own (src/tracking/cta-labels.ts).
+  const labelled = target.closest<HTMLElement>('[data-cta]');
+  const labelParams = ctaClickParams(labelled?.dataset.cta);
+  if (labelParams) pushEvent('cta_click', labelParams);
+}
+
+/** The visitor picked a currency. The currency selector announces it with the one they left and the one they picked. */
+function handleCurrencySelected(event: Event): void {
+  const detail = (event as CustomEvent<{ from: CurrencyCode; to: CurrencyCode }>).detail;
+  const params = detail && selectCurrencyParams(detail.from, detail.to);
+  if (params) pushEvent('select_currency', params);
+}
+
+/**
+ * The lead popup was shown. It is a promotion seen, with how it came to be shown (`auto` or `manual`) as its `source`,
+ * and its main button may be counted again.
+ */
+function handlePopupShown(event: Event): void {
+  const popup = document.querySelector<HTMLElement>('[data-lead-popup][data-track-promotion]');
+  const promotion = parsePromotion(popup?.dataset.trackPromotion);
+  if (!popup || !promotion) return;
+  selectGateFor(popup).reset();
+  const source = (event as CustomEvent<{ source?: string }>).detail?.source;
+  pushEvent('view_promotion', viewPromotionParams(promotion, source));
 }
 
 /** A product page that has loaded: the product, announced in the currency the visitor ends up seeing. */
@@ -166,6 +210,8 @@ export function initTracking(): void {
   whenSeen(targets);
   announceProductPage();
   document.addEventListener('click', handleClick);
+  document.addEventListener('currency:selected', handleCurrencySelected);
+  document.addEventListener('lead-popup:shown', handlePopupShown);
   document.addEventListener('cart:changed', handleCartChanged);
   // The shopper opening the drawer (cart-ui.ts) is a look at the cart. So is the cart page loading.
   document.addEventListener('cart:viewed', () => announceCartViewed(currentCurrency()));

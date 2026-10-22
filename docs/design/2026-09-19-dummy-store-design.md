@@ -72,7 +72,7 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 
 | Event | Fires when | Sent to |
 |---|---|---|
-| `view_promotion` / `select_promotion` | Popup shown or hero banner in view, then its CTA clicked | GA4 |
+| `view_promotion` / `select_promotion` | Popup shown or hero banner seen, then the banner's button clicked or the popup's main button pressed (the first press each time it is shown) | GA4 |
 | `generate_lead` | `/api/lead` returns OK | GA4, Meta `Lead`, CAPI |
 | `view_item_list` | A collection is seen, once per list per page: half of it is visible, or it fills half the screen, whichever is smaller | GA4 |
 | `select_item` | Product card clicked | GA4 |
@@ -85,7 +85,7 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 | `add_payment_info` | Payment step completes | GA4, Meta `AddPaymentInfo` |
 | `purchase` | Thank-you page renders the confirmed order | GA4, Meta `Purchase`, CAPI |
 | `apply_coupon` | A code is submitted (status: success, invalid, expired) | GA4 |
-| `select_currency` | Currency changed (from, to) | GA4 |
+| `select_currency` | The visitor picks a currency (from, to); the starting currency arriving is not a pick | GA4 |
 | `cta_click` | A tagged CTA with no ecommerce event is clicked | GA4 only |
 | `refund` | Simulated back-office action, server-only (stretch) | GA4 via Measurement Protocol |
 

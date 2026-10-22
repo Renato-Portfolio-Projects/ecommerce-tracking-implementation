@@ -72,6 +72,19 @@ export function cartParams(lines: CartLine[], currency: CurrencyCode): ShoppingA
   return items.length === 0 ? undefined : { currency, value, items };
 }
 
+/** A change of currency the visitor made: the one they left and the one they picked. Nothing when the two are the same. */
+export function selectCurrencyParams(
+  from: CurrencyCode,
+  to: CurrencyCode,
+): { currency_from: CurrencyCode; currency_to: CurrencyCode } | undefined {
+  return from === to ? undefined : { currency_from: from, currency_to: to };
+}
+
+/** A click on a labelled call to action: the label is where it happened. Nothing for a missing or blank label. */
+export function ctaClickParams(label: string | undefined): { cta_location: string } | undefined {
+  return label === undefined || label.trim() === '' ? undefined : { cta_location: label };
+}
+
 /** One announcement that a change to the cart makes: the event, and what it carries. */
 export interface CartChangeAnnouncement {
   event: 'add_to_cart' | 'remove_from_cart';

@@ -81,7 +81,7 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'select_promotion',
-    firesWhen: 'The popup or banner call to action is clicked.',
+    firesWhen: "The banner's button is clicked, or the popup's main button is pressed for the first time since the popup was shown.",
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name'],
@@ -189,7 +189,7 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'select_currency',
-    firesWhen: 'The visitor changes the currency.',
+    firesWhen: 'The visitor picks a currency. The starting currency arriving is not a pick.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency_from', 'currency_to'],

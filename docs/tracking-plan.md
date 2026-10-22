@@ -38,7 +38,7 @@ The first column is the platform-neutral dataLayer name. The three platform colu
 | Event | Fires when | GA4 | Meta Pixel | Meta CAPI | Required parameters |
 |---|---|---|---|---|---|
 | `view_promotion` | The lead popup is shown, or the hero banner scrolls into view. | `view_promotion` | - | - | `event_id`, `promotion_id`, `promotion_name`, `creative_name`, `source` |
-| `select_promotion` | The popup or banner call to action is clicked. | `select_promotion` | - | - | `event_id`, `promotion_id`, `promotion_name`, `creative_name` |
+| `select_promotion` | The banner's button is clicked, or the popup's main button is pressed for the first time since the popup was shown. | `select_promotion` | - | - | `event_id`, `promotion_id`, `promotion_name`, `creative_name` |
 | `generate_lead` | The lead form is saved by the server and returns OK. | `generate_lead` | `Lead` | `Lead` | `event_id`, `coupon`, `user_data` |
 | `view_item_list` | A collection is seen, once per list per page: half of it is visible, or it fills half the screen, whichever is smaller. | `view_item_list` | - | - | `event_id`, `item_list_id`, `item_list_name`, `items` |
 | `select_item` | A product card is clicked. | `select_item` | - | - | `event_id`, `item_list_id`, `item_list_name`, `items` |
@@ -51,9 +51,36 @@ The first column is the platform-neutral dataLayer name. The three platform colu
 | `add_payment_info` | The payment step is completed. | `add_payment_info` | `AddPaymentInfo` | - | `event_id`, `currency`, `value`, `coupon`, `payment_type`, `items` |
 | `purchase` | The thank-you page renders the order the server confirmed. | `purchase` | `Purchase` | `Purchase` | `event_id`, `transaction_id`, `currency`, `value`, `tax`, `shipping`, `coupon`, `items`, `user_data` |
 | `apply_coupon` | A discount code is submitted (status: success, invalid or expired). | `apply_coupon` | - | - | `event_id`, `coupon`, `status` |
-| `select_currency` | The visitor changes the currency. | `select_currency` | - | - | `event_id`, `currency_from`, `currency_to` |
+| `select_currency` | The visitor picks a currency. The starting currency arriving is not a pick. | `select_currency` | - | - | `event_id`, `currency_from`, `currency_to` |
 | `cta_click` | A tagged call to action with no ecommerce event of its own is clicked. | `cta_click` | - | - | `event_id`, `cta_location` |
 | `refund` | A simulated back-office refund is sent straight to GA4 (stretch goal). | `refund` | - | - | `transaction_id`, `currency`, `value`, `items` |
+
+## Call-to-action labels
+
+A `cta_click` carries one of these labels as its `cta_location`, taken from the `data-cta` attribute of the link or button that was clicked. They are written as "Area - Item". The list is in `src/tracking/cta-labels.ts`, and tests check that this table, that list and the labels on the built pages all agree.
+
+| Label | Where it is |
+|---|---|
+| `Lead Popup - Footer link` | The footer button that opens the lead popup by hand, on every store page except checkout and thank-you. |
+| `Lead Popup - Corner tab` | The small tab in the corner that offers the popup again after it was closed without taking the code. |
+| `Demo Data - Lead popup` | The "Use demo data" button inside the lead popup. |
+| `Header - Logo` | The store's name in the header, on every store page. |
+| `Nav - Tees` | The Tees link in the header. |
+| `Nav - Pants` | The Pants link in the header. |
+| `Nav - About` | The About link in the header. |
+| `Footer - GitHub` | The footer link to the project on GitHub. |
+| `Footer - Production guide` | The footer link to the production guide, "Taking this to production". |
+| `Footer - Shipping` | The footer link to the shipping policy. |
+| `Footer - Returns` | The footer link to the returns policy. |
+| `Footer - Terms` | The footer link to the terms. |
+| `Footer - Contact` | The footer link to the contact page. |
+| `Demo bar - Project link` | The "How it's tracked" link at the end of the demo bar above the header. |
+| `Cart drawer - Keep shopping` | The Keep shopping button in the cart drawer, shown when the cart is empty. |
+| `Cart page - Keep shopping` | The Keep shopping button and link on the cart page, with the cart empty or not. |
+| `Thank you - Keep shopping` | The Keep shopping button on the thank-you page. |
+| `Demo Data - Checkout contact` | The "Use demo data" button on the checkout's contact step. |
+| `Demo Data - Checkout address` | The "Use demo data" button on the checkout's address step. |
+| `Test Card - Checkout payment` | The "Use test card" button on the checkout's payment step. |
 
 ## Data contract
 
@@ -69,9 +96,10 @@ The first column is the platform-neutral dataLayer name. The three platform colu
 - **`view_cart`** is the shopper looking at the whole cart: they open the drawer with the Cart link in the header, or the cart page loads, including by way of the drawer's View cart link, so opening the drawer and then following View cart is two looks and two events. The drawer opening by itself after Add to cart is not a look, since `add_to_cart` already says what happened. An empty cart announces nothing, so the event always has items.
 - **Discounts.** `coupon` is on `begin_checkout` and `purchase`, `discount` is set per item, and `value` is net of discount. The server validates the code, so `purchase.coupon` is confirmed. The chain to watch is `generate_lead` (code issued), then `apply_coupon`, then `purchase`. A `coupon` is only sent when a code was applied, so `begin_checkout`, `add_shipping_info`, `add_payment_info` and `purchase` may leave it out without that counting as a problem.
 - **`shipping_tier`** is the name of the shipping method the shopper picked: `Standard` or `Express`.
-- **The lead popup offers three announcements and three `data-cta` labels to tag against (built in v0.2b-4, and sending nothing yet).** On the page it announces `lead-popup:shown` (with `source`: `auto` or `manual`), `lead-popup:closed` (with `reason`: `close-button`, `no-thanks`, `escape`, `backdrop` or `other`) and `lead-popup:submitted` (with the checked first name and email, whether the marketing box was ticked, and the code). `lead-popup:shown` is the moment for `view_promotion`. `lead-popup:submitted` is the moment for `generate_lead`, and the popup only announces it for a lead the server has really saved (built, v0.2c-2): a filled hidden trap field is shown the welcome code too, so a robot cannot tell it was caught, but nothing is kept and nothing is announced for it. Because the announcement carries the address as typed, the email must be hashed before anything reaches the dataLayer. `source` is sent to GA4 as a custom dimension on the popup's `view_promotion` and on `generate_lead` (decided 2026-09-30). The hero banner's `view_promotion` has no source, so it leaves it out without that counting as a problem. The `cta_click` labels are `Lead Popup - Footer link`, `Lead Popup - Corner tab` and `Demo Data - Lead popup`. "Try another person" has no label, because it is a convenience and not something the business wants to count.
+- **The lead popup (built in v0.2b-4) announces three things on the page, and two of them are now events.** It announces `lead-popup:shown` (with `source`: `auto` or `manual`), `lead-popup:closed` (with `reason`: `close-button`, `no-thanks`, `escape`, `backdrop` or `other`) and `lead-popup:submitted` (with the checked first name and email, whether the marketing box was ticked, and the code). `lead-popup:shown` is a `view_promotion` for the promotion `welcome-offer`, named "Welcome offer", with the creative "Lead popup", and with the `source`. Its main button, "Show my code", is a `select_promotion` for the same promotion, counted only for the first press each time the popup is shown: a visitor who presses it again after a mistake in the form is not counted twice, and one who is shown the popup again is counted again. The hero banner's `view_promotion` has no `source`, so it leaves it out without that counting as a problem, and a `select_promotion` never carries one. `source` is sent to GA4 as a custom dimension on the popup's `view_promotion` and on `generate_lead` (decided 2026-09-30). Nothing hangs on `lead-popup:closed`. `lead-popup:submitted` is the moment for `generate_lead` (v0.2d-3), and the popup only announces it for a lead the server has really saved (built, v0.2c-2): a filled hidden trap field is shown the welcome code too, so a robot cannot tell it was caught, but nothing is kept and nothing is announced for it. Because the announcement carries the address as typed, the email must be hashed before anything reaches the dataLayer. Three of its elements carry a `cta_click` label, in the table of call-to-action labels above, and "Try another person" has none, because it is a convenience and not something the business wants to count.
 - **The checkout page (built in v0.2c-3) and the thank-you page (built in v0.2c-4) have every moment this table names for them, and send nothing yet.** Loading with items, completing a step, applying a coupon and placing an order all happen for real against a real order endpoint, and the thank-you page renders a real, server-saved order under its own token, but wiring `begin_checkout`, `add_shipping_info`, `add_payment_info`, `apply_coupon` and `purchase` to real events is v0.2d's job. The checkout page dispatches events of its own, `checkout:step-changed`, `checkout:order-submitting` and `checkout:order-submit-failed`, but only so its own scripts can tell each other a step changed or an order is being placed; none carries the fields these ecommerce events need, and none is meant for tracking to hang on directly.
-- **`cta_click`** uses one listener and a `data-cta` attribute. It fires only where no ecommerce event exists: navigation and footer links, "Keep shopping" (the cart's empty state and the thank-you page), the size guide, the demo data buttons, and the demo bar links to the case study and proof page.
+- **`cta_click`** uses one listener and a `data-cta` attribute, and its `cta_location` is the label (see the table of call-to-action labels above). It fires only where no ecommerce event exists, so a product card, the Checkout button, the currency selector and the popup's main button carry no label. The labelled elements are the header's logo and links, the footer's links, the demo bar's link, the popup's footer button, corner tab and demo button, the Keep shopping buttons and links (the cart drawer's and the cart page's for an empty cart, the cart page's with items, and the thank-you page's), and the demo data and test card buttons on the checkout. Links in the body of a page are not labelled.
+- **`select_currency`** is the visitor picking a currency in the header, with `currency_from` the currency that was shown and `currency_to` the one picked. A first-time visitor's starting currency arriving a moment after the page loads changes what is shown but is not a pick, so it is not announced, and picking the currency already shown is not a change, so it is not announced either. The selector cannot be used on the checkout page, where the currency is locked. GA4 reports `cta_location`, `currency_from` and `currency_to` only once they are registered as custom dimensions, which belongs to v0.2d-4's checklist.
 
 ## GTM naming conventions
 

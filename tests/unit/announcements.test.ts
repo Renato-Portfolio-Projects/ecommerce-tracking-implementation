@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CartLine } from '../../src/engine/cart';
 import { findProduct, productsIn, listContextFor } from '../../src/engine/catalog';
+import { CURRENCIES } from '../../src/store/currencies';
 import { pushEvent } from '../../src/tracking/push-event';
 import { trackableProduct } from '../../src/tracking/items';
+import { CTA_LABELS } from '../../src/tracking/cta-labels';
 import { HERO_PROMOTION, POPUP_PROMOTION } from '../../src/tracking/promotions';
 import {
   cartChangeAnnouncements,
   cartParams,
+  ctaClickParams,
+  selectCurrencyParams,
   selectItemParams,
   selectPromotionParams,
   viewItemListParams,
@@ -206,6 +210,46 @@ describe('cartChangeAnnouncements', () => {
     for (const { event, params } of cartChangeAnnouncements({ added: went, removed: came }, 'USD')) {
       globalThis.dataLayer = undefined;
       expect(pushEvent(event, params).problems, event).toStrictEqual([]);
+    }
+  });
+});
+
+describe('selectCurrencyParams', () => {
+  it('names the currency the visitor left and the one they picked', () => {
+    expect(selectCurrencyParams('CAD', 'EUR')).toStrictEqual({ currency_from: 'CAD', currency_to: 'EUR' });
+  });
+
+  it('gives nothing when the two are the same, since nothing was changed', () => {
+    expect(selectCurrencyParams('USD', 'USD')).toBeUndefined();
+  });
+
+  it('is a complete select_currency announcement for every change from one currency to another', () => {
+    for (const from of CURRENCIES) {
+      for (const to of CURRENCIES) {
+        if (from.code === to.code) continue;
+        globalThis.dataLayer = undefined;
+        const result = pushEvent('select_currency', selectCurrencyParams(from.code, to.code)!);
+        expect(result.problems, `${from.code} to ${to.code}`).toStrictEqual([]);
+      }
+    }
+  });
+});
+
+describe('ctaClickParams', () => {
+  it('carries the label as the place of the click', () => {
+    expect(ctaClickParams('Nav - Tees')).toStrictEqual({ cta_location: 'Nav - Tees' });
+  });
+
+  it('gives nothing for a missing or blank label', () => {
+    expect(ctaClickParams(undefined)).toBeUndefined();
+    expect(ctaClickParams('')).toBeUndefined();
+    expect(ctaClickParams('   ')).toBeUndefined();
+  });
+
+  it('is a complete cta_click announcement for every label in the list', () => {
+    for (const label of CTA_LABELS) {
+      globalThis.dataLayer = undefined;
+      expect(pushEvent('cta_click', ctaClickParams(label)!).problems, label).toStrictEqual([]);
     }
   });
 });

@@ -5,6 +5,7 @@ import { LEAD_POPUP_KEY } from '../../src/engine/lead-popup';
 import { fill } from '../../src/engine/fill';
 import { LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
+import { POPUP_PROMOTION, parsePromotion } from '../../src/tracking/promotions';
 import { CLOSED, OPEN, decodeEntities, htmlFiles, readPage, scriptOf } from '../helpers/built';
 
 const welcome = welcomeCoupon()!;
@@ -268,6 +269,41 @@ describe('the code for the popup\'s form', () => {
       // The build writes a string with double quotes, single quotes or backticks, so all three are allowed.
       expect(script, file).not.toMatch(new RegExp(`(?:from|import)\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));
       expect(script, file).toMatch(new RegExp(`import\\(\\s*["'\`][^"'\`]*${literal(formFiles[0])}`));
+    }
+  });
+});
+
+// The popup is a promotion for tracking: it is counted when it is shown (not when it scrolls into view, since it never
+// does), and its main button is how the promotion is selected, counted once each time the popup is shown.
+describe('the lead popup, for tracking', () => {
+  it('carries its promotion as data, the same as the code that announces it, on every page that has it', () => {
+    for (const file of pages) {
+      const dialog = popupOf(readPage(OPEN, file)).match(/<dialog class="lead-popup"[^>]*>/)![0];
+      const raw = decodeEntities(dialog.match(/data-track-promotion="([^"]*)"/)?.[1] ?? '');
+      expect(parsePromotion(raw), file).toStrictEqual(POPUP_PROMOTION);
+    }
+  });
+
+  it('asks to be counted for its first press only, and not to be counted when it is seen', () => {
+    for (const file of pages) {
+      const dialog = popupOf(readPage(OPEN, file)).match(/<dialog class="lead-popup"[^>]*>/)![0];
+      expect(dialog, file).toContain('data-track-select-once');
+      expect(dialog, file).not.toContain('data-track-seen');
+    }
+  });
+
+  it('marks its main button, and nothing else, as the way to select the promotion', () => {
+    for (const file of pages) {
+      const popup = popupOf(readPage(OPEN, file));
+      expect(popup.match(/data-track-promotion-cta/g), file).toHaveLength(1);
+      expect(popup.match(/<button[^>]*data-lead-submit[^>]*>/)![0], file).toContain('data-track-promotion-cta');
+    }
+  });
+
+  it('is announced by script that looks for the popup being shown, and for the first press only', () => {
+    for (const file of pages) {
+      const script = scriptOf(OPEN, readPage(OPEN, file));
+      expect(script, file).toContain('data-track-select-once');
     }
   });
 });

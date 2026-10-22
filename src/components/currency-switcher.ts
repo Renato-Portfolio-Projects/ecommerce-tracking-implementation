@@ -93,6 +93,7 @@ export function initCurrencySwitcher(): void {
   });
 
   select.addEventListener('change', () => {
+    const from = currentCurrency();
     const chosen = select.value as CurrencyCode;
     chosenNow = chosen;
     try {
@@ -101,5 +102,8 @@ export function initCurrencySwitcher(): void {
       // A visitor blocking storage still gets to switch currency for this page view.
     }
     show(select, chosen);
+    // Tells tracking that the visitor picked this currency, which `currency:changed` cannot: that one also
+    // announces the starting currency arriving, and nobody picked that.
+    document.dispatchEvent(new CustomEvent('currency:selected', { detail: { from, to: chosen } }));
   });
 }

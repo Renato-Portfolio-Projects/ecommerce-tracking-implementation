@@ -12,5 +12,5 @@ const { link = false } = Astro.props;
 
 <div class="demo-bar" role="note">
   {WORDS['demo.bar']}
-  {link && <a href={SITE_LINKS.project}>{WORDS['demo.link']}</a>}
+  {link && <a href={SITE_LINKS.project} data-cta="Demo bar - Project link">{WORDS['demo.link']}</a>}
 </div>

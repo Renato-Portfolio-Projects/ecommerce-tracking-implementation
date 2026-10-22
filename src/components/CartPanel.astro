@@ -52,9 +52,9 @@ const words = {
     <p>{WORDS['cart.empty']}</p>
     {
       drawer ? (
-        <button type="button" class="btn" data-cart-close>{WORDS['cart.keepShopping']}</button>
+        <button type="button" class="btn" data-cart-close data-cta="Cart drawer - Keep shopping">{WORDS['cart.keepShopping']}</button>
       ) : (
-        <a class="btn" href="/">{WORDS['cart.keepShopping']}</a>
+        <a class="btn" href="/" data-cta="Cart page - Keep shopping">{WORDS['cart.keepShopping']}</a>
       )
     }
   </div>
@@ -96,7 +96,7 @@ const words = {
     {drawer && <a class="cart-view-link" href="/cart">{WORDS['cart.viewCart']}</a>}
     {/* Only the cart page has this: with items in the cart, a way back to the store. The drawer has its close
          button instead, and an empty cart has its own Keep shopping control above. */}
-    {!drawer && <a class="cart-keep-link" href="/">{WORDS['cart.keepShopping']}</a>}
+    {!drawer && <a class="cart-keep-link" href="/" data-cta="Cart page - Keep shopping">{WORDS['cart.keepShopping']}</a>}
     <p class="cart-saved">{fill(WORDS['cart.saved'], { days: CART_LIFETIME_DAYS })}</p>
   </div>
 </section>
