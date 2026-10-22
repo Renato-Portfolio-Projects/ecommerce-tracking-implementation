@@ -119,7 +119,7 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'add_to_cart',
-    firesWhen: 'An item is added to the cart.',
+    firesWhen: 'Units are added to the cart, counting only the units that went in.',
     destinations: ['ga4', 'meta-pixel', 'meta-capi'],
     metaEvent: 'AddToCart',
     viaServer: true,
@@ -127,14 +127,14 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'remove_from_cart',
-    firesWhen: 'An item is removed from the cart.',
+    firesWhen: 'Units are taken out of the cart, by the minus button or Remove.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency', 'value', 'items'],
   },
   {
     name: 'view_cart',
-    firesWhen: 'The cart drawer opens, or the cart page loads.',
+    firesWhen: 'The shopper opens the cart drawer, or the cart page loads with something in the cart.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency', 'value', 'items'],

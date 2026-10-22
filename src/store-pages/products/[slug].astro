@@ -11,6 +11,7 @@ import { CURRENCIES } from '../../store/currencies';
 import { MAX_QUANTITY_PER_LINE } from '../../store/policy';
 import { FREE_SHIPPING_FROM_CAD } from '../../store/shipping-methods';
 import { WORDS, type WordKey } from '../../store/words';
+import { trackableProduct } from '../../tracking/items';
 
 export function getStaticPaths() {
   return PRODUCTS.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -58,10 +59,14 @@ const jsonLd = {
 
   {/* What the page's script needs to know, written into the page as data: which product this is
        (`data-sku`, for the cart) and the sentences it fills in, so that the script does not have to
-       carry the words file. `data-label` describes the drawing, with blanks for the product and the colour. */}
+       carry the words file. `data-label` describes the drawing, with blanks for the product and the colour.
+       `data-track-item` is the product as tracking needs it, with its price in every currency, and
+       `data-track-view` asks for it to be announced when the page loads. */}
   <div
     class="product"
     data-product
+    data-track-view="item"
+    data-track-item={JSON.stringify(trackableProduct(product))}
     data-sku={product.sku}
     data-product-name={product.name}
     data-print={art.print}

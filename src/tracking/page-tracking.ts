@@ -1,10 +1,14 @@
+import { loadCart, type CartChange } from '../components/cart-client.js';
 import { askForStartingCurrency, currentCurrency } from '../components/currency-switcher.js';
 import type { CurrencyCode } from '../store/currencies.js';
 import { parseListContext } from '../engine/list-handoff.js';
 import {
+  cartChangeAnnouncements,
+  cartParams,
   selectItemParams,
   selectPromotionParams,
   viewItemListParams,
+  viewItemParams,
   viewPromotionParams,
   type ListedProduct,
 } from './announcements.js';
@@ -123,6 +127,31 @@ function handleClick(event: MouseEvent): void {
   }
 }
 
+/** A product page that has loaded: the product, announced in the currency the visitor ends up seeing. */
+function announceProductPage(): void {
+  const block = document.querySelector<HTMLElement>('[data-track-view="item"]');
+  const trackable = parseTrackable(block?.dataset.trackItem);
+  if (!trackable) return;
+  void whenCurrencySettled().then((currency) => pushEvent('view_item', viewItemParams(trackable, currency)));
+}
+
+/** The cart, as it is now, looked at. Nothing for an empty cart. */
+function announceCartViewed(currency: CurrencyCode): void {
+  const params = cartParams(loadCart().cart.lines, currency);
+  if (params) pushEvent('view_cart', params);
+}
+
+/**
+ * The cart changed. Only the units that really moved are announced (see `changes` in cart-client.ts and
+ * cartChangeAnnouncements): a quantity stopped at the limit counts what fit, a line already at the limit counts
+ * nothing, and a cart emptied because an order was placed carries no changes at all. The cart in another tab
+ * changing is not heard here, since it is not something the shopper did on this page.
+ */
+function handleCartChanged(event: Event): void {
+  const changes = (event as CustomEvent<CartChange>).detail?.changes;
+  for (const { event: name, params } of cartChangeAnnouncements(changes, currentCurrency())) pushEvent(name, params);
+}
+
 let started = false;
 
 /** Starts listening. Safe to call more than once. */
@@ -135,5 +164,12 @@ export function initTracking(): void {
     if (target) targets.push(target);
   }
   whenSeen(targets);
+  announceProductPage();
   document.addEventListener('click', handleClick);
+  document.addEventListener('cart:changed', handleCartChanged);
+  // The shopper opening the drawer (cart-ui.ts) is a look at the cart. So is the cart page loading.
+  document.addEventListener('cart:viewed', () => announceCartViewed(currentCurrency()));
+  if (document.querySelector('[data-cart-panel].cart-panel--page')) {
+    void whenCurrencySettled().then(announceCartViewed);
+  }
 }

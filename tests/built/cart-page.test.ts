@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
-import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites } from '../helpers/built';
+import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites, scriptOf } from '../helpers/built';
 
 const built = htmlFiles(OPEN);
 const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">'));
@@ -22,6 +22,12 @@ describe('the cart page', () => {
 
   it('is built', () => {
     expect(built).toContain(file);
+  });
+
+  it('loads the code that notices the cart page was opened, and listens for the drawer being opened', () => {
+    const script = scriptOf(OPEN, html);
+    expect(script).toContain('cart-panel--page');
+    expect(script).toContain('cart:viewed');
   });
 
   it('is named and described in the store\'s words, and keeps out of search engines', () => {

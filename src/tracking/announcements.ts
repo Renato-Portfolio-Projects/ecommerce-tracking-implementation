@@ -1,6 +1,7 @@
+import type { CartChanges, CartLine } from '../engine/cart.js';
 import type { ListContext } from '../engine/catalog.js';
 import type { CurrencyCode } from '../store/currencies.js';
-import { itemFromTrackable, type TrackableProduct, type TrackedItem } from './items.js';
+import { itemFromTrackable, trackedLines, type TrackableProduct, type TrackedItem } from './items.js';
 import type { Promotion } from './promotions.js';
 
 /**
@@ -50,4 +51,45 @@ export function viewPromotionParams(promotion: Promotion, source?: string): Reco
 /** A promotion that was clicked. The plan sends the source with a view only. */
 export function selectPromotionParams(promotion: Promotion): Record<string, string> {
   return { ...promotion };
+}
+
+/** What a shopping announcement carries: the currency, the value of the items in it, and the items. */
+export type ShoppingAnnouncement = { currency: CurrencyCode; value: number; items: TrackedItem[] };
+
+/** A product page that loaded: the one product, its price in the currency shown, and that price as the value. No colour or size is chosen yet. */
+export function viewItemParams(trackable: TrackableProduct, currency: CurrencyCode): ShoppingAnnouncement {
+  const item = itemFromTrackable(trackable, currency);
+  return { currency, value: item.price, items: [item] };
+}
+
+/**
+ * Cart lines that went into the cart, came out of it, or are being looked at: the lines as items with their variant,
+ * quantity and the list they were picked from, and the value of them all, priced by the cart's own pricing. Nothing for
+ * no lines, so an empty cart announces nothing.
+ */
+export function cartParams(lines: CartLine[], currency: CurrencyCode): ShoppingAnnouncement | undefined {
+  const { items, value } = trackedLines(lines, currency);
+  return items.length === 0 ? undefined : { currency, value, items };
+}
+
+/** One announcement that a change to the cart makes: the event, and what it carries. */
+export interface CartChangeAnnouncement {
+  event: 'add_to_cart' | 'remove_from_cart';
+  params: ShoppingAnnouncement;
+}
+
+/**
+ * What a change to the cart announces: an `add_to_cart` for the units that went in and a `remove_from_cart` for the
+ * units that came out, in that order, each only when units moved. A change with no `changes` is the cart being
+ * emptied because an order was placed (see cart-client.ts), which is not the shopper taking anything out, so it
+ * announces nothing.
+ */
+export function cartChangeAnnouncements(changes: CartChanges | undefined, currency: CurrencyCode): CartChangeAnnouncement[] {
+  if (changes === undefined) return [];
+  const announcements: CartChangeAnnouncement[] = [];
+  const added = cartParams(changes.added, currency);
+  if (added) announcements.push({ event: 'add_to_cart', params: added });
+  const removed = cartParams(changes.removed, currency);
+  if (removed) announcements.push({ event: 'remove_from_cart', params: removed });
+  return announcements;
 }

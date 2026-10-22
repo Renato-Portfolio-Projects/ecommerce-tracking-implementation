@@ -7,7 +7,8 @@ import { ART } from '../../src/store/art';
 import { MAX_QUANTITY_PER_LINE } from '../../src/store/policy';
 import { FREE_SHIPPING_FROM_CAD } from '../../src/store/shipping-methods';
 import { WORDS, type WordKey } from '../../src/store/words';
-import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites } from '../helpers/built';
+import { parseTrackable, trackableProduct } from '../../src/tracking/items';
+import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites, scriptOf } from '../helpers/built';
 
 const built = htmlFiles(OPEN);
 
@@ -90,6 +91,21 @@ describe.each(PRODUCTS)('the product page for $name', (product) => {
   it('carries its own SKU and a quantity field, which is what Add to cart reads', () => {
     expect(html).toContain(`data-sku="${product.sku}"`);
     expect(html.match(/data-quantity/g)).toHaveLength(1);
+  });
+
+  it('carries itself to tracking as data, built by the same code as the tests, and asks to be announced when it loads', () => {
+    const block = html.match(/<div\s[^>]*data-product\b[^>]*>/);
+    expect(block, 'the product block was found').not.toBeNull();
+    expect(block![0]).toContain('data-track-view="item"');
+    const raw = decodeEntities(block![0].match(/data-track-item="([^"]*)"/)?.[1] ?? '');
+    expect(parseTrackable(raw)).toStrictEqual(trackableProduct(product));
+  });
+
+  it('loads the code that looks for the product block and listens for what the shopper does with the cart', () => {
+    // Event names would prove nothing: any page that can announce at all carries the whole list of them. These are
+    // the names only the wiring uses.
+    const script = scriptOf(OPEN, html);
+    for (const wiring of ['data-track-view', 'cart:changed', 'cart:viewed']) expect(script, wiring).toContain(wiring);
   });
 
   it('names the free shipping threshold', () => {

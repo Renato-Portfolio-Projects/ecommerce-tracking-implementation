@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { productsIn, listContextFor } from '../../src/engine/catalog';
+import type { CartLine } from '../../src/engine/cart';
+import { findProduct, productsIn, listContextFor } from '../../src/engine/catalog';
 import { pushEvent } from '../../src/tracking/push-event';
 import { trackableProduct } from '../../src/tracking/items';
 import { HERO_PROMOTION, POPUP_PROMOTION } from '../../src/tracking/promotions';
 import {
+  cartChangeAnnouncements,
+  cartParams,
   selectItemParams,
   selectPromotionParams,
   viewItemListParams,
+  viewItemParams,
   viewPromotionParams,
   type ListedProduct,
 } from '../../src/tracking/announcements';
@@ -103,5 +107,105 @@ describe('viewPromotionParams and selectPromotionParams', () => {
 
   it('never send a source with a selection, which the plan sends only with a view', () => {
     expect(selectPromotionParams(POPUP_PROMOTION)).not.toHaveProperty('source');
+  });
+});
+
+describe('viewItemParams', () => {
+  const logoTee = trackableProduct(findProduct('SI-TEE-002')!);
+
+  it('is the one product with its price in the currency shown, and that price as the value', () => {
+    expect(viewItemParams(logoTee, 'USD')).toStrictEqual({
+      currency: 'USD',
+      value: 27.74,
+      items: [{ item_id: 'SI-TEE-002', item_name: 'Logo Tee', item_category: 'Tees', price: 27.74 }],
+    });
+  });
+
+  it('is a complete view_item announcement, with no colour, size or list, since none is chosen yet', () => {
+    const result = pushEvent('view_item', viewItemParams(logoTee, 'CAD'));
+    expect(result.problems).toStrictEqual([]);
+    expect(layer()).toHaveLength(2);
+    const item = (layer()[1].ecommerce as { items: Record<string, unknown>[] }).items[0];
+    expect(item).not.toHaveProperty('item_variant');
+    expect(item).not.toHaveProperty('quantity');
+    expect(item).not.toHaveProperty('index');
+  });
+});
+
+describe('cartParams', () => {
+  const tees = listContextFor(findProduct('SI-TEE-002')!);
+  const lines: CartLine[] = [
+    { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2, list: tees },
+    { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 },
+  ];
+
+  it('holds the lines as items, the value of them all, and the currency', () => {
+    const params = cartParams(lines, 'CAD');
+    expect(params?.currency).toBe('CAD');
+    expect(params?.value).toBe(172);
+    expect(params?.items.map((item) => [item.item_id, item.item_variant, item.quantity, item.price])).toStrictEqual([
+      ['SI-TEE-002', 'Ink / M', 2, 38],
+      ['SI-PNT-001', 'Ink / 32', 1, 96],
+    ]);
+    expect(params?.items[0]).toMatchObject({ item_list_id: 'tees', item_list_name: 'Tees', index: 2 });
+  });
+
+  it('prices in the currency shown', () => {
+    expect(cartParams(lines, 'EUR')?.value).toBe(113.52);
+  });
+
+  it('is a complete add_to_cart, remove_from_cart and view_cart announcement', () => {
+    for (const event of ['add_to_cart', 'remove_from_cart', 'view_cart']) {
+      globalThis.dataLayer = undefined;
+      const result = pushEvent(event, cartParams(lines, 'USD')!);
+      expect(result.problems, event).toStrictEqual([]);
+    }
+  });
+
+  it('gives nothing for no lines, so an empty cart announces nothing', () => {
+    expect(cartParams([], 'CAD')).toBeUndefined();
+  });
+});
+
+describe('cartChangeAnnouncements', () => {
+  const went: CartLine[] = [{ sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2 }];
+  const came: CartLine[] = [{ sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 }];
+
+  it('announces nothing for a change that carries no changes, which is how the cart says an order emptied it', () => {
+    expect(cartChangeAnnouncements(undefined, 'CAD')).toStrictEqual([]);
+  });
+
+  it('announces nothing when no units moved', () => {
+    expect(cartChangeAnnouncements({ added: [], removed: [] }, 'CAD')).toStrictEqual([]);
+  });
+
+  it('announces the units that went in as an add_to_cart, and nothing else', () => {
+    expect(cartChangeAnnouncements({ added: went, removed: [] }, 'CAD')).toStrictEqual([
+      { event: 'add_to_cart', params: cartParams(went, 'CAD') },
+    ]);
+  });
+
+  it('announces the units that came out as a remove_from_cart, and nothing else', () => {
+    expect(cartChangeAnnouncements({ added: [], removed: came }, 'CAD')).toStrictEqual([
+      { event: 'remove_from_cart', params: cartParams(came, 'CAD') },
+    ]);
+  });
+
+  it('announces both when both happened, the units that went in first', () => {
+    const events = cartChangeAnnouncements({ added: went, removed: came }, 'CAD').map((announcement) => announcement.event);
+    expect(events).toStrictEqual(['add_to_cart', 'remove_from_cart']);
+  });
+
+  it('prices what it announces in the currency given', () => {
+    const [add] = cartChangeAnnouncements({ added: went, removed: [] }, 'EUR');
+    expect(add.params.currency).toBe('EUR');
+    expect(add.params.value).toBe(50.16);
+  });
+
+  it('makes complete announcements, with nothing missing and nothing extra', () => {
+    for (const { event, params } of cartChangeAnnouncements({ added: went, removed: came }, 'USD')) {
+      globalThis.dataLayer = undefined;
+      expect(pushEvent(event, params).problems, event).toStrictEqual([]);
+    }
   });
 });

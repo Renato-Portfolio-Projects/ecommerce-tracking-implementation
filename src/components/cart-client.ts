@@ -1,4 +1,4 @@
-import { addToCart, emptyCart, removeFromCart, setQuantity, type Cart, type CartResult, type VariantKey } from '../engine/cart';
+import { addToCart, cartChanges, emptyCart, removeFromCart, setQuantity, type Cart, type CartChanges, type CartResult, type VariantKey } from '../engine/cart';
 import { parseStoredCart, serializeCart, type StoredCartResult } from '../engine/cart-storage';
 import type { ListContext } from '../engine/catalog';
 import type { LineInput } from '../engine/pricing';
@@ -20,6 +20,12 @@ export interface CartChange {
   limitReached?: boolean;
   /** The item that was just added, for the words that say so. */
   added?: VariantKey;
+  /**
+   * The units that really went into or came out of the cart, line by line, for tracking. A quantity stopped at the
+   * limit counts only the units that fit. It is left out when the cart was emptied (an order was placed), so that
+   * is never counted as the shopper taking things out.
+   */
+  changes?: CartChanges;
 }
 
 /**
@@ -66,27 +72,35 @@ function announce(change: CartChange = {}): void {
 
 /** Adds an item, and the list it was picked from if there was one. A refused item is reported and changes nothing. */
 export function addItem(item: LineInput, list?: ListContext): CartResult {
-  const result = addToCart(loadCart().cart, item, list);
+  const before = loadCart().cart;
+  const result = addToCart(before, item, list);
   if (result.ok) {
     saveCart(result.cart);
-    announce({ limitReached: result.limitReached, added: { sku: item.sku, colour: item.colour, size: item.size } });
+    announce({
+      limitReached: result.limitReached,
+      added: { sku: item.sku, colour: item.colour, size: item.size },
+      changes: cartChanges(before, result.cart),
+    });
   }
   return result;
 }
 
 /** Sets how many of a line the cart holds. Zero removes it, and more than the limit stops at the limit. */
 export function changeQuantity(target: VariantKey, quantity: number): void {
-  const result = setQuantity(loadCart().cart, target, quantity);
+  const before = loadCart().cart;
+  const result = setQuantity(before, target, quantity);
   if (result.ok) {
     saveCart(result.cart);
-    announce({ limitReached: result.limitReached });
+    announce({ limitReached: result.limitReached, changes: cartChanges(before, result.cart) });
   }
 }
 
 /** Takes a line out of the cart altogether. */
 export function removeItem(target: VariantKey): void {
-  saveCart(removeFromCart(loadCart().cart, target));
-  announce();
+  const before = loadCart().cart;
+  const after = removeFromCart(before, target);
+  saveCart(after);
+  announce({ changes: cartChanges(before, after) });
 }
 
 /** Empties the cart, the way placing an order really would: there is nothing left to check out with again. */

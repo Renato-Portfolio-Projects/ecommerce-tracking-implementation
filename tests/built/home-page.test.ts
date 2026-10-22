@@ -106,10 +106,12 @@ describe('the home page, for tracking', () => {
     }
   });
 
-  it('loads the code that announces what the home page does', () => {
+  it('loads the code that looks for the blocks to count when seen, and for clicks on cards and the hero button', () => {
+    // Event names would prove nothing: any page that can announce at all carries the whole list of them. These are
+    // the names only the wiring uses.
     const script = scriptOf(OPEN, html);
-    for (const event of ['view_promotion', 'select_promotion', 'view_item_list', 'select_item']) {
-      expect(script, event).toContain(event);
+    for (const wiring of ['data-track-seen', 'data-track-promotion-cta', 'a[data-track-item]']) {
+      expect(script, wiring).toContain(wiring);
     }
   });
 });
