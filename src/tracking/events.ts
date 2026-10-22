@@ -77,7 +77,7 @@ export const EVENTS: EventSpec[] = [
     firesWhen: 'The lead popup is shown, or the hero banner scrolls into view.',
     destinations: ['ga4'],
     viaServer: false,
-    params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name'],
+    params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name', 'source'],
   },
   {
     name: 'select_promotion',
