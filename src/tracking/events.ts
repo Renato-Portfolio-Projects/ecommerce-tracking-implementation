@@ -77,11 +77,11 @@ export const EVENTS: EventSpec[] = [
     firesWhen: 'The lead popup is shown, or the hero banner scrolls into view.',
     destinations: ['ga4'],
     viaServer: false,
-    params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name'],
+    params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name', 'source'],
   },
   {
     name: 'select_promotion',
-    firesWhen: 'The popup or banner call to action is clicked.',
+    firesWhen: "The banner's button is clicked, or the popup's main button is pressed for the first time since the popup was shown.",
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'promotion_id', 'promotion_name', 'creative_name'],
@@ -96,7 +96,8 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'view_item_list',
-    firesWhen: 'A collection is at least 50% in view, once per list per page.',
+    firesWhen:
+      'A collection is seen, once per list per page: half of it is visible, or it fills half the screen, whichever is smaller.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'item_list_id', 'item_list_name', 'items'],
@@ -118,7 +119,7 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'add_to_cart',
-    firesWhen: 'An item is added to the cart.',
+    firesWhen: 'Units are added to the cart, counting only the units that went in.',
     destinations: ['ga4', 'meta-pixel', 'meta-capi'],
     metaEvent: 'AddToCart',
     viaServer: true,
@@ -126,14 +127,14 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'remove_from_cart',
-    firesWhen: 'An item is removed from the cart.',
+    firesWhen: 'Units are taken out of the cart, by the minus button or Remove.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency', 'value', 'items'],
   },
   {
     name: 'view_cart',
-    firesWhen: 'The cart drawer opens, or the cart page loads.',
+    firesWhen: 'The shopper opens the cart drawer, or the cart page loads with something in the cart.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency', 'value', 'items'],
@@ -188,7 +189,7 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'select_currency',
-    firesWhen: 'The visitor changes the currency.',
+    firesWhen: 'The visitor picks a currency. The starting currency arriving is not a pick.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency_from', 'currency_to'],

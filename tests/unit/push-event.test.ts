@@ -210,6 +210,24 @@ describe('pushEvent, a broken announcement', () => {
     expect(result.problems.join(' ')).toContain('coupon');
   });
 
+  it('keeps the source of the popup promotion, and does not miss it on the hero banner, which has none', () => {
+    const popup = pushEvent('view_promotion', {
+      promotion_id: 'welcome-offer',
+      promotion_name: 'Welcome offer',
+      creative_name: 'Lead popup',
+      source: 'auto',
+    });
+    expect(popup.problems).toStrictEqual([]);
+    expect(layer()[0]).toMatchObject({ event: 'view_promotion', source: 'auto' });
+
+    const hero = pushEvent('view_promotion', {
+      promotion_id: 'home-hero',
+      promotion_name: 'New in',
+      creative_name: 'Home hero',
+    });
+    expect(hero.problems).toStrictEqual([]);
+  });
+
   it('leaves out a field the event does not list, and says which', () => {
     const result = pushEvent('cta_click', { cta_location: 'footer', favourite_colour: 'blue' });
     expect(result.pushed).toBe(true);

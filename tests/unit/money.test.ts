@@ -6,6 +6,7 @@ import {
   defaultCurrencyFor,
 } from '../../src/store/currencies';
 import {
+  amountsInAllCurrencies,
   convertFromCad,
   divideRounded,
   formatMoney,
@@ -15,6 +16,7 @@ import {
   chosenCurrency,
   currencyFromAnswer,
 } from '../../src/engine/money';
+import { PRODUCTS } from '../../src/engine/catalog';
 
 describe('CURRENCIES', () => {
   it('offers the four currencies from the design, with CAD as the base', () => {
@@ -228,5 +230,36 @@ describe('currencyFromAnswer, the answer of /api/currency', () => {
 
   it('ignores anything else the answer carries, so it cannot smuggle a second value in', () => {
     expect(currencyFromAnswer({ currency: 'GBP', country: 'GB', extra: '<b>' })).toBe('GBP');
+  });
+});
+
+describe('amountsInAllCurrencies', () => {
+  it("gives every currency's price as a number, from the same conversion as the shown price", () => {
+    // The example in the comment on pricesInAllCurrencies: $38.00, US$27.74, €25.08 and £21.28.
+    expect(amountsInAllCurrencies(3800)).toEqual({ CAD: 38, USD: 27.74, EUR: 25.08, GBP: 21.28 });
+  });
+
+  it('agrees with the price the page shows, for every product and every currency', () => {
+    for (const product of PRODUCTS) {
+      const prices = [product.priceCad, ...(product.compareAtCad === undefined ? [] : [product.compareAtCad])];
+      for (const cents of prices) {
+        const shown = pricesInAllCurrencies(cents);
+        const amounts = amountsInAllCurrencies(cents);
+        for (const { code } of CURRENCIES) {
+          const written = new Intl.NumberFormat('en-CA', { style: 'currency', currency: code }).format(amounts[code]);
+          expect(written, `${product.sku} ${code} ${cents}`).toBe(shown[code]);
+        }
+      }
+    }
+  });
+
+  it('holds exact two-decimal numbers, with no floating-point noise', () => {
+    for (const product of PRODUCTS) {
+      for (const { code } of CURRENCIES) {
+        const amount = amountsInAllCurrencies(product.priceCad)[code];
+        expect(amount, `${product.sku} ${code}`).toBeTypeOf('number');
+        expect(Number(amount.toFixed(2)), `${product.sku} ${code}`).toBe(amount);
+      }
+    }
   });
 });

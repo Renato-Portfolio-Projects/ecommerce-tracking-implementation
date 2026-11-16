@@ -243,6 +243,8 @@ function handleClick(event: MouseEvent): void {
     if (dialog) {
       event.preventDefault();
       openDrawer();
+      // The shopper chose to look at the cart. The drawer also opens by itself after Add to cart (cart:open), which is not a look.
+      document.dispatchEvent(new CustomEvent('cart:viewed'));
       return;
     }
   }

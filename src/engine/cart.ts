@@ -181,3 +181,30 @@ export function cartToItemsInput(cart: Cart, currency: string, coupon?: string):
     ...(coupon === undefined ? {} : { coupon }),
   };
 }
+
+/** The units that went into or came out of a cart, line by line. Each line carries the number of units that changed. */
+export interface CartChanges {
+  /** A new line with all its units, or a line that grew with the extra units, with the list the line has now. */
+  added: CartLine[];
+  /** A line that went with all its units, or a line that shrank with the units taken away, with the list it had. */
+  removed: CartLine[];
+}
+
+/**
+ * What changed between two states of a cart. A cart stops a quantity at its limit, so asking for 5 more
+ * of a line that has 8 adds 2, and this reports 2: what really went in, not what was asked. A line that
+ * was already at the limit reports nothing. Lines that did not change are left out.
+ */
+export function cartChanges(before: Cart, after: Cart): CartChanges {
+  const quantityBefore = new Map(before.lines.map((line) => [cartLineKey(line), line.quantity]));
+  const quantityAfter = new Map(after.lines.map((line) => [cartLineKey(line), line.quantity]));
+  const added = after.lines.flatMap((line) => {
+    const grew = line.quantity - (quantityBefore.get(cartLineKey(line)) ?? 0);
+    return grew > 0 ? [{ ...line, quantity: grew }] : [];
+  });
+  const removed = before.lines.flatMap((line) => {
+    const shrank = line.quantity - (quantityAfter.get(cartLineKey(line)) ?? 0);
+    return shrank > 0 ? [{ ...line, quantity: shrank }] : [];
+  });
+  return { added, removed };
+}

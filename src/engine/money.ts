@@ -66,6 +66,22 @@ export function pricesInAllCurrencies(cents: number): Record<CurrencyCode, strin
 }
 
 /**
+ * Every offered currency's price for one CAD amount as a number of whole units (27.74, not 2774), keyed by
+ * currency code, for an announcement to tracking. It is the same conversion that `pricesInAllCurrencies`
+ * writes out as text, so the amount tracking reports is always the amount the page shows:
+ *
+ *   amountsInAllCurrencies(3800) // { CAD: 38, USD: 27.74, EUR: 25.08, GBP: 21.28 }
+ *
+ * Every offered currency has two decimals, so a number of cents divided by 100 is its amount, which is how
+ * `formatMoney` reads it too.
+ */
+export function amountsInAllCurrencies(cents: number): Record<CurrencyCode, number> {
+  return Object.fromEntries(
+    CURRENCIES.map((currency) => [currency.code, convertFromCad(cents, currency.code) / 100]),
+  ) as Record<CurrencyCode, number>;
+}
+
+/**
  * The currency a visitor has chosen, from whatever the browser handed back for what they last chose. `raw` is
  * untrusted: on a first visit it is `null`, and at any other visit it could in principle be missing, blank, or
  * left over from a version of the store that offered different currencies. This is the one place that decision

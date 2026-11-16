@@ -2,6 +2,7 @@
 import { fill } from '../engine/fill';
 import { LEAD_RECORD_LIFETIME_DAYS, LEAD_TRAP_FIELD } from '../store/policy';
 import { WORDS } from '../store/words';
+import { POPUP_PROMOTION } from '../tracking/promotions';
 import { welcomeOffer } from './welcome-offer';
 
 interface Props {
@@ -29,8 +30,10 @@ const words = {
      return of focus. It is on every store page, closed, because the footer link and the corner tab open it from
      anywhere. It opens by itself only where `auto` is set. The form is checked by script, so the browser's own
      checks are off (`novalidate`), and it posts, never gets, so nothing a visitor types can ever end up in an
-     address. Nothing here can be seen or used until the script that opens it is loaded. */}
-<dialog class="lead-popup" data-lead-popup data-lead-auto={auto ? '' : undefined} aria-labelledby="lead-popup-title" data-words={JSON.stringify(words)}>
+     address. Nothing here can be seen or used until the script that opens it is loaded. For tracking, it is a
+     promotion (`data-track-promotion`), counted when it is shown, and the form's main button is how it is
+     selected (`data-track-promotion-cta`), counted once each time the popup is shown (`data-track-select-once`). */}
+<dialog class="lead-popup" data-lead-popup data-lead-auto={auto ? '' : undefined} data-track-promotion={JSON.stringify(POPUP_PROMOTION)} data-track-select-once aria-labelledby="lead-popup-title" data-words={JSON.stringify(words)}>
   <div class="lead-head">
     <h2 class="lead-title" id="lead-popup-title">{fill(WORDS['popup.title'], { percent })}</h2>
     <button type="button" class="lead-close" data-lead-close="close-button" aria-label={WORDS['popup.close']}>
@@ -67,7 +70,7 @@ const words = {
         <span>{WORDS['popup.marketing']}</span>
       </label>
 
-      <button type="submit" class="btn lead-submit" data-lead-submit>{WORDS['popup.submit']}</button>
+      <button type="submit" class="btn lead-submit" data-lead-submit data-track-promotion-cta>{WORDS['popup.submit']}</button>
       {/* Shown by the script only if the form's code cannot be loaded, which is rare. The browser does not try a failed load again by itself, so the visitor is asked to reload the page. */}
       <p class="lead-error" role="alert" data-lead-load-error hidden></p>
       {/* Shown by the form's code when the server says too many tries, or could not keep the lead. */}

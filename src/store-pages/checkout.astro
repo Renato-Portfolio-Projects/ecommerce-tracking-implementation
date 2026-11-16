@@ -42,7 +42,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
         <p class="lead-error" id="checkout-phone-error" data-checkout-error="phone" hidden></p>
       </div>
       <div class="checkout-demo">
-        <button type="button" class="link-button" data-checkout-demo="contact">{WORDS['checkout.demoButton']}</button>
+        <button type="button" class="link-button" data-checkout-demo="contact" data-cta="Demo Data - Checkout contact">{WORDS['checkout.demoButton']}</button>
         <button type="button" class="link-button" data-checkout-new-person="contact" hidden>{WORDS['checkout.newPerson']}</button>
       </div>
       <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
@@ -108,7 +108,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
         </div>
       </div>
       <div class="checkout-demo">
-        <button type="button" class="link-button" data-checkout-demo="address">{WORDS['checkout.demoButton']}</button>
+        <button type="button" class="link-button" data-checkout-demo="address" data-cta="Demo Data - Checkout address">{WORDS['checkout.demoButton']}</button>
         <button type="button" class="link-button" data-checkout-new-person="address" hidden>{WORDS['checkout.newPerson']}</button>
       </div>
       <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
@@ -144,7 +144,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
            it is not tied to one field, the way the lead popup shows a failed save under its button. */}
       <p class="lead-error" role="alert" data-checkout-declined hidden></p>
       <div class="checkout-demo">
-        <button type="button" class="link-button" data-checkout-demo="payment">{WORDS['checkout.testCardButton']}</button>
+        <button type="button" class="link-button" data-checkout-demo="payment" data-cta="Test Card - Checkout payment">{WORDS['checkout.testCardButton']}</button>
       </div>
       <button type="submit" class="btn">{WORDS['checkout.continue']}</button>
     </form>

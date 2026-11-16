@@ -47,6 +47,9 @@ const { title, description, wide = false, cartDrawer = true, leadPopupAuto = fal
 <script>
   import { initCartUi } from '../components/cart-ui';
   import { initLeadPopup } from '../components/lead-popup-ui';
+  import { initTracking } from '../tracking/page-tracking';
+  // Tracking starts first, so that it is listening before anything the other two do as the page loads.
+  initTracking();
   initCartUi();
   // Does nothing when the page has no popup (leadPopup={false}): initLeadPopup finds none and returns at once.
   initLeadPopup();

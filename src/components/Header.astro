@@ -2,10 +2,11 @@
 import { CURRENCIES } from '../store/currencies';
 import { WORDS } from '../store/words';
 
+// `cta` is the label a click on the link is counted under (src/tracking/cta-labels.ts).
 const links = [
-  { href: '/#tees', label: WORDS['nav.tees'] },
-  { href: '/#pants', label: WORDS['nav.pants'] },
-  { href: '/about', label: WORDS['nav.about'] },
+  { href: '/#tees', label: WORDS['nav.tees'], cta: 'Nav - Tees' },
+  { href: '/#pants', label: WORDS['nav.pants'], cta: 'Nav - Pants' },
+  { href: '/about', label: WORDS['nav.about'], cta: 'Nav - About' },
 ];
 
 // The cart link says "Cart" when the cart is empty and "Cart (3)" once it holds something. The cart's own
@@ -29,9 +30,9 @@ const onCheckoutPage = path === '/checkout';
 ---
 
 <header class="header">
-  <a class="wordmark" href="/">{WORDS['site.name']}</a>
+  <a class="wordmark" href="/" data-cta="Header - Logo">{WORDS['site.name']}</a>
   <nav class="nav" aria-label={WORDS['nav.label']}>
-    {links.map((link) => <a href={link.href}>{link.label}</a>)}
+    {links.map((link) => <a href={link.href} data-cta={link.cta}>{link.label}</a>)}
   </nav>
   <div class="tools">
     <label class="currency-picker">

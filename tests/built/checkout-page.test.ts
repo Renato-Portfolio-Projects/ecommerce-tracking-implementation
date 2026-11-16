@@ -101,10 +101,10 @@ describe('the checkout page, before any script has run', () => {
       [contact, 'contact'],
       [address, 'address'],
     ] as const) {
-      expect(step, name).toContain(`data-checkout-demo="${name}">${WORDS['checkout.demoButton']}`);
+      expect(step, name).toContain(`data-checkout-demo="${name}" data-cta="Demo Data - Checkout ${name}">${WORDS['checkout.demoButton']}`);
       expect(step, name).toMatch(new RegExp(`data-checkout-new-person="${name}" hidden>${WORDS['checkout.newPerson']}`));
     }
-    expect(payment).toContain(`data-checkout-demo="payment">${WORDS['checkout.testCardButton']}`);
+    expect(payment).toContain(`data-checkout-demo="payment" data-cta="Test Card - Checkout payment">${WORDS['checkout.testCardButton']}`);
     expect(payment).not.toContain('data-checkout-new-person');
   });
 

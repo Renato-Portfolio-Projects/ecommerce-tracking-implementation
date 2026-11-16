@@ -9,6 +9,7 @@ import {
 } from '../../src/engine/catalog';
 import {
   addToCart,
+  cartChanges,
   cartLineKey,
   cartQuantity,
   cartToItemsInput,
@@ -282,6 +283,86 @@ describe('cartToItemsInput', () => {
     if (!result.ok) throw new Error('Expected a price');
     // 2 Logo Tees at $38.00 and 1 Plain Chino at $96.00.
     expect(result.items.itemsSubtotal).toBe(17200);
+  });
+});
+
+describe('cartChanges', () => {
+  const plainTeeInk = { sku: 'SI-TEE-001', colour: 'Ink', size: 'S' };
+
+  /** The units that changed, as [sku, quantity] pairs, so a test can see them at a glance. */
+  function units(lines: { sku: string; quantity: number }[]) {
+    return lines.map((line) => [line.sku, line.quantity]);
+  }
+
+  it('reports nothing when the cart did not change', () => {
+    const cart = added(emptyCart(), { ...logoTeeInk, quantity: 2 }, tees).cart;
+    expect(cartChanges(cart, cart)).toEqual({ added: [], removed: [] });
+    expect(cartChanges(emptyCart(), emptyCart())).toEqual({ added: [], removed: [] });
+  });
+
+  it('reports a new line as added, with all its units and the list it was picked from', () => {
+    const after = added(emptyCart(), { ...logoTeeInk, quantity: 2 }, tees).cart;
+    expect(cartChanges(emptyCart(), after)).toEqual({
+      added: [{ ...logoTeeInk, quantity: 2, list: tees }],
+      removed: [],
+    });
+  });
+
+  it('reports only the extra units when a line grows', () => {
+    const before = added(emptyCart(), { ...logoTeeInk, quantity: 3 }, tees).cart;
+    const after = added(before, { ...logoTeeInk, quantity: 2 }).cart;
+    expect(cartChanges(before, after)).toEqual({
+      added: [{ ...logoTeeInk, quantity: 2, list: tees }],
+      removed: [],
+    });
+  });
+
+  it('counts only the units that fit under the limit', () => {
+    const before = added(emptyCart(), { ...logoTeeInk, quantity: MAX_QUANTITY_PER_LINE - 2 }, tees).cart;
+    const result = added(before, { ...logoTeeInk, quantity: 5 });
+    expect(result.limitReached).toBe(true);
+    expect(units(cartChanges(before, result.cart).added)).toEqual([['SI-TEE-002', 2]]);
+  });
+
+  it('reports nothing when the line was already at the limit', () => {
+    const before = added(emptyCart(), { ...logoTeeInk, quantity: MAX_QUANTITY_PER_LINE }).cart;
+    const result = added(before, { ...logoTeeInk, quantity: 3 });
+    expect(cartChanges(before, result.cart)).toEqual({ added: [], removed: [] });
+  });
+
+  it('reports only the units taken away when a line shrinks, with the list it has', () => {
+    const before = added(emptyCart(), { ...logoTeeInk, quantity: 5 }, tees).cart;
+    const after = setQuantity(before, logoTeeInk, 3);
+    if (!after.ok) throw new Error('Expected the quantity to be set');
+    expect(cartChanges(before, after.cart)).toEqual({
+      added: [],
+      removed: [{ ...logoTeeInk, quantity: 2, list: tees }],
+    });
+  });
+
+  it('reports a line that is taken out with all its units', () => {
+    const before = added(emptyCart(), { ...logoTeeInk, quantity: 4 }, tees).cart;
+    expect(cartChanges(before, removeFromCart(before, logoTeeInk))).toEqual({
+      added: [],
+      removed: [{ ...logoTeeInk, quantity: 4, list: tees }],
+    });
+  });
+
+  it('reports every line of a cart that is emptied', () => {
+    const before = added(added(emptyCart(), { ...logoTeeInk, quantity: 1 }, tees).cart, { ...plainChinoInk, quantity: 2 }).cart;
+    const changes = cartChanges(before, clearCart());
+    expect(changes.added).toEqual([]);
+    expect(units(changes.removed)).toEqual([['SI-TEE-002', 1], ['SI-PNT-001', 2]]);
+  });
+
+  it('leaves out the lines that did not change, and reports a line that grew and one that shrank together', () => {
+    const start = added(added(added(emptyCart(), { ...logoTeeInk, quantity: 2 }).cart, { ...plainChinoInk, quantity: 3 }).cart, { ...plainTeeInk, quantity: 1 }).cart;
+    const grown = added(start, { ...logoTeeInk, quantity: 2 }).cart;
+    const shrunk = setQuantity(grown, plainChinoInk, 1);
+    if (!shrunk.ok) throw new Error('Expected the quantity to be set');
+    const changes = cartChanges(start, shrunk.cart);
+    expect(units(changes.added)).toEqual([['SI-TEE-002', 2]]);
+    expect(units(changes.removed)).toEqual([['SI-PNT-001', 2]]);
   });
 });
 

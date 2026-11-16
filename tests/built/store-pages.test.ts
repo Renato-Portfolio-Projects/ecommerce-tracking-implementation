@@ -117,7 +117,7 @@ describe.each(PAGES)('the store page $file', (page) => {
     expect(text.indexOf('class="skip-link"'), 'the skip link comes before the demo bar').toBeLessThan(text.indexOf('class="demo-bar"'));
     expect(text).toContain(`href="#content">${WORDS['nav.skip']}</a>`);
     expect(text).toContain(`${WORDS['demo.bar']}`);
-    expect(text).toContain(`<a href="${SITE_LINKS.project}">${WORDS['demo.link']}</a>`);
+    expect(text).toContain(`<a href="${SITE_LINKS.project}" data-cta="Demo bar - Project link">${WORDS['demo.link']}</a>`);
     expect(text).toContain(`<nav class="nav" aria-label="${WORDS['nav.label']}">`);
     expect(html.match(/<header\b/g)).toHaveLength(1);
     expect(html.match(/<main\b[^>]*id="content"/g)).toHaveLength(1);
@@ -145,8 +145,8 @@ describe('the footer and the header', () => {
     for (const address of ['/policies/shipping', '/policies/returns', '/policies/terms', '/contact', '/about']) {
       expect(html, address).toContain(`href="${address}"`);
     }
-    expect(html).toContain(`href="${SITE_LINKS.project}">${WORDS['footer.github']}</a>`);
-    expect(html).toContain(`href="${SITE_LINKS.guide}">${WORDS['footer.guide']}</a>`);
+    expect(html).toContain(`href="${SITE_LINKS.project}" data-cta="Footer - GitHub">${WORDS['footer.github']}</a>`);
+    expect(html).toContain(`href="${SITE_LINKS.guide}" data-cta="Footer - Production guide">${WORDS['footer.guide']}</a>`);
     expect(html).toContain(WORDS['footer.small']);
     expect(html).toContain(WORDS['site.tagline']);
   });

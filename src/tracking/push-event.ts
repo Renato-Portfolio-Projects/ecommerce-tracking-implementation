@@ -10,8 +10,10 @@ export interface PushResult {
   problems: string[];
 }
 
-// A coupon exists only when a code was applied, so these announcements may leave it out.
+// A coupon exists only when a code was applied, and only the popup's promotion has a source (how the popup
+// was opened), so these announcements may leave those out.
 export const OPTIONAL_PARAMS: Record<string, string[]> = {
+  view_promotion: ['source'],
   begin_checkout: ['coupon'],
   add_shipping_info: ['coupon'],
   add_payment_info: ['coupon'],

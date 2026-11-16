@@ -45,6 +45,22 @@ export function currentCurrency(): CurrencyCode {
   return choice() ?? knownDefault() ?? CURRENCIES[0].code;
 }
 
+/** The question of what starting currency this visitor gets, asked at most once on a page and kept so everything that waits for the answer waits for the same one. */
+let startingCurrencyQuestion: Promise<CurrencyCode | undefined> | undefined;
+
+/**
+ * The starting-currency question while it is being answered, or after it has been, and nothing when there was nothing to ask
+ * because the visitor has chosen a currency or one is already known for the tab. The selector uses it to show the answer, and
+ * tracking waits on it (src/tracking/page-tracking.ts), so an announcement with a price is recorded in the currency the visitor
+ * ends up seeing. Whichever asks first starts the question, and the other joins it.
+ */
+export function askForStartingCurrency(): Promise<CurrencyCode | undefined> | undefined {
+  if (startingCurrencyQuestion === undefined && choice() === undefined && knownDefault() === undefined) {
+    startingCurrencyQuestion = fetchDefault();
+  }
+  return startingCurrencyQuestion;
+}
+
 function applyCurrency(currency: CurrencyCode): void {
   for (const element of document.querySelectorAll<HTMLElement>('[data-prices]')) {
     const prices = JSON.parse(element.dataset.prices!) as Record<CurrencyCode, string>;
@@ -72,13 +88,12 @@ export function initCurrencySwitcher(): void {
 
   // Nothing chosen and nothing known for this tab: ask the server once. If the visitor picks a currency while the
   // answer is on its way, or has one by the time it comes, the answer is dropped.
-  if (choice() === undefined && knownDefault() === undefined) {
-    void fetchDefault().then((starting) => {
-      if (starting !== undefined && choice() === undefined && starting !== select.value) show(select, starting);
-    });
-  }
+  void askForStartingCurrency()?.then((starting) => {
+    if (starting !== undefined && choice() === undefined && starting !== select.value) show(select, starting);
+  });
 
   select.addEventListener('change', () => {
+    const from = currentCurrency();
     const chosen = select.value as CurrencyCode;
     chosenNow = chosen;
     try {
@@ -87,5 +102,8 @@ export function initCurrencySwitcher(): void {
       // A visitor blocking storage still gets to switch currency for this page view.
     }
     show(select, chosen);
+    // Tells tracking that the visitor picked this currency, which `currency:changed` cannot: that one also
+    // announces the starting currency arriving, and nobody picked that.
+    document.dispatchEvent(new CustomEvent('currency:selected', { detail: { from, to: chosen } }));
   });
 }

@@ -72,20 +72,20 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 
 | Event | Fires when | Sent to |
 |---|---|---|
-| `view_promotion` / `select_promotion` | Popup shown or hero banner in view, then its CTA clicked | GA4 |
+| `view_promotion` / `select_promotion` | Popup shown or hero banner seen, then the banner's button clicked or the popup's main button pressed (the first press each time it is shown) | GA4 |
 | `generate_lead` | `/api/lead` returns OK | GA4, Meta `Lead`, CAPI |
-| `view_item_list` | A collection is at least 50% in view, once per list per page | GA4 |
+| `view_item_list` | A collection is seen, once per list per page: half of it is visible, or it fills half the screen, whichever is smaller | GA4 |
 | `select_item` | Product card clicked | GA4 |
 | `view_item` | Product page loads | GA4, Meta `ViewContent` |
-| `add_to_cart` | Item added | GA4, Meta `AddToCart`, CAPI |
-| `remove_from_cart` | Item removed | GA4 |
-| `view_cart` | Drawer opens or `/cart` loads | GA4 |
+| `add_to_cart` | Units added, counting only the units that went in | GA4, Meta `AddToCart`, CAPI |
+| `remove_from_cart` | Units taken out, by the minus button or Remove | GA4 |
+| `view_cart` | The shopper opens the drawer, or `/cart` loads with something in the cart | GA4 |
 | `begin_checkout` | Checkout loads with items | GA4, Meta `InitiateCheckout`, CAPI |
 | `add_shipping_info` | Shipping step completes | GA4 |
 | `add_payment_info` | Payment step completes | GA4, Meta `AddPaymentInfo` |
 | `purchase` | Thank-you page renders the confirmed order | GA4, Meta `Purchase`, CAPI |
 | `apply_coupon` | A code is submitted (status: success, invalid, expired) | GA4 |
-| `select_currency` | Currency changed (from, to) | GA4 |
+| `select_currency` | The visitor picks a currency (from, to); the starting currency arriving is not a pick | GA4 |
 | `cta_click` | A tagged CTA with no ecommerce event is clicked | GA4 only |
 | `refund` | Simulated back-office action, server-only (stretch) | GA4 via Measurement Protocol |
 

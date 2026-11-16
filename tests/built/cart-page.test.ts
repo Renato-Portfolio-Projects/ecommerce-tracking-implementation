@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { fill } from '../../src/engine/fill';
 import { CART_LIFETIME_DAYS } from '../../src/store/policy';
 import { WORDS } from '../../src/store/words';
-import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites } from '../helpers/built';
+import { OPEN, decodeEntities, externalLinks, fileFor, headingLevels, htmlFiles, internalLinks, readPage, requestsToOtherSites, scriptOf } from '../helpers/built';
 
 const built = htmlFiles(OPEN);
 const pages = built.filter((file) => readPage(OPEN, file).includes('<header class="header">'));
@@ -22,6 +22,12 @@ describe('the cart page', () => {
 
   it('is built', () => {
     expect(built).toContain(file);
+  });
+
+  it('loads the code that notices the cart page was opened, and listens for the drawer being opened', () => {
+    const script = scriptOf(OPEN, html);
+    expect(script).toContain('cart-panel--page');
+    expect(script).toContain('cart:viewed');
   });
 
   it('is named and described in the store\'s words, and keeps out of search engines', () => {
@@ -52,7 +58,7 @@ describe('the cart page', () => {
       const expected = other === file ? 1 : 0;
       expect(readPage(OPEN, other).match(/class="cart-keep-link"/g)?.length ?? 0, other).toBe(expected);
     }
-    expect(text).toContain(`<a class="cart-keep-link" href="/">${WORDS['cart.keepShopping']}</a>`);
+    expect(text).toContain(`<a class="cart-keep-link" href="/" data-cta="Cart page - Keep shopping">${WORDS['cart.keepShopping']}</a>`);
     const order = ['data-cart-checkout', 'class="cart-keep-link"', 'class="cart-saved"'].map((marker) => html.indexOf(marker));
     expect(order.every((position) => position > -1), 'a marker is missing').toBe(true);
     expect(order).toEqual([...order].sort((a, b) => a - b));
@@ -64,7 +70,7 @@ describe('the cart page', () => {
     }
     expect(text).toContain(fill(WORDS['cart.saved'], { days: CART_LIFETIME_DAYS }));
     expect(text).toContain(`role="group" aria-label="${WORDS['cart.quantity']}"`);
-    expect(text).toContain(`<a class="btn" href="/">${WORDS['cart.keepShopping']}</a>`);
+    expect(text).toContain(`<a class="btn" href="/" data-cta="Cart page - Keep shopping">${WORDS['cart.keepShopping']}</a>`);
   });
 
   it('gives its script every word it fills in, the same as the ones in the store\'s words', () => {
@@ -124,7 +130,7 @@ describe('the cart drawer', () => {
     expect(html).toContain(`>${WORDS['cart.title']}</h2>`);
     expect(html).toContain('class="cart-panel cart-panel--drawer"');
     expect(html).toContain(`<button type="button" class="cart-close" data-cart-close aria-label="${WORDS['cart.close']}">`);
-    expect(html).toContain(`<button type="button" class="btn" data-cart-close>${WORDS['cart.keepShopping']}</button>`);
+    expect(html).toContain(`<button type="button" class="btn" data-cart-close data-cta="Cart drawer - Keep shopping">${WORDS['cart.keepShopping']}</button>`);
   });
 
   it('links to the cart page, in the store\'s words, under the Checkout button, and the cart page does not link to itself', () => {

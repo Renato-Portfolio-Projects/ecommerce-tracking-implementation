@@ -44,7 +44,7 @@ describe('the thank-you page, before any script has run', () => {
     expect(section).toContain(`<h2>${WORDS['checkout.contactHeading']}</h2>`);
     expect(section).toContain(`<h2>${WORDS['checkout.addressHeading']}</h2>`);
     expect(section).toContain(`<h2>${WORDS['checkout.paymentHeading']}</h2>`);
-    expect(section).toContain(`<a class="btn" href="/" data-thank-you-keep-shopping>${WORDS['cart.keepShopping']}</a>`);
+    expect(section).toContain(`<a class="btn" href="/" data-thank-you-keep-shopping data-cta="Thank you - Keep shopping">${WORDS['cart.keepShopping']}</a>`);
   });
 
   it('gives the order section a line-item template with a quantity, name, variant and price', () => {
