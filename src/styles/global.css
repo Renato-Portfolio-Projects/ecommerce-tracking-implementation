@@ -1039,15 +1039,27 @@ body:has(.cart-drawer[open]) {
   font-weight: 600;
 }
 
-.lead-field input {
+/* The text boxes and the lists (the phone's country codes, the country, the province) look alike: a list is given the
+   same look explicitly, which the browser would not give it on its own. */
+.lead-field input,
+.lead-field select {
+  --control-padding: 0.6rem;
   font: inherit;
-  padding: 0.6rem 0.7rem;
+  padding: var(--control-padding) 0.7rem;
   background: color-mix(in oklab, var(--paper) 50%, white);
   border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
   border-radius: 2px;
 }
 
-.lead-field input[aria-invalid='true'] {
+/* A browser works out a list's height from a line of its own and ignores the line height set here, so a list would come
+   out shorter than a text box with the same padding, and one list taller than another by the letters its choices hold. A
+   text box is a line of body text (1.6, set on the body) plus its padding and its border, and the list is given as much. */
+.lead-field select {
+  min-height: calc(1.6em + 2 * var(--control-padding) + 2px);
+}
+
+.lead-field input[aria-invalid='true'],
+.lead-field select[aria-invalid='true'] {
   border-color: var(--spot-red-text);
 }
 
@@ -1202,7 +1214,7 @@ body:has(.cart-drawer[open]) {
 
 /* The phone: the list of country codes, then the number. A closed list that reads "United Kingdom (+44)" needs about
    13.5rem with its arrow, so the two share a line only where there is room, from 30rem, and stack on a narrow phone.
-   The list is given the same look as the fields beside it, which the browser would not give a select on its own. */
+   The list takes its look from `.lead-field`, like the other lists and the text boxes. */
 .checkout-phone-row {
   display: grid;
   gap: var(--space-2);
@@ -1210,11 +1222,6 @@ body:has(.cart-drawer[open]) {
 
 .checkout-phone-row select {
   min-width: 0;
-  font: inherit;
-  padding: 0.6rem 0.7rem;
-  background: color-mix(in oklab, var(--paper) 50%, white);
-  border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
-  border-radius: 2px;
 }
 
 @media (min-width: 30rem) {
