@@ -17,7 +17,7 @@ import { WORDS } from '../store/words';
     data-words={JSON.stringify({ body: WORDS['thankYou.body'], free: WORDS['checkout.freeShipping'], cardEnding: WORDS['checkout.cardEnding'] })}
   >
     <h1>{WORDS['thankYou.heading']}</h1>
-    <p data-thank-you-body></p>
+    <p class="shopper-text" data-thank-you-body></p>
 
     <ul class="checkout-review-lines" data-thank-you-lines></ul>
     <template data-thank-you-line>
@@ -38,10 +38,10 @@ import { WORDS } from '../store/words';
     </dl>
 
     <h2>{WORDS['checkout.contactHeading']}</h2>
-    <p data-thank-you-contact></p>
+    <p class="shopper-text" data-thank-you-contact></p>
 
     <h2>{WORDS['checkout.addressHeading']}</h2>
-    <p data-thank-you-address></p>
+    <p class="shopper-text" data-thank-you-address></p>
 
     <h2>{WORDS['checkout.paymentHeading']}</h2>
     <p data-thank-you-payment></p>

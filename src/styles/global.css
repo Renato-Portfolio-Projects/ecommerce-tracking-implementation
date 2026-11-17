@@ -167,6 +167,9 @@ a {
 
 .currency-picker {
   display: flex;
+  /* On the checkout page the label, the list and the note about the lock together are wider than a 360 px screen, so
+     the note drops to a line of its own instead of pushing the whole page wider. */
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -1027,6 +1030,9 @@ body:has(.cart-drawer[open]) {
 
 .lead-field {
   display: grid;
+  /* One column that may be narrower than what is in it. Left to size itself, the column is as wide as the text box's
+     own natural width (215 px), so in a row of two or three fields on a phone the form ran past the screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
 }
 
@@ -1139,10 +1145,15 @@ body:has(.cart-drawer[open]) {
   border-bottom: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
 }
 
+/* A step's title, what was entered in it once it is done, and its Edit link. On a phone the title and the Edit link
+   share the first line and what was entered goes under them, across the whole width: beside the title it is left with
+   a column too narrow for an email address, which then breaks in the middle of a word. From 32rem all three share a
+   line. */
 .checkout-step-summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-1) var(--space-3);
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
@@ -1150,6 +1161,12 @@ body:has(.cart-drawer[open]) {
 
 .checkout-step-value {
   flex: 1;
+  /* In the phone's grid: the second row, across both columns. The title and the Edit link fill the first row. */
+  grid-row: 2;
+  grid-column: 1 / -1;
+  /* What was typed can be one long word (an email address can start with 64 characters and nothing to break them at).
+     It breaks anywhere rather than push the Edit link and the page past the screen. */
+  overflow-wrap: anywhere;
   font-size: 1rem;
   font-weight: 400;
   color: var(--ink-soft);
@@ -1162,6 +1179,19 @@ body:has(.cart-drawer[open]) {
 .checkout-step-edit {
   font-size: 0.9rem;
   font-weight: 400;
+}
+
+@media (min-width: 32rem) {
+  .checkout-step-summary {
+    display: flex;
+    gap: var(--space-3);
+  }
+}
+
+/* Text a shopper typed, shown back to them on the thank-you page. Like the step summaries above, it breaks anywhere
+   instead of running past the screen. */
+.shopper-text {
+  overflow-wrap: anywhere;
 }
 
 .checkout-form {
