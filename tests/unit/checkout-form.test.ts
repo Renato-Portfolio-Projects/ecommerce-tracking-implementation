@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
+import { COUNTRIES, PROVINCES, type CountryCode } from '../../src/store/destinations';
 import {
   checkAddress,
   checkContact,
@@ -7,6 +7,7 @@ import {
   type FieldProblem,
   type FormField,
 } from '../../src/engine/checkout-form';
+import { buildPhone } from '../../src/engine/phone';
 
 /** Every field of a check that fails, as "field: message", so a test can see it all at once. */
 function problemsOf(result: { ok: boolean; problems?: FieldProblem[] }): string[] {
@@ -191,17 +192,24 @@ describe('email', () => {
 });
 
 describe('phone', () => {
+  // The number arrives as one string: a plus sign, a calling code from the list, then the number. How it is built
+  // from the list and the number box, and what each country allows, is in src/engine/phone.ts and its own tests.
   const good = [
     '+1 514 555 0142',
-    '(416) 555-0117',
-    '416.555.0117',
-    '5145550142',
+    '+1 (416) 555-0117',
+    '+1 416.555.0117',
     '+44 20 7946 0134',
+    '+44 7700 900123',
+    '+33 6 12 34 56 78',
     '+49 30 23125 123',
-    '5550142',
-    '+123456789012345',
+    '+353 87 123 4567',
+    '+39 06 1234 5678',
+    '+31 6 12345678',
+    '+34 612 345 678',
   ];
-  const wrong = ['12345', '123456', '1234567890123456', 'abc', '514-555-CALL', '++1 514 555 0142', '514 555 0142 ext 5', '1+514 555 0142', '<1234567>'];
+  const noCode = ['5145550142', '(416) 555-0117', '++1 514 555 0142', '+81 90 1234 5678', '1+514 555 0142', 'abc', '12', '+', '0044 7700 900123'];
+  const wrongCanadian = ['+1 514 555', '+1 514 555 0142 99', '+1 514 555 CALL', '+1 514 555 0142 ext 5', '+1 <5145550142>', '+1 014 555 0142', '+1 514 055 0142'];
+  const wrongBritish = ['+44 7700', '+44 07700 900123', '+44 7700 900123 4567', '+44 7700 CALL 123'];
 
   it('is optional, and an empty one is left out of the result', () => {
     for (const typed of [undefined, null, '', '   ', 5145550142]) {
@@ -212,7 +220,7 @@ describe('phone', () => {
     }
   });
 
-  it('accepts 7 to 15 digits with spaces, dashes, dots, brackets and a leading plus', () => {
+  it('accepts a number in the form that is sent, with a calling code from the list, and keeps it as it is', () => {
     for (const typed of good) {
       expect(checkContact({ email: 'maya@example.com', phone: typed }), typed).toEqual({
         ok: true,
@@ -221,23 +229,64 @@ describe('phone', () => {
     }
   });
 
-  it('tidies the spacing', () => {
+  it('tidies the spacing, and puts one space after the code', () => {
     const result = checkContact({ email: 'maya@example.com', phone: '  +1   514 555  0142 ' });
     expect(result).toEqual({ ok: true, value: { email: 'maya@example.com', phone: '+1 514 555 0142' } });
+    expect(checkContact({ email: 'maya@example.com', phone: '+447700900123' })).toEqual({
+      ok: true,
+      value: { email: 'maya@example.com', phone: '+44 7700900123' },
+    });
   });
 
-  it('asks for a real number when there are too few or too many digits or odd characters', () => {
-    for (const typed of wrong) {
+  it('asks for a country code from the list when the number has none, or has one the store does not ship to', () => {
+    for (const typed of noCode) {
       expect(problemsOf(checkContact({ email: 'maya@example.com', phone: typed })), typed).toEqual([
-        "phone: That phone number doesn't look right. Use 7 to 15 digits, or leave it empty.",
+        'phone: Pick a country code from the list, or leave the number empty.',
       ]);
+    }
+  });
+
+  it('says how many digits the country needs when the code is right and the number is not', () => {
+    for (const typed of wrongCanadian) {
+      expect(problemsOf(checkContact({ email: 'maya@example.com', phone: typed })), typed).toEqual([
+        "phone: That phone number doesn't look right. For +1, use 10 digits, not counting a 1 at the start, or leave it empty.",
+      ]);
+    }
+    for (const typed of wrongBritish) {
+      expect(problemsOf(checkContact({ email: 'maya@example.com', phone: typed })), typed).toEqual([
+        "phone: That phone number doesn't look right. For +44, use 9 or 10 digits, not counting a 0 at the start, or leave it empty.",
+      ]);
+    }
+  });
+
+  it('accepts every number that the checkout builds from a good number in each country, so the browser and the server agree', () => {
+    const typedAtHome: [CountryCode, string][] = [
+      ['CA', '(514) 555-0142'],
+      ['US', '1 512 555 0184'],
+      ['GB', '07700 900123'],
+      ['FR', '06 12 34 56 78'],
+      ['DE', '030 23125123'],
+      ['IE', '087 123 4567'],
+      ['IT', '06 1234 5678'],
+      ['NL', '06 12345678'],
+      ['ES', '612 345 678'],
+    ];
+    for (const [country, typed] of typedAtHome) {
+      const built = buildPhone(country, typed);
+      expect(built.ok, `${country} ${typed}`).toBe(true);
+      if (built.ok) {
+        expect(checkContact({ email: 'maya@example.com', phone: built.value }), `${country} ${typed}`).toEqual({
+          ok: true,
+          value: { email: 'maya@example.com', phone: built.value },
+        });
+      }
     }
   });
 
   it('reports the email first and the phone second', () => {
     expect(problemsOf(checkContact({ email: '', phone: '12' }))).toEqual([
       'email: Enter your email address.',
-      "phone: That phone number doesn't look right. Use 7 to 15 digits, or leave it empty.",
+      'phone: Pick a country code from the list, or leave the number empty.',
     ]);
   });
 });
@@ -483,21 +532,33 @@ describe('checks that hold for any typing', () => {
 
   it('contact: never fails on odd input, and what it keeps is clean and stays the same when checked again', () => {
     const random = seeded(23);
+    const goodPhones = ['+1 514 555 0142', '+44 7700 900123', '+33 6 12 34 56 78', '+49 30 23125 123', '+39 06 1234 5678'];
     let kept = 0;
+    let keptPhones = 0;
     for (let i = 0; i < 600; i += 1) {
       const digits = Array.from({ length: Math.floor(random() * 20) }, () => Math.floor(random() * 10)).join('');
       const input = {
         email: random() < 0.7 ? `${text(random, 10, emailLike)}@example.com` : anything(random, 30),
-        phone: random() < 0.5 ? `${random() < 0.5 ? '+' : ''}${digits}` : anything(random, 20),
+        phone:
+          random() < 0.3
+            ? oneOf(random, goodPhones)
+            : random() < 0.5
+              ? `${random() < 0.5 ? '+' : ''}${digits}`
+              : anything(random, 20),
       };
       const result = checkContact(input);
       if (result.ok) {
         kept += 1;
         checkRules(result.value, `contact ${i}`);
         expect(checkContact(result.value), `contact ${i}`).toEqual(result);
+        if (result.value.phone !== undefined) {
+          keptPhones += 1;
+          expect(result.value.phone, `contact ${i}`).toMatch(/^\+\d{1,3} \S/);
+        }
       }
     }
     expect(kept).toBeGreaterThan(20);
+    expect(keptPhones).toBeGreaterThan(20);
   });
 
   it('address: never fails on odd input, reports each field at most once in form order, and keeps only clean values', () => {

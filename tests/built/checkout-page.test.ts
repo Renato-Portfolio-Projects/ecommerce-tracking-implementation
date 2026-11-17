@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { fill } from '../../src/engine/fill';
 import { postalCodeLabel } from '../../src/engine/postal-codes';
 import { COUNTRIES, PROVINCES } from '../../src/store/destinations';
 import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
@@ -59,9 +60,33 @@ describe('the checkout page, before any script has run', () => {
     const step = page.match(/data-checkout-form="contact"[\s\S]*?<\/form>/)![0];
     expect(step).toContain(`<label for="checkout-email">${WORDS['popup.email']}</label>`);
     expect(step).toMatch(/<input id="checkout-email" name="email" type="email"/);
-    expect(step).toContain(`<label for="checkout-phone">${WORDS['checkout.phone']}</label>`);
-    expect(step).toMatch(/<input id="checkout-phone" name="phone" type="tel"/);
     expect(step).not.toMatch(/name="phone"[^>]*\srequired/);
+    expect(step).not.toMatch(/name="phoneCountry"[^>]*\srequired/);
+  });
+
+  it('puts the phone in one group of two controls, a list of country codes and the number, each named for a screen reader and for autofill', () => {
+    const step = page.match(/data-checkout-form="contact"[\s\S]*?<\/form>/)![0];
+    expect(step).toContain('<div class="lead-field checkout-phone" role="group" aria-labelledby="checkout-phone-label">');
+    expect(step).toContain(`<label for="checkout-phone" id="checkout-phone-label">${WORDS['checkout.phone']}</label>`);
+    expect(step).toContain(`<label for="checkout-phone-code" class="visually-hidden">${WORDS['checkout.phoneCode']}</label>`);
+    expect(step).toMatch(/<select id="checkout-phone-code" name="phoneCountry" autocomplete="tel-country-code">/);
+    expect(step).toMatch(/<input id="checkout-phone" name="phone" type="tel" autocomplete="tel-national"/);
+    // The problem is tied to the number, the way the email's is, and starts hidden.
+    expect(step).toContain('<p class="lead-error" id="checkout-phone-error" data-checkout-error="phone" hidden></p>');
+  });
+
+  it('lists every country the store ships to in the list of country codes, in the address list\'s order, each with its own code, starting on Canada', () => {
+    const step = page.match(/data-checkout-form="contact"[\s\S]*?<\/form>/)![0];
+    const list = step.match(/<select id="checkout-phone-code"[\s\S]*?<\/select>/)![0];
+    const options = [...list.matchAll(/<option value="(\w+)">([^<]*)<\/option>/g)];
+    expect(options.map((match) => match[1])).toEqual(COUNTRIES.map((country) => country.code));
+    expect(options.map((match) => match[2])).toEqual(
+      COUNTRIES.map((country) => fill(WORDS['checkout.phoneOption'], { country: country.name, callingCode: country.phone.callingCode })),
+    );
+    expect(options[0][1]).toBe('CA');
+    expect(options[0][2]).toBe('Canada (+1)');
+    expect(options[1][2]).toBe('United States (+1)');
+    expect(list).not.toContain(' selected');
   });
 
   it('asks for a full shipping address, every country and province listed, and the popup\'s own name labels reused', () => {
@@ -117,7 +142,11 @@ describe('the checkout page, before any script has run', () => {
     // truncate the match at the JSON's own quotes.
     const match = html.match(/data-checkout-announce data-words="([^"]*)"/);
     expect(match).not.toBeNull();
-    expect(JSON.parse(decodeEntities(match![1]))).toEqual({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'] });
+    expect(JSON.parse(decodeEntities(match![1]))).toEqual({
+      demoAnnounce: WORDS['checkout.demoAnnounce'],
+      cardEnding: WORDS['checkout.cardEnding'],
+      phoneMoved: WORDS['checkout.phoneMoved'],
+    });
     const script = scriptOf(OPEN, html);
     expect(script).not.toContain(WORDS['about.p1']);
   });

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { buildPhone, checkPhoneNumber } from '../../src/engine/phone';
+import { buildPhone, checkPhoneNumber, phoneProblem } from '../../src/engine/phone';
 import { COUNTRIES, type CountryCode } from '../../src/store/destinations';
+
+/**
+ * What buildPhone gives back for a number it accepts. The number box holds what follows the code in what is sent, so a
+ * number that arrived with its own code is shown without it.
+ */
+const asBuilt = (country: CountryCode, value: string) => ({
+  ok: true,
+  country,
+  value,
+  number: value.replace(/^\+\d+ ?/, ''),
+});
 
 // The number goes to the order as one string: a plus sign, the calling code, a space, then the number as the shopper
 // typed it with the national prefix (the digit dialled first for a call inside the country) left off. So the country
@@ -32,7 +43,7 @@ describe('buildPhone, a number typed the way it is dialled at home', () => {
 
   it('puts the calling code in front, and takes the home digit off the front when it was typed', () => {
     for (const [country, typed, sent] of rows) {
-      expect(buildPhone(country, typed), `${country} ${typed}`).toEqual({ ok: true, country, value: sent });
+      expect(buildPhone(country, typed), `${country} ${typed}`).toEqual(asBuilt(country, sent));
     }
   });
 
@@ -56,30 +67,40 @@ describe('buildPhone, a number typed the way it is dialled at home', () => {
   });
 
   it('keeps the 0 of an Italian number, since in Italy it is part of the number', () => {
-    expect(buildPhone('IT', '06 1234 5678')).toEqual({ ok: true, country: 'IT', value: '+39 06 1234 5678' });
-    expect(buildPhone('IT', '02 1234 5678')).toEqual({ ok: true, country: 'IT', value: '+39 02 1234 5678' });
+    expect(buildPhone('IT', '06 1234 5678')).toEqual(asBuilt('IT', '+39 06 1234 5678'));
+    expect(buildPhone('IT', '02 1234 5678')).toEqual(asBuilt('IT', '+39 02 1234 5678'));
   });
 
   it('takes off only the first home digit, and leaves a second one to be refused by the check', () => {
-    expect(buildPhone('GB', '0 07700 900123')).toEqual({ ok: true, country: 'GB', value: '+44 07700 900123' });
-    expect(buildPhone('CA', '11 514 555 0142')).toEqual({ ok: true, country: 'CA', value: '+1 1 514 555 0142' });
+    expect(buildPhone('GB', '0 07700 900123')).toEqual(asBuilt('GB', '+44 07700 900123'));
+    expect(buildPhone('CA', '11 514 555 0142')).toEqual(asBuilt('CA', '+1 1 514 555 0142'));
   });
 
   it('keeps the shopper\'s own spacing and punctuation, with the ends trimmed and runs of spaces made into one', () => {
-    expect(buildPhone('GB', '  07700   900123 ')).toEqual({ ok: true, country: 'GB', value: '+44 7700 900123' });
-    expect(buildPhone('FR', '\t06\n12 34 56 78')).toEqual({ ok: true, country: 'FR', value: '+33 6 12 34 56 78' });
+    expect(buildPhone('GB', '  07700   900123 ')).toEqual(asBuilt('GB', '+44 7700 900123'));
+    expect(buildPhone('FR', '\t06\n12 34 56 78')).toEqual(asBuilt('FR', '+33 6 12 34 56 78'));
   });
 
   it('sends nothing when the number box is empty, whatever the list says', () => {
     for (const typed of ['', '   ', '\n\t']) {
-      expect(buildPhone('GB', typed), JSON.stringify(typed)).toEqual({ ok: true, country: 'GB', value: '' });
+      expect(buildPhone('GB', typed), JSON.stringify(typed)).toEqual(asBuilt('GB', ''));
     }
   });
 
   it('sends the code alone when only the home digit was typed, so the check can ask for the rest', () => {
-    expect(buildPhone('GB', '0')).toEqual({ ok: true, country: 'GB', value: '+44' });
-    expect(buildPhone('CA', '1')).toEqual({ ok: true, country: 'CA', value: '+1' });
-    expect(buildPhone('GB', '(0)')).toEqual({ ok: true, country: 'GB', value: '+44' });
+    expect(buildPhone('GB', '0')).toEqual(asBuilt('GB', '+44'));
+    expect(buildPhone('CA', '1')).toEqual(asBuilt('CA', '+1'));
+    expect(buildPhone('GB', '(0)')).toEqual(asBuilt('GB', '+44'));
+  });
+
+  it('gives back the number as the box should show it, without the code and without the home digit', () => {
+    expect(buildPhone('GB', '07700 900123')).toMatchObject({ number: '7700 900123' });
+    expect(buildPhone('CA', '1-514-555-0142')).toMatchObject({ number: '514-555-0142' });
+    expect(buildPhone('CA', '+44 (0) 7700 900123')).toMatchObject({ country: 'GB', number: '7700 900123' });
+    expect(buildPhone('US', '+1 503 555 0128')).toMatchObject({ country: 'US', number: '503 555 0128' });
+    expect(buildPhone('IT', '06 1234 5678')).toMatchObject({ number: '06 1234 5678' });
+    expect(buildPhone('GB', '')).toMatchObject({ number: '' });
+    expect(buildPhone('GB', '0')).toMatchObject({ number: '' });
   });
 
   it('builds numbers that the check accepts and gives back unchanged', () => {
@@ -115,15 +136,15 @@ describe('buildPhone, a number that arrives with its own country code', () => {
 
   it('moves the list to that country, and takes the code, and any home digit after it, off the front', () => {
     for (const [picked, typed, moved, sent] of rows) {
-      expect(buildPhone(picked, typed), `${picked} ${typed}`).toEqual({ ok: true, country: moved, value: sent });
+      expect(buildPhone(picked, typed), `${picked} ${typed}`).toEqual(asBuilt(moved, sent));
     }
   });
 
   it('keeps Canada or the United States when the code is +1 and one of them is picked, and otherwise moves to Canada', () => {
-    expect(buildPhone('US', '+1 512 555 0184')).toEqual({ ok: true, country: 'US', value: '+1 512 555 0184' });
-    expect(buildPhone('CA', '+1 514 555 0142')).toEqual({ ok: true, country: 'CA', value: '+1 514 555 0142' });
-    expect(buildPhone('GB', '+1 514 555 0142')).toEqual({ ok: true, country: 'CA', value: '+1 514 555 0142' });
-    expect(buildPhone('US', '001 512 555 0184')).toEqual({ ok: true, country: 'US', value: '+1 512 555 0184' });
+    expect(buildPhone('US', '+1 512 555 0184')).toEqual(asBuilt('US', '+1 512 555 0184'));
+    expect(buildPhone('CA', '+1 514 555 0142')).toEqual(asBuilt('CA', '+1 514 555 0142'));
+    expect(buildPhone('GB', '+1 514 555 0142')).toEqual(asBuilt('CA', '+1 514 555 0142'));
+    expect(buildPhone('US', '001 512 555 0184')).toEqual(asBuilt('US', '+1 512 555 0184'));
   });
 
   it('asks for a code from the list when the code is not one the store ships to', () => {
@@ -133,8 +154,8 @@ describe('buildPhone, a number that arrives with its own country code', () => {
   });
 
   it('leaves the rest of the number to the check, so letters and odd marks come through to be refused there', () => {
-    expect(buildPhone('GB', '07700 CALL ME')).toEqual({ ok: true, country: 'GB', value: '+44 7700 CALL ME' });
-    expect(buildPhone('GB', '+44x')).toEqual({ ok: true, country: 'GB', value: '+44 x' });
+    expect(buildPhone('GB', '07700 CALL ME')).toEqual(asBuilt('GB', '+44 7700 CALL ME'));
+    expect(buildPhone('GB', '+44x')).toEqual(asBuilt('GB', '+44 x'));
   });
 });
 
@@ -235,6 +256,42 @@ describe('checkPhoneNumber', () => {
   it('asks for a calling code from the list when there is none, or it is not one the store ships to', () => {
     for (const phone of ['+81 90 1234 5678', '514 555 0142', '(514) 555-0142', '0044 7700 900123', '++1 514 555 0142', '+', '+4', 'abc']) {
       expect(checkPhoneNumber(phone), phone).toEqual(noCode);
+    }
+  });
+});
+
+describe('phoneProblem, the words for a number that failed the check', () => {
+  const words = (phone: string) => {
+    const checked = checkPhoneNumber(phone);
+    return checked.ok ? 'no problem' : phoneProblem(checked);
+  };
+  const lead = "That phone number doesn't look right.";
+
+  it('asks for a country code from the list when there is none or it is not one the store ships to', () => {
+    for (const phone of ['+81 90 1234 5678', '514 555 0142', '+', 'abc']) {
+      expect(words(phone), phone).toBe('Pick a country code from the list, or leave the number empty.');
+    }
+  });
+
+  it('says how many digits the country needs, and that a home digit at the start is not counted', () => {
+    expect(words('+44 12')).toBe(`${lead} For +44, use 9 or 10 digits, not counting a 0 at the start, or leave it empty.`);
+    expect(words('+1 514')).toBe(`${lead} For +1, use 10 digits, not counting a 1 at the start, or leave it empty.`);
+    expect(words('+33 6 12')).toBe(`${lead} For +33, use 9 digits, not counting a 0 at the start, or leave it empty.`);
+    expect(words('+49 12')).toBe(`${lead} For +49, use 5 to 13 digits, not counting a 0 at the start, or leave it empty.`);
+    expect(words('+353 12')).toBe(`${lead} For +353, use 7 to 10 digits, not counting a 0 at the start, or leave it empty.`);
+  });
+
+  it('leaves out the home digit where the country has none', () => {
+    expect(words('+39 1')).toBe(`${lead} For +39, use 6 to 12 digits, or leave it empty.`);
+    expect(words('+34 1')).toBe(`${lead} For +34, use 9 digits, or leave it empty.`);
+  });
+
+  it('has words for every country the store ships to, each saying its own code', () => {
+    for (const country of COUNTRIES) {
+      const code = country.phone.callingCode;
+      expect(words(`+${code} 1`), country.code).toMatch(
+        new RegExp(`^That phone number doesn't look right\\. For \\+${code}, use \\d+( or \\d+| to \\d+)? digits(, not counting a \\d at the start)?, or leave it empty\\.$`),
+      );
     }
   });
 });

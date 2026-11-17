@@ -8,6 +8,7 @@ import { shippingCost } from '../engine/shipping';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 import type { CurrencyCode } from '../store/currencies';
 import { clearCart, loadCart } from './cart-client';
+import { currentPhone } from './checkout-phone';
 import { clearIdempotencyKey, currentIdempotencyKey } from './checkout-idempotency';
 import { currentCurrency } from './currency-switcher';
 
@@ -191,7 +192,8 @@ function fieldValue(formSelector: string, name: string): string {
 }
 
 function contactFields(): { email: string; phone: string } {
-  return { email: fieldValue('[data-checkout-form="contact"]', 'email'), phone: fieldValue('[data-checkout-form="contact"]', 'phone') };
+  const contact = document.querySelector<HTMLFormElement>('[data-checkout-form="contact"]')!;
+  return { email: fieldValue('[data-checkout-form="contact"]', 'email'), phone: currentPhone(contact) };
 }
 
 function addressFields(): Record<string, string> {

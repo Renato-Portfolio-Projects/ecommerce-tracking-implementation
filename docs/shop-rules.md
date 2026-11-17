@@ -200,7 +200,8 @@ The checkout asks for a few details, and the lead popup asks for two of them. Ea
 | First name | Letters and numbers from any language, spaces, apostrophes, hyphens and periods, up to 50 characters | Enter your first name. | Your first name can only use letters, numbers, spaces, apostrophes, hyphens and periods, up to 50 characters. |
 | Last name | The same as the first name | Enter your last name. | Your last name can only use letters, numbers, spaces, apostrophes, hyphens and periods, up to 50 characters. |
 | Email | The shape of a real address, see "Email addresses" below | Enter your email address. | That email address doesn't look right. It should look like name@example.com. |
-| Phone | Optional. 7 to 15 digits, with spaces, dashes, dots, brackets and a leading + allowed | Nothing, it is optional | That phone number doesn't look right. Use 7 to 15 digits, or leave it empty. |
+| Phone | Optional. A plus sign, a calling code from the list, then the number with the digits that country allows, and spaces, dashes, dots and brackets allowed. The checkout builds this from the country list and the number box | Nothing, it is optional | That phone number doesn't look right. For +1, use 10 digits, not counting a 1 at the start, or leave it empty. |
+| Phone country code | A number typed or pasted with a + or 00 at the front must go on with a calling code from the list, and the list moves to that country | Nothing, it is optional | Pick a country code from the list, or leave the number empty. |
 | Country | One of the nine countries the store ships to | Choose a country we ship to. | Choose a country we ship to. |
 | Street address | Letters, numbers and basic punctuation, up to 80 characters. May start with a # | Enter your street address. | Check your street address. It can use letters, numbers and basic punctuation, up to 80 characters. |
 | Second address line | Optional. The same as the street address | Nothing, it is optional | Check your second address line. It can use letters, numbers and basic punctuation, up to 80 characters. |
@@ -209,6 +210,8 @@ The checkout asks for a few details, and the lead popup asks for two of them. Ea
 | Postal code | The format of the country, see below | Enter a valid postal code, like K1A 0B1. | Enter a valid postal code, like K1A 0B1. |
 
 The postal code message uses the country's own word for it, and an example. For the United States it reads "Enter a valid ZIP code, like 95014." The table shows Canada's.
+
+The phone message names the country's own calling code and says how many digits it takes. For the United Kingdom it reads "That phone number doesn't look right. For +44, use 9 or 10 digits, not counting a 0 at the start, or leave it empty." The table shows +1's, which is the code of both Canada and the United States. The digit people dial first for a call inside the country (a 0 in the United Kingdom, France, Germany, Ireland and the Netherlands, a 1 in Canada and the United States) is left off once the code is on, so 07700 900123 is sent as +44 7700 900123. Italy and Spain have none, and an Italian 06 1234 5678 keeps its 0. Only the shape and the length of a number are checked, not whether it exists.
 
 ## Email addresses
 
@@ -338,7 +341,7 @@ Every number and list above is defined in one place in the code. To change one, 
 | Coupon codes and discounts | Codes are stored in capitals, and a typed code matches in any case | `COUPONS` in `src/store/coupon-codes.ts` |
 | The characters a name, a city or a street line may use | Letters from any language and the marks names use, so real names are not turned away | `NAME_PATTERN` in `src/engine/checkout-form.ts` and `STREET_PATTERN` in `src/engine/checkout-form.ts` |
 | The length limits on names, cities, street lines and emails | Long enough for real names, short enough to keep records tidy. The email limits are the email standard's | `NAME_LENGTH`, `CITY_LENGTH` and `ADDRESS_LENGTH` in `src/engine/checkout-form.ts`, and `EMAIL_LENGTH`, `LOCAL_PART_LENGTH` and `DOMAIN_PART_LENGTH` in `src/engine/checkout-form.ts` |
-| How many digits a phone number has | Seven keeps out obvious typos, and 15 is the most an international number can have | `PHONE_DIGITS` in `src/engine/checkout-form.ts` |
+| How a phone number is written in each country | The calling code, the digit dialled first at home (left off once the code is on) and how many digits follow, read from Google's libphonenumber data on 2026-11-16. Germany's longest is 13, not Google's 15, so that the code and the number fit the 15 digits an international number may have | `COUNTRIES` in `src/store/destinations.ts`, and `phoneProblem` in `src/engine/phone.ts` for the words |
 | What an email may look like | The email standard's rules for the part before the @, letters from any language, a domain of two or more parts, and no endings set aside for tests | `LOCAL_PART_PATTERN` in `src/engine/checkout-form.ts`, `DOMAIN_PART_PATTERN` in `src/engine/checkout-form.ts` and `RESERVED_EMAIL_ENDINGS` in `src/engine/checkout-form.ts` |
 | The postal code formats | Shape only, one for each country the store ships to | `POSTAL_CODE_FORMATS` in `src/engine/postal-codes.ts` |
 | Which card numbers are accepted, and which one declines | Well-known test numbers only, so a real card can never work | `TEST_CARDS` in `src/demo/test-cards.ts` |

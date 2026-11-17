@@ -1178,6 +1178,29 @@ body:has(.cart-drawer[open]) {
   gap: var(--space-3);
 }
 
+/* The phone: the list of country codes, then the number. A closed list that reads "United Kingdom (+44)" needs about
+   13.5rem with its arrow, so the two share a line only where there is room, from 30rem, and stack on a narrow phone.
+   The list is given the same look as the fields beside it, which the browser would not give a select on its own. */
+.checkout-phone-row {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.checkout-phone-row select {
+  min-width: 0;
+  font: inherit;
+  padding: 0.6rem 0.7rem;
+  background: color-mix(in oklab, var(--paper) 50%, white);
+  border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
+  border-radius: 2px;
+}
+
+@media (min-width: 30rem) {
+  .checkout-phone-row {
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
+}
+
 .checkout-demo {
   display: flex;
   flex-wrap: wrap;

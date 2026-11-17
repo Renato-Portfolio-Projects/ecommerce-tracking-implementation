@@ -2,6 +2,7 @@
 import StorePage from '../layouts/StorePage.astro';
 import { WORDS } from '../store/words';
 import { COUNTRIES, PROVINCES } from '../store/destinations';
+import { fill } from '../engine/fill';
 import { postalCodeLabel } from '../engine/postal-codes';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 
@@ -36,9 +37,19 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
         <input id="checkout-email" name="email" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" required />
         <p class="lead-error" id="checkout-email-error" data-checkout-error="email" hidden></p>
       </div>
-      <div class="lead-field">
-        <label for="checkout-phone">{WORDS['checkout.phone']}</label>
-        <input id="checkout-phone" name="phone" type="tel" autocomplete="tel" />
+      {/* The phone is one group of two controls: the country code, then the number. checkout-phone.ts builds the one
+           string that is checked and sent from them (src/engine/phone.ts). The list starts on the first country,
+           Canada, the way the address step's country list does. Both are optional: an empty number sends no phone,
+           whatever the list says. The code's label is read out and not shown, and the group is named by the visible one. */}
+      <div class="lead-field checkout-phone" role="group" aria-labelledby="checkout-phone-label">
+        <label for="checkout-phone" id="checkout-phone-label">{WORDS['checkout.phone']}</label>
+        <div class="checkout-phone-row">
+          <label for="checkout-phone-code" class="visually-hidden">{WORDS['checkout.phoneCode']}</label>
+          <select id="checkout-phone-code" name="phoneCountry" autocomplete="tel-country-code">
+            {COUNTRIES.map((country) => <option value={country.code}>{fill(WORDS['checkout.phoneOption'], { country: country.name, callingCode: country.phone.callingCode })}</option>)}
+          </select>
+          <input id="checkout-phone" name="phone" type="tel" autocomplete="tel-national" />
+        </div>
         <p class="lead-error" id="checkout-phone-error" data-checkout-error="phone" hidden></p>
       </div>
       <div class="checkout-demo">
@@ -211,7 +222,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
 
   {/* The few words this page's script needs are handed to it here, rather than importing the whole words file,
        so the eagerly-loaded checkout script does not carry every word on the site (docs/brand.md's script budget). */}
-  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'] })}></p>
+  <p class="visually-hidden" role="status" data-checkout-announce data-words={JSON.stringify({ demoAnnounce: WORDS['checkout.demoAnnounce'], cardEnding: WORDS['checkout.cardEnding'], phoneMoved: WORDS['checkout.phoneMoved'] })}></p>
 </StorePage>
 
 <script>

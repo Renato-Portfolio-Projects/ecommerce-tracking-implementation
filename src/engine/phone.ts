@@ -7,8 +7,12 @@ import { COUNTRIES, type CountryCode, type PhoneRule } from '../store/destinatio
 // length of a number are looked at, never whether it exists. The same code runs in the shopper's browser and on the
 // server, so a hand-made request cannot skip it.
 
+/**
+ * `country` is the country the list should show, `value` is the number as it is sent, and `number` is what follows the
+ * code in it: what the number box should show, which is not what was typed when the number came with its own code.
+ */
 export type PhoneBuild =
-  | { ok: true; country: CountryCode; value: string }
+  | { ok: true; country: CountryCode; value: string; number: string }
   | { ok: false; reason: 'unknown-code' };
 
 /**
@@ -80,18 +84,41 @@ export function buildPhone(country: CountryCode, typedNumber: string): PhoneBuil
   if (picked === undefined) return { ok: false, reason: 'unknown-code' };
 
   const typed = typedNumber.trim().replace(/\s+/g, ' ');
-  if (typed === '') return { ok: true, country, value: '' };
+  if (typed === '') return { ok: true, country, value: '', number: '' };
 
   const withCode = typed.startsWith('+') ? typed.slice(1) : typed.startsWith('00') ? typed.slice(2) : undefined;
   if (withCode === undefined) {
-    return { ok: true, country, value: written(picked.phone.callingCode, dropPrefix(typed, picked.phone.nationalPrefix)) };
+    const number = dropPrefix(typed, picked.phone.nationalPrefix);
+    return { ok: true, country, value: written(picked.phone.callingCode, number), number };
   }
 
   const read = readCode(withCode);
   if (read === undefined) return { ok: false, reason: 'unknown-code' };
   const { callingCode, nationalPrefix } = read.rule;
   const moved = [picked, ...COUNTRIES].find((candidate) => candidate.phone.callingCode === callingCode) ?? picked;
-  return { ok: true, country: moved.code, value: written(callingCode, dropPrefix(read.rest, nationalPrefix)) };
+  const number = dropPrefix(read.rest, nationalPrefix);
+  return { ok: true, country: moved.code, value: written(callingCode, number), number };
+}
+
+/** A number the check refused. */
+export type PhoneFailure = Exclude<PhoneCheck, { ok: true }>;
+
+const PICK_A_CODE = 'Pick a country code from the list, or leave the number empty.';
+
+/**
+ * What to tell a shopper whose number was refused. No code, or one that is not in the list, asks for one from the
+ * list. Anything else names the country's code and says how many digits it takes, and that a home digit at the start
+ * does not count, since the shopper may have typed one and it is dropped.
+ */
+export function phoneProblem(failure: PhoneFailure): string {
+  if (failure.reason === 'unknown-code') return PICK_A_CODE;
+  const rule = RULES.get(failure.callingCode);
+  if (rule === undefined) return PICK_A_CODE;
+
+  const { fewest, most } = rule.digits;
+  const count = fewest === most ? `${most}` : most - fewest === 1 ? `${fewest} or ${most}` : `${fewest} to ${most}`;
+  const home = rule.nationalPrefix === undefined ? '' : `, not counting a ${rule.nationalPrefix} at the start`;
+  return `That phone number doesn't look right. For +${failure.callingCode}, use ${count} digits${home}, or leave it empty.`;
 }
 
 /**
