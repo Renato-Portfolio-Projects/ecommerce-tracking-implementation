@@ -167,9 +167,6 @@ a {
 
 .currency-picker {
   display: flex;
-  /* On the checkout page the label, the list and the note about the lock together are wider than a 360 px screen, so
-     the note drops to a line of its own instead of pushing the whole page wider. */
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -187,11 +184,6 @@ a {
 .currency-picker select:disabled {
   color: var(--ink-soft);
   cursor: not-allowed;
-}
-
-.currency-locked-note {
-  font-size: 0.8rem;
-  color: var(--ink-soft);
 }
 
 .cart-indicator {

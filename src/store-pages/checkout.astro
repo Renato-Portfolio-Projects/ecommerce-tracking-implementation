@@ -7,8 +7,9 @@ import { postalCodeLabel } from '../engine/postal-codes';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 
 // The lead popup never appears here (decision 10 of the v0.2c-3 proposals): a shopper who is already
-// checking out should never be interrupted by an offer to start over. The currency selector is locked
-// here too, by Header.astro, which reads the same URL this page does.
+// checking out should never be interrupted by an offer to start over. The currency selector works here as it
+// does on every other page, so a shopper who sees the wrong currency at the total can change it on the spot;
+// it holds still only while an order is being sent (currency-switcher.ts).
 
 // The country selector has no blank option, so it starts on the first one, Canada, the way the currency
 // selector always starts on a real value. The postal code field's label starts matching that, so it is

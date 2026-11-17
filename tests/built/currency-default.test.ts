@@ -25,7 +25,7 @@ describe('the pages, before any script has chosen a currency', () => {
     let priced = 0;
     for (const file of pages) {
       const html = readPage(OPEN, file);
-      // The checkout page disables this selector (the currency locks there) and carries no "selected" option either way.
+      // No page marks an option as selected, the checkout page included: the script chooses, once it knows who is visiting.
       const select = html.match(/<select id="currency-select"[^>]*>[\s\S]*?<\/select>/)![0];
       expect(select, file).not.toMatch(/\sselected[\s>=]/);
       for (const match of html.matchAll(/<span\b[^>]*\sdata-prices="([^"]*)"[^>]*>([^<]*)</g)) {

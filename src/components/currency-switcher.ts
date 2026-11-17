@@ -23,6 +23,12 @@ import { fetchDefault, knownDefault } from './default-currency';
  * built, and they change to their own currency when the answer arrives, which is a fraction of a second on a
  * working connection. A returning visitor who chose a currency other than CAD sees the same brief flash, since
  * the page is static and cannot know the choice until it runs. That trade-off is accepted for a demo store.
+ *
+ * The selector works on every page, the checkout included, so a shopper who finds the wrong currency at the total can
+ * change it there and the review prices itself again (checkout-review.ts). It holds still only while an order is being
+ * sent: what is on its way was priced in the currency showing, and a change then would leave the page showing something
+ * other than what was sent. checkout-review.ts announces when sending starts and when it fails; once it succeeds the
+ * browser leaves for the thank-you page, so the selector is not freed.
  */
 
 const STORAGE_KEY = 'second-impression:currency';
@@ -106,4 +112,8 @@ export function initCurrencySwitcher(): void {
     // announces the starting currency arriving, and nobody picked that.
     document.dispatchEvent(new CustomEvent('currency:selected', { detail: { from, to: chosen } }));
   });
+
+  // Holds the selector still while an order is being sent, and frees it if the order is turned down.
+  document.addEventListener('checkout:order-submitting', () => { select.disabled = true; });
+  document.addEventListener('checkout:order-submit-failed', () => { select.disabled = false; });
 }

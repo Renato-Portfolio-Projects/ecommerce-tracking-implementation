@@ -6,7 +6,7 @@ import { SHIPPING_METHODS } from '../../src/store/shipping-methods';
 import { WORDS } from '../../src/store/words';
 import { decodeEntities, OPEN, readPage, scriptOf } from '../helpers/built';
 
-// The checkout page's own markup: the three steps and their fields, the demo buttons, the currency lock, and
+// The checkout page's own markup: the three steps and their fields, the demo buttons, the currency selector, and
 // that the lead popup never appears here. What a step does when its form is sent, and what happens once all
 // three are complete, cannot be checked here (there is no script running): that is proven in a real browser.
 
@@ -30,10 +30,10 @@ describe('the checkout page, before any script has run', () => {
     expect(page).toContain('data-cart-drawer');
   });
 
-  it('locks the currency selector, with the word that says so', () => {
+  it('leaves the currency selector working, as on every other page, with no note about a lock', () => {
     const select = page.match(/<select id="currency-select"[^>]*>/)![0];
-    expect(select).toMatch(/\sdisabled[\s>]/);
-    expect(page).toContain(`<span class="currency-locked-note">${WORDS['currency.locked']}</span>`);
+    expect(select).not.toMatch(/\sdisabled[\s>]/);
+    expect(page).not.toContain('currency-locked-note');
   });
 
   it('has the three steps, in order, only the first open', () => {

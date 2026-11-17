@@ -223,7 +223,6 @@ Built in the second part of this work. Every price is stored in Canadian dollars
 |---|---|---|
 | `currency.label` | Currency | Label of the currency selector |
 | `currency.note` | Prices are converted from Canadian dollars at fixed demo rates. | A small note near the selector |
-| `currency.locked` | The currency is locked once checkout starts. | Shown beside the selector once checkout has begun |
 | `currency.CAD` | Canadian dollar (CAD) | An option in the selector |
 | `currency.USD` | US dollar (USD) | An option in the selector |
 | `currency.EUR` | Euro (EUR) | An option in the selector |

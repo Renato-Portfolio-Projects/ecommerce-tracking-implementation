@@ -16,7 +16,8 @@ import { currentCurrency } from './currency-switcher';
  * The order summary: shown only once the three steps above are all complete, priced for real from the same
  * code the cart already uses (src/engine/pricing.ts), so the amount here is always the amount that would be
  * charged. It re-prices whenever anything that affects the total changes: a step is completed or reopened, the
- * shipping method is chosen, a coupon is applied, or the cart itself changes (another tab, say).
+ * shipping method is chosen, a coupon is applied, the shopper picks another currency, or the cart itself changes
+ * (another tab, say).
  *
  * Whether the three steps are all done is read from the page itself, the same way a shopper sees it (each
  * step closed with its summary showing), rather than asked of checkout-steps.ts directly, so the two files
@@ -134,9 +135,9 @@ function redraw(): void {
   showShippingPrices(currency, result.order.itemsNet, { free: words.free });
 }
 
-/** A changed cart is honestly a new attempt at checking out, whatever caused the change: reusing a stale
- * idempotency key here would be a bug, not a safety net. */
-function handleCartChanged(): void {
+/** A changed cart or a changed currency is honestly a new attempt at checking out, whatever caused the change:
+ * the order would be a different one, so reusing a stale idempotency key here would be a bug, not a safety net. */
+function handleOrderChanged(): void {
   clearIdempotencyKey();
   redraw();
 }
@@ -277,8 +278,8 @@ export function initCheckoutReview(): void {
     return;
   }
   document.addEventListener('checkout:step-changed', redraw);
-  document.addEventListener('cart:changed', handleCartChanged);
-  document.addEventListener('currency:changed', redraw);
+  document.addEventListener('cart:changed', handleOrderChanged);
+  document.addEventListener('currency:changed', handleOrderChanged);
   for (const radio of document.querySelectorAll<HTMLInputElement>('[data-checkout-shipping-method]')) {
     radio.addEventListener('change', redraw);
   }
