@@ -2,6 +2,7 @@ import { checkLead, type FieldProblem } from '../engine/checkout-form';
 import { fill } from '../engine/fill';
 import { demoLead } from '../demo/personas';
 import { LEAD_TRAP_FIELD } from '../store/policy';
+import { initLeadTracking } from '../tracking/lead-tracking';
 import { demoPersona } from './demo-persona';
 import { submitLead, type LeadAnswer } from './submit-lead';
 
@@ -20,8 +21,14 @@ import { submitLead, type LeadAnswer } from './submit-lead';
  * The form is sent to the server by `submitLead`, and the code is shown only when the server answers that it
  * has it. A failed save and too many tries are said under the main button. When the code is shown the form
  * announces `lead-popup:submitted` on the document, carrying the checked first name and email, whether the
- * marketing box was ticked, and the code, but only if the server kept the lead. It sends nothing itself.
+ * marketing box was ticked, how the popup was opened (`source`) and the code, but only if the server kept the
+ * lead. It sends nothing itself. That announcement is what tracking hears (src/tracking/lead-tracking.ts, which
+ * this file loads, so that it is carried by the popup's form and by no other page), and it is the only place
+ * a lead is announced from.
  */
+
+// Listening for a lead that was kept starts when this file is first loaded, which is before the form can be sent.
+initLeadTracking();
 
 /** The sentences this script fills in, written into the popup as data by LeadPopup.astro. */
 interface PopupWords {
@@ -190,7 +197,7 @@ export async function submitForm(dialog: HTMLDialogElement): Promise<void> {
   if (answer.status === 'accepted') {
     showCode(dialog, answer.code);
     if (answer.saved) {
-      document.dispatchEvent(new CustomEvent('lead-popup:submitted', { detail: { ...checked.value, marketing, code: answer.code } }));
+      document.dispatchEvent(new CustomEvent('lead-popup:submitted', { detail: { ...checked.value, marketing, source, code: answer.code } }));
     }
     return;
   }
