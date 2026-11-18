@@ -119,6 +119,9 @@ export const WORDS = {
   'checkout.reviewHeading': 'Review your order',
   'checkout.lastName': 'Last name',
   'checkout.phone': 'Phone (optional)',
+  'checkout.phoneCode': 'Country code',
+  'checkout.phoneOption': '{country} (+{callingCode})',
+  'checkout.phoneMoved': 'Country code changed to {country} (+{callingCode}).',
   'checkout.country': 'Country',
   'checkout.address1': 'Address',
   'checkout.address2': 'Apartment, suite, etc. (optional)',
@@ -165,7 +168,6 @@ export const WORDS = {
   // Currency
   'currency.label': 'Currency',
   'currency.note': 'Prices are converted from Canadian dollars at fixed demo rates.',
-  'currency.locked': 'The currency is locked once checkout starts.',
   'currency.CAD': 'Canadian dollar (CAD)',
   'currency.USD': 'US dollar (USD)',
   'currency.EUR': 'Euro (EUR)',

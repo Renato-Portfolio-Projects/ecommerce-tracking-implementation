@@ -1,4 +1,5 @@
 import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations.js';
+import { checkPhoneNumber, phoneProblem } from './phone.js';
 import { checkPostalCode, postalCodeHelp } from './postal-codes.js';
 
 // These checks look at the shape of what was typed and nothing else. Nothing is looked up, and a
@@ -11,7 +12,6 @@ const ADDRESS_LENGTH = 80;
 const EMAIL_LENGTH = 254;
 const LOCAL_PART_LENGTH = 64;
 const DOMAIN_PART_LENGTH = 63;
-const PHONE_DIGITS = { fewest: 7, most: 15 };
 
 // Letters and digits from any language, with their accents, then those, spaces, apostrophes, hyphens and periods.
 const NAME_PATTERN = /^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N} '’.-]*$/u;
@@ -24,7 +24,6 @@ const LOCAL_PART_PATTERN = /^[\p{L}\p{M}\p{N}!#$%&'*+/=?^_`{|}~-]+(?:\.[\p{L}\p{
 const DOMAIN_PART_PATTERN = /^[\p{L}\p{M}\p{N}](?:[\p{L}\p{M}\p{N}-]*[\p{L}\p{M}\p{N}])?$/u;
 // Endings that are set aside so they can never belong to anyone, and so can never receive mail.
 const RESERVED_EMAIL_ENDINGS = ['test', 'example', 'invalid', 'localhost'];
-const PHONE_PATTERN = /^\+?[\d\s().-]+$/;
 
 export type FormField =
   | 'firstName'
@@ -161,17 +160,15 @@ function checkEmail(input: unknown): string | FieldProblem {
   return email;
 }
 
+/**
+ * The phone number arrives as one string, a plus sign, a calling code from the list and the number, which the
+ * browser builds from the list and the number box. Its rules, and the words for a refusal, are in phone.ts.
+ */
 function checkPhone(input: unknown): Checked {
   const phone = typed(input);
   if (phone === '') return undefined;
-  const digits = phone.replace(/\D/g, '').length;
-  if (!PHONE_PATTERN.test(phone) || digits < PHONE_DIGITS.fewest || digits > PHONE_DIGITS.most) {
-    return problem(
-      'phone',
-      `That phone number doesn't look right. Use ${PHONE_DIGITS.fewest} to ${PHONE_DIGITS.most} digits, or leave it empty.`,
-    );
-  }
-  return phone;
+  const checked = checkPhoneNumber(phone);
+  return checked.ok ? checked.value : problem('phone', phoneProblem(checked));
 }
 
 function checkCountry(input: unknown): CountryCode | FieldProblem {

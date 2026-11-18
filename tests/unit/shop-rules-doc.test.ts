@@ -183,7 +183,8 @@ describe('docs/shop-rules.md', () => {
         problemMessage(checkContact({ email: '' }), 'email'),
         problemMessage(checkContact({ email: 'not an email' }), 'email'),
       ],
-      ['Phone', optional, problemMessage(checkContact({ email, phone: '12' }), 'phone')],
+      ['Phone', optional, problemMessage(checkContact({ email, phone: '+1 514 555' }), 'phone')],
+      ['Phone country code', optional, problemMessage(checkContact({ email, phone: '+81 90 1234 5678' }), 'phone')],
       [
         'Country',
         problemMessage(checkAddress({ ...address, country: '' }), 'country'),

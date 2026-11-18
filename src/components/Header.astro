@@ -23,10 +23,6 @@ const cartWords = {
 // following it would only reload the page.
 const path = Astro.url.pathname.replace(/\/$/, '');
 const onCartPage = path === '/cart';
-// The currency locks once checkout starts (docs/site-words.md, currency.locked), so the selector is a plain
-// disabled control here: a disabled select fires no change event and cannot be opened, so no script is needed
-// to enforce the lock, only to explain it.
-const onCheckoutPage = path === '/checkout';
 ---
 
 <header class="header">
@@ -37,10 +33,9 @@ const onCheckoutPage = path === '/checkout';
   <div class="tools">
     <label class="currency-picker">
       <span class="label">{WORDS['header.currency']}</span>
-      <select id="currency-select" disabled={onCheckoutPage}>
+      <select id="currency-select">
         {CURRENCIES.map((currency) => <option value={currency.code}>{WORDS[`currency.${currency.code}`]}</option>)}
       </select>
-      {onCheckoutPage && <span class="currency-locked-note">{WORDS['currency.locked']}</span>}
     </label>
     <a class="cart-indicator" href="/cart" data-cart-link data-words={JSON.stringify(cartWords)} aria-current={onCartPage ? 'page' : undefined}>{WORDS['header.cart']}</a>
   </div>

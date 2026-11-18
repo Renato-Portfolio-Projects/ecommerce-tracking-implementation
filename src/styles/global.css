@@ -186,11 +186,6 @@ a {
   cursor: not-allowed;
 }
 
-.currency-locked-note {
-  font-size: 0.8rem;
-  color: var(--ink-soft);
-}
-
 .cart-indicator {
   font-size: 0.9rem;
   font-weight: 600;
@@ -1027,6 +1022,9 @@ body:has(.cart-drawer[open]) {
 
 .lead-field {
   display: grid;
+  /* One column that may be narrower than what is in it. Left to size itself, the column is as wide as the text box's
+     own natural width (215 px), so in a row of two or three fields on a phone the form ran past the screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
 }
 
@@ -1041,15 +1039,27 @@ body:has(.cart-drawer[open]) {
   font-weight: 600;
 }
 
-.lead-field input {
+/* The text boxes and the lists (the phone's country codes, the country, the province) look alike: a list is given the
+   same look explicitly, which the browser would not give it on its own. */
+.lead-field input,
+.lead-field select {
+  --control-padding: 0.6rem;
   font: inherit;
-  padding: 0.6rem 0.7rem;
+  padding: var(--control-padding) 0.7rem;
   background: color-mix(in oklab, var(--paper) 50%, white);
   border: 1px solid color-mix(in oklab, var(--ink) 40%, transparent);
   border-radius: 2px;
 }
 
-.lead-field input[aria-invalid='true'] {
+/* A browser works out a list's height from a line of its own and ignores the line height set here, so a list would come
+   out shorter than a text box with the same padding, and one list taller than another by the letters its choices hold. A
+   text box is a line of body text (1.6, set on the body) plus its padding and its border, and the list is given as much. */
+.lead-field select {
+  min-height: calc(1.6em + 2 * var(--control-padding) + 2px);
+}
+
+.lead-field input[aria-invalid='true'],
+.lead-field select[aria-invalid='true'] {
   border-color: var(--spot-red-text);
 }
 
@@ -1139,10 +1149,15 @@ body:has(.cart-drawer[open]) {
   border-bottom: 1px solid color-mix(in oklab, var(--ink) 15%, transparent);
 }
 
+/* A step's title, what was entered in it once it is done, and its Edit link. On a phone the title and the Edit link
+   share the first line and what was entered goes under them, across the whole width: beside the title it is left with
+   a column too narrow for an email address, which then breaks in the middle of a word. From 32rem all three share a
+   line. */
 .checkout-step-summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  gap: var(--space-3);
+  gap: var(--space-1) var(--space-3);
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
@@ -1150,6 +1165,12 @@ body:has(.cart-drawer[open]) {
 
 .checkout-step-value {
   flex: 1;
+  /* In the phone's grid: the second row, across both columns. The title and the Edit link fill the first row. */
+  grid-row: 2;
+  grid-column: 1 / -1;
+  /* What was typed can be one long word (an email address can start with 64 characters and nothing to break them at).
+     It breaks anywhere rather than push the Edit link and the page past the screen. */
+  overflow-wrap: anywhere;
   font-size: 1rem;
   font-weight: 400;
   color: var(--ink-soft);
@@ -1164,6 +1185,19 @@ body:has(.cart-drawer[open]) {
   font-weight: 400;
 }
 
+@media (min-width: 32rem) {
+  .checkout-step-summary {
+    display: flex;
+    gap: var(--space-3);
+  }
+}
+
+/* Text a shopper typed, shown back to them on the thank-you page. Like the step summaries above, it breaks anywhere
+   instead of running past the screen. */
+.shopper-text {
+  overflow-wrap: anywhere;
+}
+
 .checkout-form {
   display: grid;
   gap: var(--space-3);
@@ -1176,6 +1210,24 @@ body:has(.cart-drawer[open]) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: var(--space-3);
+}
+
+/* The phone: the list of country codes, then the number. A closed list that reads "United Kingdom (+44)" needs about
+   13.5rem with its arrow, so the two share a line only where there is room, from 30rem, and stack on a narrow phone.
+   The list takes its look from `.lead-field`, like the other lists and the text boxes. */
+.checkout-phone-row {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.checkout-phone-row select {
+  min-width: 0;
+}
+
+@media (min-width: 30rem) {
+  .checkout-phone-row {
+    grid-template-columns: 14rem minmax(0, 1fr);
+  }
 }
 
 .checkout-demo {

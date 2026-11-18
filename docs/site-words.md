@@ -159,6 +159,9 @@ Built in the fourth part of this work. One page, `/checkout`, with three editabl
 | `checkout.reviewHeading` | Review your order | The order summary |
 | `checkout.lastName` | Last name | Shipping address step |
 | `checkout.phone` | Phone (optional) | Contact step |
+| `checkout.phoneCode` | Country code | Contact step, the name of the list of country codes beside the phone number. Read out by screen readers, not shown |
+| `checkout.phoneOption` | {country} (+{callingCode}) | Contact step, each choice in the list of country codes, such as Canada (+1). The blanks are the country's name and its calling code, from the store's own list of countries |
+| `checkout.phoneMoved` | Country code changed to {country} (+{callingCode}). | Read out to screen readers when a number typed or pasted with its own country code moves the list to that country |
 | `checkout.country` | Country | Shipping address step, label of the country selector |
 | `checkout.address1` | Address | Shipping address step |
 | `checkout.address2` | Apartment, suite, etc. (optional) | Shipping address step |
@@ -220,7 +223,6 @@ Built in the second part of this work. Every price is stored in Canadian dollars
 |---|---|---|
 | `currency.label` | Currency | Label of the currency selector |
 | `currency.note` | Prices are converted from Canadian dollars at fixed demo rates. | A small note near the selector |
-| `currency.locked` | The currency is locked once checkout starts. | Shown beside the selector once checkout has begun |
 | `currency.CAD` | Canadian dollar (CAD) | An option in the selector |
 | `currency.USD` | US dollar (USD) | An option in the selector |
 | `currency.EUR` | Euro (EUR) | An option in the selector |

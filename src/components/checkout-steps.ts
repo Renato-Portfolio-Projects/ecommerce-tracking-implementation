@@ -2,8 +2,9 @@ import { checkAddress, checkContact, type FieldProblem } from '../engine/checkou
 import { checkPayment, demoCard, formatCardNumber, type CardField } from '../demo/test-cards';
 import { fill } from '../engine/fill';
 import { demoAddress, demoContact } from '../demo/personas';
-import { COUNTRIES, PROVINCES } from '../store/destinations';
+import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations';
 import { postalCodeLabel } from '../engine/postal-codes';
+import { bringsItsOwnCode, currentPhone, settlePhone, showPhone } from './checkout-phone';
 import { demoPersona } from './demo-persona';
 
 /**
@@ -75,31 +76,33 @@ function showProblems(step: Step, problems: readonly (FieldProblem | { field: Ca
   if (first) control(form(step), first).focus();
 }
 
-/** Reads a step's own fields into a plain object, by name, exactly as the checks expect. */
+/** Reads a step's own fields into a plain object, by name, exactly as the checks expect. The phone is the one
+ * string made of the list of country codes and the number box (checkout-phone.ts). */
 function readFields(step: Step): Record<string, string> {
   const values: Record<string, string> = {};
   for (const field of STEP_FIELDS[step]) values[field] = (control(form(step), field) as HTMLInputElement).value;
+  if (step === 'contact') values.phone = currentPhone(form('contact'));
   return values;
 }
 
 /** The few words this script needs, written into the page as data by checkout.astro, so this eagerly-loaded
  * script does not carry the whole words file (see the comment on the element it reads from). */
-function checkoutStepWords(): { demoAnnounce?: string; cardEnding?: string } {
+function checkoutStepWords(): { demoAnnounce?: string; cardEnding?: string; phoneMoved?: string } {
   const box = find<HTMLElement>(document, '[data-checkout-announce]');
   return JSON.parse(box.dataset.words ?? '{}');
 }
 
-function demoAnnounceText(): string {
-  return checkoutStepWords().demoAnnounce ?? '';
-}
-
-function announceDemoFilled(): void {
+function announce(text: string): void {
   const box = find<HTMLElement>(document, '[data-checkout-announce]');
   box.textContent = '';
   // A screen reader speaks a live region when its text changes, so the same sentence has to be taken out and put back.
   setTimeout(() => {
-    box.textContent = demoAnnounceText();
+    box.textContent = text;
   }, 100);
+}
+
+function announceDemoFilled(): void {
+  announce(checkoutStepWords().demoAnnounce ?? '');
 }
 
 /**
@@ -153,6 +156,21 @@ function provinceName(code: string): string {
   return PROVINCES.find((province) => province.code === code)?.name ?? code;
 }
 
+function callingCodeOf(code: CountryCode): string {
+  return COUNTRIES.find((country) => country.code === code)?.phone.callingCode ?? '';
+}
+
+/**
+ * Brings the list and the number box into line with the number they make: a number typed, pasted or filled in with its
+ * own country code moves the list to that country and loses the code, and a number typed with its home digit loses
+ * that. A screen reader is told when the list moved, since a change the shopper did not make is easy to miss.
+ */
+function settlePhoneControls(): void {
+  const moved = settlePhone(form('contact'));
+  if (moved === undefined) return;
+  announce(fill(checkoutStepWords().phoneMoved ?? '', { country: countryName(moved), callingCode: callingCodeOf(moved) }));
+}
+
 function submitContact(event: SubmitEvent): void {
   event.preventDefault();
   const checked = checkContact(readFields('contact'));
@@ -161,6 +179,7 @@ function submitContact(event: SubmitEvent): void {
     return;
   }
   clearAllProblems('contact');
+  settlePhoneControls();
   completeStep('contact', checked.value.phone ? `${checked.value.email} · ${checked.value.phone}` : checked.value.email);
 }
 
@@ -223,9 +242,11 @@ function setField(root: ParentNode, field: string, value: string): void {
 }
 
 function fillContactDemo(another: boolean): void {
-  const person = demoContact(demoPersona(another));
+  const persona = demoPersona(another);
+  const person = demoContact(persona);
   setField(form('contact'), 'email', person.email);
-  setField(form('contact'), 'phone', person.phone);
+  // Their number already has its code, so the list is set to their country and the box to what follows the code.
+  showPhone(form('contact'), persona.country, person.phone);
   find<HTMLElement>(details('contact'), '[data-checkout-new-person="contact"]').hidden = false;
   announceDemoFilled();
 }
@@ -287,6 +308,18 @@ export function initCheckoutSteps(): void {
 
   updateForCountry();
   control(form('address'), 'country').addEventListener('change', updateForCountry);
+
+  // A number with its own country code is read when the shopper leaves the box, and at once when it was pasted,
+  // dropped or filled in by the browser. Typing is left alone, so a code half typed is never taken for a whole one.
+  const phoneBox = control(form('contact'), 'phone');
+  const readAtOnce = new Set(['insertFromPaste', 'insertFromDrop', 'insertReplacementText']);
+  phoneBox.addEventListener('change', () => {
+    if (bringsItsOwnCode(form('contact'))) settlePhoneControls();
+  });
+  phoneBox.addEventListener('input', (event) => {
+    const kind = event instanceof InputEvent ? event.inputType : undefined;
+    if ((kind === undefined || readAtOnce.has(kind)) && bringsItsOwnCode(form('contact'))) settlePhoneControls();
+  });
 
   find<HTMLElement>(details('contact'), '[data-checkout-demo="contact"]').addEventListener('click', () => fillContactDemo(false));
   find<HTMLElement>(details('contact'), '[data-checkout-new-person="contact"]').addEventListener('click', () => fillContactDemo(true));

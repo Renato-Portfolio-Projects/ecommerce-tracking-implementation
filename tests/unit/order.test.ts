@@ -177,6 +177,37 @@ describe('the checks that run again on the server', () => {
     expect(t.store.keys()).toEqual([]);
   });
 
+  it('keep a phone number as it is sent, with its calling code and its spacing tidied, and give it back the same', async () => {
+    const t = setup();
+    const response = await t.send({ ...GOOD, contact: { email: CONTACT.email, phone: '  +44   7700  900123 ' } });
+    expect(response.status).toBe(200);
+    expect((await t.store.readOrder('token1'))!.contact).toEqual({ email: CONTACT.email, phone: '+44 7700 900123' });
+    expect(await json(await t.read('token1'))).toMatchObject({ contact: { email: CONTACT.email, phone: '+44 7700 900123' } });
+  });
+
+  it('take an order with no phone number, and keep none', async () => {
+    const t = setup();
+    const response = await t.send({ ...GOOD, contact: { email: CONTACT.email, phone: '' } });
+    expect(response.status).toBe(200);
+    expect((await t.store.readOrder('token1'))!.contact).toEqual({ email: CONTACT.email });
+  });
+
+  it('turn away a phone number with no country code, one the store does not ship to, or the wrong length, in the words the browser shows', async () => {
+    const t = setup();
+    for (const [index, phone] of ['514 555 0142', '+81 90 1234 5678', '+44 7700'].entries()) {
+      const contact = { email: CONTACT.email, phone };
+      const expected = checkContact(contact);
+      const response = await t.send({ ...GOOD, idempotencyKey: `attempt-${index}`, contact });
+      expect(response.status, phone).toBe(400);
+      expect(expected.ok, phone).toBe(false);
+      if (!expected.ok) {
+        expect(expected.problems.map((problem) => problem.field), phone).toEqual(['phone']);
+        expect(await json(response), phone).toEqual({ ok: false, problems: expected.problems });
+      }
+    }
+    expect(t.store.keys()).toEqual([]);
+  });
+
   it('turn away a bad address with the same problems checkAddress gives', async () => {
     const t = setup();
     const bad = { ...SHIPPING_ADDRESS, postalCode: 'not a postal code' };

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COUNTRIES } from '../../src/store/destinations';
 import { taxPercentFor } from '../../src/engine/tax';
 import { checkAddress, checkContact, checkLead } from '../../src/engine/checkout-form';
+import { buildPhone } from '../../src/engine/phone';
 import {
   PERSONAS,
   demoAddress,
@@ -73,6 +74,25 @@ describe('PERSONAS', () => {
   it("gives each person a phone number in their country's reserved fiction range", () => {
     for (const persona of PERSONAS) {
       expect(persona.phone, persona.id).toMatch(fictionPhone[persona.country]);
+    }
+  });
+
+  it("gives each person a phone number that starts with their own country's calling code", () => {
+    for (const persona of PERSONAS) {
+      const country = COUNTRIES.find((candidate) => candidate.code === persona.country)!;
+      expect(persona.phone.startsWith(`+${country.phone.callingCode} `), persona.id).toBe(true);
+    }
+  });
+
+  it("fills the checkout's country list and number box from each person's number, and sends the number as it is written", () => {
+    for (const persona of PERSONAS) {
+      const built = buildPhone(persona.country, demoContact(persona).phone);
+      expect(built.ok, persona.id).toBe(true);
+      if (built.ok) {
+        expect(built.country, persona.id).toBe(persona.country);
+        expect(built.value, persona.id).toBe(persona.phone);
+        expect(persona.phone, persona.id).toBe(`+${COUNTRIES.find((candidate) => candidate.code === built.country)!.phone.callingCode} ${built.number}`);
+      }
     }
   });
 
