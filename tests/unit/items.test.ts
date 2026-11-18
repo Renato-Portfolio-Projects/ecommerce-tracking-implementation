@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { CartLine } from '../../src/engine/cart';
+import { cartToItemsInput, type CartLine } from '../../src/engine/cart';
 import { findProduct, listContextFor } from '../../src/engine/catalog';
-import { itemFromTrackable, parseTrackable, trackableProduct, trackedLines } from '../../src/tracking/items';
+import { priceItems, priceOrder, type PricedOrder } from '../../src/engine/pricing';
+import { CURRENCIES } from '../../src/store/currencies';
+import {
+  itemFromTrackable,
+  parseTrackable,
+  trackableProduct,
+  trackedLines,
+  trackedOrderLines,
+} from '../../src/tracking/items';
 
 const logoTee = findProduct('SI-TEE-002')!;
 const misprintTee = findProduct('SI-TEE-003')!;
@@ -143,5 +151,146 @@ describe('trackedLines', () => {
   it('gives nothing, instead of throwing, for a line that cannot be priced', () => {
     const unknown: CartLine = { sku: 'SI-NOT-001', colour: 'Ink', size: 'M', quantity: 1 };
     expect(trackedLines([unknown], 'CAD')).toStrictEqual({ items: [], value: 0 });
+  });
+});
+
+describe('trackedLines with a discount code', () => {
+  const twoTees: CartLine = { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2, list: teesList };
+
+  it('takes the code off each unit, and the value is what is left, without shipping or tax', () => {
+    expect(trackedLines([twoTees], 'CAD', 'WELCOME10')).toStrictEqual({
+      items: [
+        {
+          item_id: 'SI-TEE-002',
+          item_name: 'Logo Tee',
+          item_category: 'Tees',
+          item_variant: 'Ink / M',
+          price: 38,
+          quantity: 2,
+          discount: 3.8,
+          item_list_id: 'tees',
+          item_list_name: 'Tees',
+          index: 2,
+        },
+      ],
+      // 2 x (38.00 - 3.80)
+      value: 68.4,
+      coupon: 'WELCOME10',
+    });
+  });
+
+  it('names the code as the store spells it, whatever the case or the spaces it was typed with', () => {
+    for (const typed of ['WELCOME10', 'welcome10', '  Welcome10 ']) {
+      const tracked = trackedLines([twoTees], 'CAD', typed);
+      expect(tracked.coupon, typed).toBe('WELCOME10');
+      expect(tracked.value, typed).toBe(68.4);
+    }
+  });
+
+  it('gives each line its own discount, with the same figures the cart prices, in every currency', () => {
+    const lines: CartLine[] = [
+      { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 3 },
+      { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 },
+    ];
+    for (const { code } of CURRENCIES) {
+      const tracked = trackedLines(lines, code, 'WELCOME10');
+      const priced = priceItems(cartToItemsInput({ lines }, code, 'WELCOME10'));
+      if (!priced.ok) throw new Error(`could not price the cart in ${code}`);
+      expect(tracked.value, code).toBe(priced.items.itemsNet / 100);
+      expect(tracked.items.map((item) => item.price), code).toStrictEqual(
+        priced.items.lines.map((line) => line.unitPrice / 100),
+      );
+      expect(tracked.items.map((item) => item.discount), code).toStrictEqual(
+        priced.items.lines.map((line) => line.unitDiscount / 100),
+      );
+      for (const item of tracked.items) expect(item.discount, code).toBeGreaterThan(0);
+    }
+  });
+
+  it('ignores an expired code, one the store does not know and a blank one, as the cart does', () => {
+    for (const typed of ['SPRING20', 'NOPE', '', '   ']) {
+      const tracked = trackedLines([twoTees], 'CAD', typed);
+      expect(tracked.value, typed).toBe(76);
+      expect(tracked.items[0], typed).not.toHaveProperty('discount');
+      expect(tracked, typed).not.toHaveProperty('coupon');
+    }
+  });
+
+  it('puts no discount on an item and no code in the result when none was given', () => {
+    const tracked = trackedLines([twoTees], 'CAD');
+    expect(tracked.items[0]).not.toHaveProperty('discount');
+    expect(tracked).not.toHaveProperty('coupon');
+  });
+
+  it('gives nothing for no lines, even with a code', () => {
+    expect(trackedLines([], 'CAD', 'WELCOME10')).toStrictEqual({ items: [], value: 0 });
+  });
+});
+
+describe('trackedOrderLines', () => {
+  const order = (coupon?: string, currency = 'CAD', quantity = 2): PricedOrder => {
+    const result = priceOrder({
+      lines: [
+        { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity },
+        { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 },
+      ],
+      currency,
+      ...(coupon === undefined ? {} : { coupon }),
+      destination: { country: 'CA', province: 'ON' },
+      shippingMethod: 'express',
+    });
+    if (!result.ok) throw new Error('could not price the order');
+    return result.order;
+  };
+
+  it("turns an order's lines into items with the variant, the quantity, the price of one unit and the discount on one", () => {
+    expect(trackedOrderLines(order('WELCOME10').lines)).toStrictEqual([
+      {
+        item_id: 'SI-TEE-002',
+        item_name: 'Logo Tee',
+        item_category: 'Tees',
+        item_variant: 'Ink / M',
+        price: 38,
+        quantity: 2,
+        discount: 3.8,
+      },
+      {
+        item_id: 'SI-PNT-001',
+        item_name: 'Plain Chino',
+        item_category: 'Pants',
+        item_variant: 'Ink / 32',
+        price: 96,
+        quantity: 1,
+        discount: 9.6,
+      },
+    ]);
+  });
+
+  it('puts no discount on an order that used no code', () => {
+    for (const item of trackedOrderLines(order().lines)) expect(item).not.toHaveProperty('discount');
+  });
+
+  it('prices each unit in the currency the order was placed in', () => {
+    const placed = order('WELCOME10', 'GBP');
+    const items = trackedOrderLines(placed.lines);
+    expect(items.map((item) => item.price)).toStrictEqual(placed.lines.map((line) => line.unitPrice / 100));
+    expect(items[0].price).toBe(21.28);
+  });
+
+  it('adds the list a line was picked from, found by its variant SKU, and only to a line the note names', () => {
+    const items = trackedOrderLines(order().lines, { 'SI-TEE-002-INK-M': teesList });
+    expect(items[0]).toMatchObject({ item_list_id: 'tees', item_list_name: 'Tees', index: 2 });
+    expect(items[1]).not.toHaveProperty('item_list_id');
+    expect(items[1]).not.toHaveProperty('item_list_name');
+    expect(items[1]).not.toHaveProperty('index');
+  });
+
+  it('ignores an entry of the note that no line of the order has', () => {
+    const items = trackedOrderLines(order().lines, { 'SI-TEE-001-PAPER-M': teesList });
+    for (const item of items) expect(item).not.toHaveProperty('item_list_id');
+  });
+
+  it('gives nothing for an order with no lines', () => {
+    expect(trackedOrderLines([])).toStrictEqual([]);
   });
 });

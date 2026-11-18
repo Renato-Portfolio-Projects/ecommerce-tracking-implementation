@@ -1,5 +1,5 @@
 import { loadCart, type CartChange } from '../components/cart-client.js';
-import { askForStartingCurrency, currentCurrency } from '../components/currency-switcher.js';
+import { currentCurrency } from '../components/currency-switcher.js';
 import type { CurrencyCode } from '../store/currencies.js';
 import { parseListContext } from '../engine/list-handoff.js';
 import {
@@ -14,12 +14,12 @@ import {
   viewPromotionParams,
   type ListedProduct,
 } from './announcements.js';
+import { whenCurrencySettled } from './currency-wait.js';
 import { parseTrackable } from './items.js';
 import { createOnceGate, type OnceGate } from './once.js';
 import { parsePromotion } from './promotions.js';
 import { pushEvent } from './push-event.js';
 import { isSeen, seenAtRatio } from './seen.js';
-import { settledAfter } from './settled.js';
 
 /**
  * Turns what a store page does into announcements to the dataLayer. The pages already announce most of what
@@ -29,14 +29,6 @@ import { settledAfter } from './settled.js';
  * announcements.ts and items.ts, and tested there; this file is only the wiring to the page, which cannot be
  * tested without a page and is checked in a real browser.
  */
-
-/** How long an announcement with a price waits for a first-time visitor's starting currency to arrive. */
-const SETTLE_LIMIT_MS = 1500;
-
-/** The currency to record a price in: the one the visitor ends up seeing, once the starting currency has arrived. */
-function whenCurrencySettled(): Promise<CurrencyCode> {
-  return settledAfter(askForStartingCurrency(), SETTLE_LIMIT_MS).then(() => currentCurrency());
-}
 
 /** Steps for the browser to watch a block at, a fixed distance apart, as a safety net for a page whose size changes after it starts. */
 const COARSE_STEPS = Array.from({ length: 41 }, (_, index) => index / 40);

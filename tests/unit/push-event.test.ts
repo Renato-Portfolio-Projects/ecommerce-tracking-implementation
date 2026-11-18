@@ -205,9 +205,41 @@ describe('pushEvent, a broken announcement', () => {
     expect(result.problems).toStrictEqual([]);
   });
 
-  it('does call a coupon missing where the code is always known', () => {
-    const result = pushEvent('apply_coupon', { status: 'success' });
+  it('does call a coupon missing where the code is always known, which is a lead, since the popup always issues one', () => {
+    const result = pushEvent('generate_lead', { source: 'auto' });
     expect(result.problems.join(' ')).toContain('coupon');
+  });
+
+  it('does not call a coupon missing on apply_coupon, since the text of a code the store does not know is never sent', () => {
+    const result = pushEvent('apply_coupon', { status: 'invalid' });
+    expect(result.problems).toStrictEqual([]);
+    expect(layer()[0]).toMatchObject({ event: 'apply_coupon', status: 'invalid' });
+    expect(layer()[0]).not.toHaveProperty('coupon');
+  });
+
+  it('still calls the status missing on apply_coupon', () => {
+    const result = pushEvent('apply_coupon', { coupon: 'WELCOME10' });
+    expect(result.problems.join(' ')).toContain('status');
+  });
+
+  it('does not call user_data missing where a page may be unable to make fingerprints, which is a lead and a purchase', () => {
+    expect(pushEvent('generate_lead', { coupon: 'WELCOME10', source: 'auto' }).problems).toStrictEqual([]);
+    const purchase = pushEvent('purchase', {
+      transaction_id: 'SI-ABCD2345',
+      currency: 'CAD',
+      value: 28,
+      tax: 3.64,
+      shipping: 9,
+      items,
+    });
+    expect(purchase.problems).toStrictEqual([]);
+    expect(layer()[2]).toMatchObject({ event: 'purchase' });
+    expect(layer()[2]).not.toHaveProperty('user_data');
+  });
+
+  it('still calls the source missing on a lead, since the popup always knows how it was opened', () => {
+    const result = pushEvent('generate_lead', { coupon: 'WELCOME10' });
+    expect(result.problems.join(' ')).toContain('source');
   });
 
   it('keeps the source of the popup promotion, and does not miss it on the hero banner, which has none', () => {
@@ -267,7 +299,7 @@ describe('pushEvent, a broken announcement', () => {
 });
 
 describe('pushEvent, personal details', () => {
-  const lead = { coupon: 'WELCOME10' };
+  const lead = { coupon: 'WELCOME10', source: 'auto' };
   const typedEmail = 'maya.tremblay@example.com';
 
   it('keeps real fingerprints, beside the event', () => {

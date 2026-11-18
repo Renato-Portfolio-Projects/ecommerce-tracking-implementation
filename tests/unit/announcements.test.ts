@@ -1,15 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CartLine } from '../../src/engine/cart';
 import { findProduct, productsIn, listContextFor } from '../../src/engine/catalog';
+import { priceOrder, type OrderInput, type PricedOrder } from '../../src/engine/pricing';
 import { CURRENCIES } from '../../src/store/currencies';
 import { pushEvent } from '../../src/tracking/push-event';
 import { trackableProduct } from '../../src/tracking/items';
 import { CTA_LABELS } from '../../src/tracking/cta-labels';
 import { HERO_PROMOTION, POPUP_PROMOTION } from '../../src/tracking/promotions';
 import {
+  PAYMENT_TYPE,
+  addPaymentInfoParams,
+  addShippingInfoParams,
+  applyCouponParams,
+  beginCheckoutParams,
   cartChangeAnnouncements,
   cartParams,
   ctaClickParams,
+  generateLeadParams,
+  purchaseParams,
   selectCurrencyParams,
   selectItemParams,
   selectPromotionParams,
@@ -250,6 +258,329 @@ describe('ctaClickParams', () => {
     for (const label of CTA_LABELS) {
       globalThis.dataLayer = undefined;
       expect(pushEvent('cta_click', ctaClickParams(label)!).problems, label).toStrictEqual([]);
+    }
+  });
+});
+
+describe('beginCheckoutParams, addShippingInfoParams and addPaymentInfoParams', () => {
+  const tees = listContextFor(findProduct('SI-TEE-002')!);
+  const lines: CartLine[] = [
+    { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2, list: tees },
+    { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 },
+  ];
+  const twoTees = [lines[0]];
+
+  it('begin_checkout holds the currency, the value of the items and the items, and no code when none is applied', () => {
+    expect(beginCheckoutParams(twoTees, 'CAD')).toStrictEqual({
+      currency: 'CAD',
+      value: 76,
+      items: [
+        {
+          item_id: 'SI-TEE-002',
+          item_name: 'Logo Tee',
+          item_category: 'Tees',
+          item_variant: 'Ink / M',
+          price: 38,
+          quantity: 2,
+          item_list_id: 'tees',
+          item_list_name: 'Tees',
+          index: 2,
+        },
+      ],
+    });
+  });
+
+  it('holds the code and the discount on each unit once a code is applied, and the value is what the items cost after it', () => {
+    const params = beginCheckoutParams(twoTees, 'CAD', 'WELCOME10');
+    expect(params?.coupon).toBe('WELCOME10');
+    expect(params?.value).toBe(68.4);
+    expect(params?.items[0].discount).toBe(3.8);
+  });
+
+  it('leaves the code out when it is expired, unknown or blank', () => {
+    for (const typed of ['SPRING20', 'NOPE', '']) {
+      const params = beginCheckoutParams(twoTees, 'CAD', typed);
+      expect(params, typed).not.toHaveProperty('coupon');
+      expect(params?.value, typed).toBe(76);
+    }
+  });
+
+  it('add_shipping_info adds the method chosen, and the value stays what the items cost, without shipping or tax', () => {
+    expect(addShippingInfoParams(twoTees, 'CAD', 'Express')).toMatchObject({
+      currency: 'CAD',
+      value: 76,
+      shipping_tier: 'Express',
+    });
+    expect(addShippingInfoParams(twoTees, 'CAD', 'Standard')?.shipping_tier).toBe('Standard');
+  });
+
+  it('add_payment_info adds the payment type, which is a card, whatever the card is', () => {
+    expect(PAYMENT_TYPE).toBe('Credit Card');
+    expect(addPaymentInfoParams(twoTees, 'CAD')).toMatchObject({
+      currency: 'CAD',
+      value: 76,
+      payment_type: 'Credit Card',
+    });
+  });
+
+  it('carries the code on a step that is completed again after a code was applied', () => {
+    expect(addShippingInfoParams(twoTees, 'CAD', 'Express', 'WELCOME10')).toMatchObject({
+      value: 68.4,
+      coupon: 'WELCOME10',
+      shipping_tier: 'Express',
+    });
+    expect(addPaymentInfoParams(twoTees, 'CAD', 'WELCOME10')).toMatchObject({ value: 68.4, coupon: 'WELCOME10' });
+  });
+
+  it('prices in the currency shown', () => {
+    expect(beginCheckoutParams(lines, 'EUR')?.value).toBe(113.52);
+    expect(addPaymentInfoParams(lines, 'GBP')?.currency).toBe('GBP');
+  });
+
+  it('gives nothing for an empty cart, so an empty cart announces nothing', () => {
+    expect(beginCheckoutParams([], 'CAD')).toBeUndefined();
+    expect(addShippingInfoParams([], 'CAD', 'Standard')).toBeUndefined();
+    expect(addPaymentInfoParams([], 'CAD')).toBeUndefined();
+  });
+
+  it('makes complete announcements, with nothing missing and nothing extra, with a code and without one', () => {
+    for (const coupon of [undefined, 'WELCOME10']) {
+      for (const { code } of CURRENCIES) {
+        const made: Array<[string, Record<string, unknown>]> = [
+          ['begin_checkout', beginCheckoutParams(lines, code, coupon)!],
+          ['add_shipping_info', addShippingInfoParams(lines, code, 'Standard', coupon)!],
+          ['add_payment_info', addPaymentInfoParams(lines, code, coupon)!],
+        ];
+        for (const [event, params] of made) {
+          globalThis.dataLayer = undefined;
+          expect(pushEvent(event, params).problems, `${event} in ${code} with ${coupon}`).toStrictEqual([]);
+        }
+      }
+    }
+  });
+});
+
+describe('applyCouponParams', () => {
+  it('reports a live code as a success, with the code as the store spells it', () => {
+    expect(applyCouponParams('valid', 'WELCOME10')).toStrictEqual({ status: 'success', coupon: 'WELCOME10' });
+    expect(applyCouponParams('valid', ' welcome10 ')).toStrictEqual({ status: 'success', coupon: 'WELCOME10' });
+  });
+
+  it('reports a recognised code that has expired as expired, with the code', () => {
+    expect(applyCouponParams('expired', 'SPRING20')).toStrictEqual({ status: 'expired', coupon: 'SPRING20' });
+  });
+
+  it('reports a code the store does not know as invalid, and sends no code', () => {
+    expect(applyCouponParams('invalid', 'NOPE')).toStrictEqual({ status: 'invalid' });
+    expect(applyCouponParams('invalid')).toStrictEqual({ status: 'invalid' });
+  });
+
+  it('gives nothing for an empty box, or for a status that is not one of the three', () => {
+    for (const status of ['none', '', 'success', 'VALID', ' valid']) {
+      expect(applyCouponParams(status, 'WELCOME10'), JSON.stringify(status)).toBeUndefined();
+    }
+  });
+
+  it('gives nothing when the status and the code disagree, which the order review cannot make', () => {
+    expect(applyCouponParams('valid', 'SPRING20')).toBeUndefined();
+    expect(applyCouponParams('expired', 'WELCOME10')).toBeUndefined();
+    expect(applyCouponParams('valid', 'NOPE')).toBeUndefined();
+    expect(applyCouponParams('valid')).toBeUndefined();
+    expect(applyCouponParams('expired', '')).toBeUndefined();
+  });
+
+  it('never carries what was typed, whatever the status: an email, a card number or a phone number cannot appear', () => {
+    const typed: Array<[string, string]> = [
+      ['maya.tremblay@example.com', 'maya'],
+      ['4242 4242 4242 4242', '4242'],
+      ['+16505551212', '6505551212'],
+      ['WELCOME10 maya.tremblay@example.com', 'maya'],
+      ['<script>alert(1)</script>', 'script'],
+    ];
+    for (const [text, piece] of typed) {
+      for (const status of ['valid', 'expired', 'invalid']) {
+        const written = JSON.stringify(applyCouponParams(status, text) ?? {});
+        expect(written, `${status}: ${text}`).not.toContain(text);
+        expect(written, `${status}: ${text}`).not.toContain(piece);
+      }
+    }
+  });
+
+  it('makes complete apply_coupon announcements for all three outcomes, with the code or without it', () => {
+    const outcomes: Array<[string, string | undefined, string, boolean]> = [
+      ['valid', 'WELCOME10', 'success', true],
+      ['expired', 'SPRING20', 'expired', true],
+      ['invalid', 'NOPE', 'invalid', false],
+    ];
+    for (const [status, code, announced, hasCode] of outcomes) {
+      globalThis.dataLayer = undefined;
+      const result = pushEvent('apply_coupon', applyCouponParams(status, code)!);
+      expect(result.problems, status).toStrictEqual([]);
+      expect(layer()[0], status).toMatchObject({ event: 'apply_coupon', status: announced });
+      if (hasCode) expect(layer()[0], status).toHaveProperty('coupon', code);
+      else expect(layer()[0], status).not.toHaveProperty('coupon');
+    }
+  });
+});
+
+describe('generateLeadParams', () => {
+  const FINGERPRINT = 'a68414a03cfb6a8136979bfaa406739eeb4a195a60d8345121b38d1c4038140f';
+  // What the popup announces: the shopper's details are in it so the listener can fingerprint the email, and none of them
+  // is meant to reach the dataLayer.
+  const popup = {
+    firstName: 'Maya',
+    email: 'maya.tremblay@example.com',
+    marketing: true,
+    code: 'WELCOME10',
+    source: 'auto',
+  };
+
+  it('carries the code the popup issued and how the popup was opened, and nothing the shopper typed', () => {
+    expect(generateLeadParams(popup)).toStrictEqual({ coupon: 'WELCOME10', source: 'auto' });
+    const written = JSON.stringify(generateLeadParams(popup, { sha256_email_address: FINGERPRINT }));
+    for (const typed of ['Maya', 'maya.tremblay@example.com', 'marketing']) expect(written).not.toContain(typed);
+  });
+
+  it('adds the email fingerprint, which the caller makes, and leaves user_data out when there is none', () => {
+    expect(generateLeadParams(popup, { sha256_email_address: FINGERPRINT })).toStrictEqual({
+      coupon: 'WELCOME10',
+      source: 'auto',
+      user_data: { sha256_email_address: FINGERPRINT },
+    });
+    expect(generateLeadParams(popup)).not.toHaveProperty('user_data');
+  });
+
+  it('keeps how the popup was opened', () => {
+    expect(generateLeadParams({ ...popup, source: 'manual' }).source).toBe('manual');
+  });
+
+  it('is a complete generate_lead announcement, with a fingerprint and without one', () => {
+    for (const userData of [{ sha256_email_address: FINGERPRINT }, undefined]) {
+      globalThis.dataLayer = undefined;
+      const result = pushEvent('generate_lead', generateLeadParams(popup, userData));
+      expect(result.problems, String(userData)).toStrictEqual([]);
+      expect(layer()[0]).toMatchObject({ event: 'generate_lead', coupon: 'WELCOME10', source: 'auto' });
+    }
+  });
+});
+
+describe('purchaseParams', () => {
+  const FINGERPRINT = 'a68414a03cfb6a8136979bfaa406739eeb4a195a60d8345121b38d1c4038140f';
+  const PHONE_FINGERPRINT = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+  const tees = listContextFor(findProduct('SI-TEE-002')!);
+  const lists = { 'SI-TEE-002-INK-M': tees };
+
+  interface Options {
+    coupon?: string;
+    currency?: string;
+    lines?: OrderInput['lines'];
+    shippingMethod?: string;
+  }
+
+  // The order as the server prices it: two Logo Tees, an Ontario address, in Canadian dollars with Express unless said otherwise.
+  function placed({
+    coupon,
+    currency = 'CAD',
+    lines = [{ sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2 }],
+    shippingMethod = 'express',
+  }: Options = {}): PricedOrder {
+    const result = priceOrder({
+      lines,
+      currency,
+      ...(coupon === undefined ? {} : { coupon }),
+      destination: { country: 'CA', province: 'ON' },
+      shippingMethod,
+    });
+    if (!result.ok) throw new Error('could not price the order');
+    return result.order;
+  }
+
+  it('reports the order as the server priced it: the value is after the discount, with no shipping or tax in it', () => {
+    expect(purchaseParams('SI-ABCD2345', placed({ coupon: 'WELCOME10' }), lists)).toStrictEqual({
+      transaction_id: 'SI-ABCD2345',
+      currency: 'CAD',
+      value: 68.4,
+      tax: 11.36,
+      shipping: 19,
+      coupon: 'WELCOME10',
+      items: [
+        {
+          item_id: 'SI-TEE-002',
+          item_name: 'Logo Tee',
+          item_category: 'Tees',
+          item_variant: 'Ink / M',
+          price: 38,
+          quantity: 2,
+          discount: 3.8,
+          item_list_id: 'tees',
+          item_list_name: 'Tees',
+          index: 2,
+        },
+      ],
+    });
+  });
+
+  it('takes each figure from the order itself, in every currency, and not from what the page shows now', () => {
+    for (const { code } of CURRENCIES) {
+      const order = placed({ currency: code, coupon: 'WELCOME10' });
+      const params = purchaseParams('SI-ABCD2345', order)!;
+      expect(params.currency, code).toBe(code);
+      expect(params.value, code).toBe(order.itemsNet / 100);
+      expect(params.tax, code).toBe(order.tax / 100);
+      expect(params.shipping, code).toBe(order.shipping / 100);
+    }
+  });
+
+  it('keeps a shipping of zero, which is a free Standard, and does not call it missing', () => {
+    const free = placed({
+      lines: [{ sku: 'SI-TEE-003', colour: 'Paper', size: 'M', quantity: 3 }],
+      shippingMethod: 'standard',
+    });
+    expect(free.shipping).toBe(0);
+    const params = purchaseParams('SI-ABCD2345', free)!;
+    expect(params).toHaveProperty('shipping', 0);
+    expect(pushEvent('purchase', params).problems).toStrictEqual([]);
+  });
+
+  it('leaves the code and the discounts out when the order used no code', () => {
+    const params = purchaseParams('SI-ABCD2345', placed())!;
+    expect(params).not.toHaveProperty('coupon');
+    for (const item of params.items) expect(item).not.toHaveProperty('discount');
+  });
+
+  it('adds the list to the items the note names, and leaves it off when there is no note or the note does not name them', () => {
+    expect(purchaseParams('SI-ABCD2345', placed(), lists)!.items[0]).toMatchObject({
+      item_list_id: 'tees',
+      item_list_name: 'Tees',
+      index: 2,
+    });
+    expect(purchaseParams('SI-ABCD2345', placed())!.items[0]).not.toHaveProperty('item_list_id');
+    expect(purchaseParams('SI-ABCD2345', placed(), {})!.items[0]).not.toHaveProperty('item_list_id');
+  });
+
+  it('adds the fingerprints the caller made, and leaves user_data out when there are none', () => {
+    const userData = { sha256_email_address: FINGERPRINT, sha256_phone_number: PHONE_FINGERPRINT };
+    expect(purchaseParams('SI-ABCD2345', placed(), lists, userData)!.user_data).toStrictEqual(userData);
+    expect(purchaseParams('SI-ABCD2345', placed(), lists)).not.toHaveProperty('user_data');
+  });
+
+  it('gives nothing without an order number, since a purchase with no transaction ID would count as every other', () => {
+    for (const blank of ['', '   ']) {
+      expect(purchaseParams(blank, placed(), lists), JSON.stringify(blank)).toBeUndefined();
+    }
+  });
+
+  it('is a complete purchase announcement, whatever is left out, and its event_id is made from the order number', () => {
+    for (const coupon of [undefined, 'WELCOME10']) {
+      for (const withLists of [lists, undefined]) {
+        for (const userData of [{ sha256_email_address: FINGERPRINT }, undefined]) {
+          globalThis.dataLayer = undefined;
+          const params = purchaseParams('SI-ABCD2345', placed({ coupon }), withLists, userData)!;
+          const label = `${coupon} ${withLists ? 'with' : 'without'} lists, ${userData ? 'with' : 'without'} user_data`;
+          expect(pushEvent('purchase', params).problems, label).toStrictEqual([]);
+          expect(layer()[1].event_id, label).toBe('purchase_SI-ABCD2345');
+        }
+      }
     }
   });
 });

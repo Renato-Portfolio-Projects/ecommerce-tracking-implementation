@@ -10,14 +10,19 @@ export interface PushResult {
   problems: string[];
 }
 
-// A coupon exists only when a code was applied, and only the popup's promotion has a source (how the popup
-// was opened), so these announcements may leave those out.
+// What an announcement may leave out without that counting as a fault. A coupon exists only when a code was
+// applied, and on apply_coupon only when the code is one the store knows, because the text of any other code is
+// typed into a free-text box and is never sent. Only the popup's promotion has a source (how the popup was
+// opened). And user_data is missing when the page could not make fingerprints, which needs a secure page.
+// A lead's source is not here: the popup always knows how it was opened.
 export const OPTIONAL_PARAMS: Record<string, string[]> = {
   view_promotion: ['source'],
+  generate_lead: ['user_data'],
   begin_checkout: ['coupon'],
   add_shipping_info: ['coupon'],
   add_payment_info: ['coupon'],
-  purchase: ['coupon'],
+  purchase: ['coupon', 'user_data'],
+  apply_coupon: ['coupon'],
 };
 
 const FINGERPRINT = /^[0-9a-f]{64}$/;
