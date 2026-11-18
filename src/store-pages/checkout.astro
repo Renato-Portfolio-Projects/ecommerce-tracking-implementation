@@ -119,6 +119,20 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
           <p class="lead-error" id="checkout-postal-code-error" data-checkout-error="postalCode" hidden></p>
         </div>
       </div>
+      {/* The shipping method is chosen here, as a real store asks for it, so that completing this step (the address and the
+           method) is the moment tracking calls `add_shipping_info`, with the method that was really chosen. Standard is chosen
+           until the shopper picks otherwise. checkout-review.ts draws the two prices, even while the review is still hidden,
+           and they follow the currency and any coupon. */}
+      <fieldset class="checkout-shipping-methods">
+        <legend>{WORDS['checkout.shippingMethodHeading']}</legend>
+        {SHIPPING_METHODS.map((method, index) => (
+          <label class="checkout-shipping-option">
+            <input type="radio" name="shippingMethod" value={method.id} checked={index === 0} data-checkout-shipping-method />
+            <span>{method.name}</span>
+            <span data-checkout-shipping-price={method.id}></span>
+          </label>
+        ))}
+      </fieldset>
       <div class="checkout-demo">
         <button type="button" class="link-button" data-checkout-demo="address" data-cta="Demo Data - Checkout address">{WORDS['checkout.demoButton']}</button>
         <button type="button" class="link-button" data-checkout-new-person="address" hidden>{WORDS['checkout.newPerson']}</button>
@@ -186,17 +200,6 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
         <span class="checkout-review-line-price" data-checkout-review-price></span>
       </li>
     </template>
-
-    <fieldset class="checkout-shipping-methods">
-      <legend>{WORDS['checkout.shippingMethodHeading']}</legend>
-      {SHIPPING_METHODS.map((method, index) => (
-        <label class="checkout-shipping-option">
-          <input type="radio" name="shippingMethod" value={method.id} checked={index === 0} data-checkout-shipping-method />
-          <span>{method.name}</span>
-          <span data-checkout-shipping-price={method.id}></span>
-        </label>
-      ))}
-    </fieldset>
 
     <form class="checkout-coupon" data-checkout-coupon-form novalidate>
       <div class="lead-field">

@@ -3,6 +3,7 @@ import { checkPayment, demoCard, formatCardNumber, type CardField } from '../dem
 import { fill } from '../engine/fill';
 import { demoAddress, demoContact } from '../demo/personas';
 import { COUNTRIES, PROVINCES, type CountryCode } from '../store/destinations';
+import { SHIPPING_METHODS } from '../store/shipping-methods';
 import { postalCodeLabel } from '../engine/postal-codes';
 import { bringsItsOwnCode, currentPhone, settlePhone, showPhone } from './checkout-phone';
 import { demoPersona } from './demo-persona';
@@ -13,7 +14,9 @@ import { demoPersona } from './demo-persona';
  * again (src/engine/checkout-form.ts, src/demo/test-cards.ts). A step that passes collapses to a one-line
  * summary and opens the next one; any step can still be reopened by hand, which is what makes them editable.
  *
- * The review, the coupon and "Place order" are not here yet: they arrive with the review step.
+ * The address step also holds the choice of shipping method (Standard or Express), made here as a real store asks for it, so
+ * completing the step confirms the method and its summary ends with the method's name. The review, the coupon and
+ * "Place order" are in checkout-review.ts.
  */
 
 const STEP_ORDER = ['contact', 'address', 'payment'] as const;
@@ -160,6 +163,13 @@ function callingCodeOf(code: CountryCode): string {
   return COUNTRIES.find((country) => country.code === code)?.phone.callingCode ?? '';
 }
 
+/** The name of the shipping method that is chosen (Standard until the shopper picks otherwise), which the address step's
+ * summary ends with. The method is chosen in that step, so completing the step confirms it. */
+function chosenShippingName(): string {
+  const id = document.querySelector<HTMLInputElement>('input[name="shippingMethod"]:checked')?.value;
+  return SHIPPING_METHODS.find((method) => method.id === id)?.name ?? '';
+}
+
 /**
  * Brings the list and the number box into line with the number they make: a number typed, pasted or filled in with its
  * own country code moves the list to that country and loses the code, and a number typed with its home digit loses
@@ -198,7 +208,7 @@ function submitAddress(event: SubmitEvent): void {
     [v.city, v.province ? provinceName(v.province) : undefined, v.postalCode].filter(Boolean).join(', '),
     countryName(v.country),
   ];
-  completeStep('address', lines.join(', '));
+  completeStep('address', [lines.join(', '), chosenShippingName()].filter(Boolean).join(' · '));
 }
 
 function submitPayment(event: SubmitEvent): void {

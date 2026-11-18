@@ -180,16 +180,34 @@ describe('the checkout page, before any script has run', () => {
     expect(template).toContain(`aria-label="${WORDS['cart.quantity']}"`);
   });
 
-  it('lists both shipping methods, in order, standard chosen by default', () => {
-    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
-    expect(section).toContain(`<legend>${WORDS['checkout.shippingMethodHeading']}</legend>`);
-    const radios = [...section.matchAll(/<input type="radio" name="shippingMethod" value="(\w+)"( checked)?/g)];
+  it('lists both shipping methods in the address step, in order, standard chosen by default', () => {
+    const step = page.match(/data-checkout-form="address"[\s\S]*?<\/form>/)![0];
+    expect(step).toContain(`<legend>${WORDS['checkout.shippingMethodHeading']}</legend>`);
+    const radios = [...step.matchAll(/<input type="radio" name="shippingMethod" value="(\w+)"( checked)?/g)];
     expect(radios.map((match) => match[1])).toEqual(SHIPPING_METHODS.map((method) => method.id));
     expect(radios.map((match) => !!match[2])).toEqual(SHIPPING_METHODS.map((_, index) => index === 0));
     for (const method of SHIPPING_METHODS) {
-      expect(section, method.id).toContain(`<span>${method.name}</span>`);
-      expect(section, method.id).toContain(`data-checkout-shipping-price="${method.id}"`);
+      expect(step, method.id).toContain(`<span>${method.name}</span>`);
+      expect(step, method.id).toContain(`data-checkout-shipping-price="${method.id}"`);
     }
+  });
+
+  it('puts the shipping methods after the address fields and before the demo button and Continue, so completing the step confirms the choice', () => {
+    const step = page.match(/data-checkout-form="address"[\s\S]*?<\/form>/)![0];
+    const at = (text: string) => step.indexOf(text);
+    expect(at('name="postalCode"')).toBeGreaterThan(-1);
+    expect(at('<fieldset class="checkout-shipping-methods">')).toBeGreaterThan(at('name="postalCode"'));
+    expect(at('data-checkout-demo="address"')).toBeGreaterThan(at('</fieldset>'));
+    expect(at(`class="btn">${WORDS['checkout.continue']}</button>`)).toBeGreaterThan(at('data-checkout-demo="address"'));
+  });
+
+  it('does not offer the shipping choice in the review any more: the review shows only what the chosen method costs', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    expect(section).not.toContain('shippingMethod');
+    expect(section).not.toContain('checkout-shipping');
+    expect(section).not.toContain(WORDS['checkout.shippingMethodHeading']);
+    // The Shipping row of the totals is still there: it is tested with the other four totals, below.
+    expect(section).toContain(`<dt>${WORDS['checkout.shipping']}</dt><dd data-checkout-total="shipping"></dd>`);
   });
 
   it('has a coupon form in the store\'s words, its field styled like every other field, and a hidden message box beside it', () => {
