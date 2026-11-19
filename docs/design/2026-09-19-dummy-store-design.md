@@ -55,7 +55,7 @@ Two separate stores keep business data apart from analytics plumbing:
 - **Business records** (leads, orders) are saved by the site's own endpoints, whatever the tracking consent is.
 - **Tracking receipts** exist only when a tracked event actually reached the server container.
 
-Order flow: `/api/order` validates prices and the coupon on the server, issues the order number and stores the order. The thank-you page renders from that response, and `purchase` fires with `transaction_id` equal to the order number. A refresh cannot double-count.
+Order flow: `/api/order` validates prices and the coupon on the server, issues the order number and stores the order. The thank-you page renders from that response, and `purchase` fires with `transaction_id` equal to the order number. A purchase is announced once for each order in a browser: the browser remembers the orders it has announced (7 days, at most 50), so a reload or a second tab sends nothing more, and for a browser with no memory of the order the transaction ID and the event ID are what the platforms use to recognise a repeat.
 
 ## 4. Tracking design
 
@@ -81,10 +81,10 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 | `remove_from_cart` | Units taken out, by the minus button or Remove | GA4 |
 | `view_cart` | The shopper opens the drawer, or `/cart` loads with something in the cart | GA4 |
 | `begin_checkout` | Checkout loads with items | GA4, Meta `InitiateCheckout`, CAPI |
-| `add_shipping_info` | Shipping step completes | GA4 |
-| `add_payment_info` | Payment step completes | GA4, Meta `AddPaymentInfo` |
+| `add_shipping_info` | The address step, which includes the shipping method, completes | GA4 |
+| `add_payment_info` | The payment step completes with a card the store accepts | GA4, Meta `AddPaymentInfo` |
 | `purchase` | Thank-you page renders the confirmed order | GA4, Meta `Purchase`, CAPI |
-| `apply_coupon` | A code is submitted (status: success, invalid, expired) | GA4 |
+| `apply_coupon` | A code is submitted in the order review (status: success, invalid, expired); a code the store does not know is reported without its text | GA4 |
 | `select_currency` | The visitor picks a currency (from, to); the starting currency arriving is not a pick | GA4 |
 | `cta_click` | A tagged CTA with no ecommerce event is clicked | GA4 only |
 | `refund` | Simulated back-office action, server-only (stretch) | GA4 via Measurement Protocol |
@@ -97,8 +97,8 @@ Order flow: `/api/order` validates prices and the coupon on the server, issues t
 - Meta events carry `content_ids`, `contents`, `content_type`, `value` and `currency`.
 - `value` is the net item total after discount, excluding tax and shipping (per Google's ecommerce guide). Tax and shipping are separate fields. Meta receives the same `value`, so revenue matches across platforms.
 - `currency` is the currency actually charged.
-- Discounts: `coupon` on `begin_checkout` and `purchase`, `discount` per item, `value` net of discount. The server validates the code, so `purchase.coupon` is confirmed. Chain: `generate_lead` (code issued), `apply_coupon`, `purchase`. A `coupon` is only sent when a code was applied.
-- The browser hashes (SHA-256) any email or phone before it reaches the dataLayer, so no tag sees clear-text personal data. An email is first trimmed and lowercased, and a phone number is first turned into digits with its country code (the checkout always supplies one, picked from a list, and a number that does not start with a plus sign sends no fingerprint). `user_data` carries the fingerprints under Google's names for already-hashed values, `sha256_email_address` and `sha256_phone_number`, and `pushEvent` lets nothing else into it. Hashed values are attached only to `generate_lead` and `purchase`, and only travel to the server. The lead popup has no phone box, so `generate_lead` carries an email fingerprint only. Stape's Facebook tag documentation says it hashes raw values and leaves already-hashed values alone. Confirmed with Test Events in v0.4.
+- Discounts: `coupon` on `begin_checkout` and `purchase`, `discount` per item, `value` net of discount. The server validates the code, so `purchase.coupon` is confirmed. Chain: `generate_lead` (code issued), `apply_coupon`, `purchase`. A `coupon` is only sent when a code was applied: the coupon box is in the order review, after the steps, so a step carries one only when it is completed again after a code was applied, and `apply_coupon` sends the code only when the store knows it, so that nothing typed into the box is ever sent.
+- The browser hashes (SHA-256) any email or phone before it reaches the dataLayer, so no tag sees clear-text personal data. An email is first trimmed and lowercased, and a phone number is first turned into digits with its country code (the checkout always supplies one, picked from a list, and a number that does not start with a plus sign sends no fingerprint). `user_data` carries the fingerprints under Google's names for already-hashed values, `sha256_email_address` and `sha256_phone_number`, and `pushEvent` lets nothing else into it. Hashed values are attached only to `generate_lead` and `purchase`, and only travel to the server. The lead popup has no phone box, so `generate_lead` carries an email fingerprint only. A page that cannot make a fingerprint (the browser allows it only on a secure page) announces the event without `user_data` and says so in the console, so a real lead or purchase is never lost to it. Stape's Facebook tag documentation says it hashes raw values and leaves already-hashed values alone. Confirmed with Test Events in v0.4.
 
 ### GTM conventions
 
