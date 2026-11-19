@@ -18,7 +18,9 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
 ---
 
 <StorePage title={WORDS['checkout.title']} description={WORDS['checkout.description']} leadPopup={false}>
-  <h1>{WORDS['checkout.heading']}</h1>
+  {/* `data-track-view` says this page is a checkout, for the script that announces `begin_checkout` when it loads with items in
+       the cart (src/tracking/checkout-tracking.ts). */}
+  <h1 data-track-view="checkout">{WORDS['checkout.heading']}</h1>
 
   {/* Three steps, each a native <details>: the browser gives the disclosure triangle, the keyboard handling
        and the open/closed state for free. Completing one (checkout-steps.ts) collapses it to a one-line
@@ -127,7 +129,7 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
         <legend>{WORDS['checkout.shippingMethodHeading']}</legend>
         {SHIPPING_METHODS.map((method, index) => (
           <label class="checkout-shipping-option">
-            <input type="radio" name="shippingMethod" value={method.id} checked={index === 0} data-checkout-shipping-method />
+            <input type="radio" name="shippingMethod" value={method.id} checked={index === 0} data-checkout-shipping-method data-track-tier={method.name} />
             <span>{method.name}</span>
             <span data-checkout-shipping-price={method.id}></span>
           </label>
@@ -232,6 +234,8 @@ const DEFAULT_COUNTRY = COUNTRIES[0].code;
 <script>
   import { initCheckoutSteps } from '../components/checkout-steps';
   import { initCheckoutReview } from '../components/checkout-review';
+  import { initCheckoutTracking } from '../tracking/checkout-tracking';
   initCheckoutSteps();
   initCheckoutReview();
+  initCheckoutTracking();
 </script>

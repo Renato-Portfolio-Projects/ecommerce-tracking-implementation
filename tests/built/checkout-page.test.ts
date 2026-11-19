@@ -17,7 +17,8 @@ describe('the checkout page, before any script has run', () => {
   it('is named and described in the store\'s words', () => {
     expect(page).toContain(`<title>${WORDS['checkout.title']} | Second Impression</title>`);
     expect(page).toContain(`<meta name="description" content="${WORDS['checkout.description']}">`);
-    expect(page).toContain(`<h1>${WORDS['checkout.heading']}</h1>`);
+    // The heading also carries the attribute that tracking looks for, which the tests for tracking below check.
+    expect(page).toMatch(new RegExp(`<h1[^>]*>${WORDS['checkout.heading']}</h1>`));
   });
 
   it('has no lead popup, footer link or corner tab: a shopper checking out is never invited to start over', () => {
@@ -259,6 +260,44 @@ describe('the script that runs the checkout steps', () => {
       const script = scriptOf(OPEN, readPage(OPEN, file));
       expect(script, file).not.toContain('data-checkout-form');
       expect(script, file).not.toContain('data-checkout-review');
+    }
+  });
+});
+
+// The checkout page is where four of the events are announced. Its heading says the page is a checkout, each shipping method
+// names itself, and the review says which code it has applied once it has one (written by its script, so not in the page as built).
+// What is announced, and when, cannot be checked here, since no script runs: that is proven in a real browser.
+describe('the checkout page, for tracking', () => {
+  it('marks its heading, and nothing else, as the checkout being looked at', () => {
+    expect(page.match(/data-track-view="checkout"/g)).toHaveLength(1);
+    expect(page).toContain(`<h1 data-track-view="checkout">${WORDS['checkout.heading']}</h1>`);
+  });
+
+  it('names each shipping method as it is announced, with the name the store gives it', () => {
+    expect(SHIPPING_METHODS.length).toBeGreaterThan(1);
+    for (const method of SHIPPING_METHODS) {
+      const radio = page.match(new RegExp(`<input type="radio" name="shippingMethod" value="${method.id}"[^>]*>`))![0];
+      expect(radio, method.id).toContain(`data-track-tier="${method.name}"`);
+    }
+  });
+
+  it('does not say a code is applied before the shopper has applied one', () => {
+    expect(page).not.toContain('data-applied-coupon');
+  });
+
+  it('is loaded with the script that announces its events, which hears when a step is completed and when a code is submitted', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('data-track-view="checkout"');
+    expect(script).toContain('checkout:step-completed');
+    expect(script).toContain('checkout:coupon-submitted');
+  });
+
+  it('is the only page that carries that script', () => {
+    for (const file of ['index.html', 'cart/index.html', 'about/index.html', 'thank-you/index.html']) {
+      const script = scriptOf(OPEN, readPage(OPEN, file));
+      expect(script, file).not.toContain('data-track-view="checkout"');
+      expect(script, file).not.toContain('checkout:step-completed');
+      expect(script, file).not.toContain('checkout:coupon-submitted');
     }
   });
 });

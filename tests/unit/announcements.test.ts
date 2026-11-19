@@ -21,6 +21,7 @@ import {
   selectCurrencyParams,
   selectItemParams,
   selectPromotionParams,
+  stepCompletedAnnouncement,
   viewItemListParams,
   viewItemParams,
   viewPromotionParams,
@@ -354,6 +355,63 @@ describe('beginCheckoutParams, addShippingInfoParams and addPaymentInfoParams', 
         for (const [event, params] of made) {
           globalThis.dataLayer = undefined;
           expect(pushEvent(event, params).problems, `${event} in ${code} with ${coupon}`).toStrictEqual([]);
+        }
+      }
+    }
+  });
+});
+
+describe('stepCompletedAnnouncement', () => {
+  const lines: CartLine[] = [{ sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity: 2 }];
+
+  it('is an add_shipping_info for the address step, which carries the method chosen in it', () => {
+    const made = stepCompletedAnnouncement('address', lines, 'CAD', { shippingTier: 'Express' });
+    expect(made?.event).toBe('add_shipping_info');
+    expect(made?.params).toMatchObject({ currency: 'CAD', value: 76, shipping_tier: 'Express' });
+    expect(made?.params).not.toHaveProperty('payment_type');
+  });
+
+  it('is an add_payment_info for the payment step, which carries the kind of payment and no shipping method', () => {
+    const made = stepCompletedAnnouncement('payment', lines, 'CAD', { shippingTier: 'Express' });
+    expect(made?.event).toBe('add_payment_info');
+    expect(made?.params).toMatchObject({ currency: 'CAD', value: 76, payment_type: 'Credit Card' });
+    expect(made?.params).not.toHaveProperty('shipping_tier');
+  });
+
+  it('is nothing for the contact step, which GA4 has no event for, and nothing for any other word', () => {
+    for (const step of ['contact', 'review', '', 'Address', 'payment ', 'shipping']) {
+      expect(stepCompletedAnnouncement(step, lines, 'CAD', { shippingTier: 'Standard' }), JSON.stringify(step)).toBeUndefined();
+    }
+  });
+
+  it('carries the code applied so far, with the discount on each unit and the value after it', () => {
+    for (const step of ['address', 'payment']) {
+      const made = stepCompletedAnnouncement(step, lines, 'CAD', { shippingTier: 'Standard', coupon: 'WELCOME10' });
+      expect(made?.params, step).toMatchObject({ value: 68.4, coupon: 'WELCOME10' });
+      expect((made?.params.items as Array<{ discount?: number }>)[0].discount, step).toBe(3.8);
+    }
+  });
+
+  it('carries no code when none is applied, or when the one that was tried was expired', () => {
+    for (const coupon of [undefined, 'SPRING20', 'NOPE']) {
+      const made = stepCompletedAnnouncement('address', lines, 'CAD', { shippingTier: 'Standard', coupon });
+      expect(made?.params, String(coupon)).not.toHaveProperty('coupon');
+      expect(made?.params.value, String(coupon)).toBe(76);
+    }
+  });
+
+  it('gives nothing for an empty cart', () => {
+    expect(stepCompletedAnnouncement('address', [], 'CAD', { shippingTier: 'Standard' })).toBeUndefined();
+    expect(stepCompletedAnnouncement('payment', [], 'CAD', { shippingTier: 'Standard' })).toBeUndefined();
+  });
+
+  it('makes complete announcements in every currency, with a code and without one', () => {
+    for (const step of ['address', 'payment']) {
+      for (const coupon of [undefined, 'WELCOME10']) {
+        for (const { code } of CURRENCIES) {
+          const made = stepCompletedAnnouncement(step, lines, code, { shippingTier: 'Standard', coupon })!;
+          globalThis.dataLayer = undefined;
+          expect(pushEvent(made.event, made.params).problems, `${step} in ${code} with ${coupon}`).toStrictEqual([]);
         }
       }
     }

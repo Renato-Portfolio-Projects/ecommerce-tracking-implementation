@@ -117,6 +117,16 @@ function announceStepsChanged(): void {
   document.dispatchEvent(new CustomEvent('checkout:step-changed'));
 }
 
+/**
+ * Told when a shopper completes a step, which is more than something having changed: tracking counts a completion, and a step
+ * that is edited and completed again is completed again. Reopening a step is not a completion, and neither is a form that was
+ * sent with a mistake in it, since a step is completed only once its checks pass. The contact step announces it too, and
+ * tracking has nothing to say about that one (src/tracking/checkout-tracking.ts).
+ */
+function announceStepCompleted(step: Step): void {
+  document.dispatchEvent(new CustomEvent('checkout:step-completed', { detail: { step } }));
+}
+
 /** Closed, with a summary showing: what "done" looks like for a step, on the page, the same way
  * checkout-review.ts works out whether every step is done. */
 function isStepComplete(step: Step): boolean {
@@ -141,6 +151,7 @@ function completeStep(step: Step, summary: string): void {
   const next = STEP_ORDER[STEP_ORDER.indexOf(step) + 1];
   if (next && !isStepComplete(next)) details(next).open = true;
   announceStepsChanged();
+  announceStepCompleted(step);
 }
 
 /** Reopening a step for editing hides its summary and Edit link again, so they are never shown at the same time as the form. */

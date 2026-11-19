@@ -1,4 +1,4 @@
-import { checkCoupon } from '../engine/coupons';
+import { checkCoupon, type CouponCheck } from '../engine/coupons';
 import { checkPayment, type KeptCard } from '../demo/test-cards';
 import { fill } from '../engine/fill';
 import { formatMoney } from '../engine/money';
@@ -22,6 +22,9 @@ import { currentCurrency } from './currency-switcher';
  * The shipping method is chosen in the address step, not here (checkout.astro), where a real store asks for it and where
  * tracking can tell which one a shopper chose. This file draws each method's price beside it, whether or not the review
  * is showing yet, and prices the order with the method that is chosen.
+ *
+ * It tells tracking about the code, and nothing else of what it knows: a code that was submitted is announced with how it went
+ * (`checkout:coupon-submitted`), and the code that is applied is written on the review (`data-applied-coupon`).
  *
  * Whether the three steps are all done is read from the page itself, the same way a shopper sees it (each
  * step closed with its summary showing), rather than asked of checkout-steps.ts directly, so the two files
@@ -144,6 +147,26 @@ function handleOrderChanged(): void {
   redraw();
 }
 
+/**
+ * Says, on the review itself, which code is applied, as the store spells it, and nothing when none is. Tracking reads it
+ * (src/tracking/checkout-tracking.ts), so that it never keeps a second copy of what this file knows.
+ */
+function showAppliedCoupon(code: string | undefined): void {
+  if (code === undefined) delete section().dataset.appliedCoupon;
+  else section().dataset.appliedCoupon = code;
+}
+
+/**
+ * Told whenever a code is submitted, with how it went (`valid`, `expired` or `invalid`, the words of `checkCoupon`) and, for the
+ * first two, the store's own code. Never what was typed, because the box takes any text and a shopper can type or paste
+ * anything into it. An empty box submits no code, so nothing is told.
+ */
+function announceCouponSubmitted(checked: CouponCheck): void {
+  if (checked.status === 'none') return;
+  const detail = checked.status === 'invalid' ? { status: checked.status } : { status: checked.status, code: checked.coupon.code };
+  document.dispatchEvent(new CustomEvent('checkout:coupon-submitted', { detail }));
+}
+
 function applyCoupon(event: SubmitEvent): void {
   event.preventDefault();
   if (placed) return;
@@ -160,7 +183,9 @@ function applyCoupon(event: SubmitEvent): void {
     appliedCoupon = '';
     showCouponMessage(checked.status === 'expired' ? words.couponExpired : words.couponInvalid);
   }
+  showAppliedCoupon(checked.status === 'valid' ? checked.coupon.code : undefined);
   redraw();
+  announceCouponSubmitted(checked);
 }
 
 /** Told the moment "Place order" sends its request, so checkout-steps.ts stops the three steps above being

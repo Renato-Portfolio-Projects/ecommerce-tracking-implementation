@@ -165,6 +165,35 @@ export function addPaymentInfoParams(
   return base === undefined ? undefined : { ...base, payment_type: PAYMENT_TYPE };
 }
 
+/** What completing a step of the checkout announces: the event, and what it carries. */
+export type StepAnnouncement =
+  | { event: 'add_shipping_info'; params: NonNullable<ReturnType<typeof addShippingInfoParams>> }
+  | { event: 'add_payment_info'; params: NonNullable<ReturnType<typeof addPaymentInfoParams>> };
+
+/**
+ * What completing a step announces. The address step, which includes the shipping method, is an `add_shipping_info`, and the
+ * payment step an `add_payment_info`. The contact step announces nothing, because GA4 has no event for it, and neither does any
+ * word that is not a step. Nothing for an empty cart. `shippingTier` is the name of the method that was chosen, and `coupon`
+ * the code applied so far, if any: the order review applies a code after the steps, so a step carries one only when it is
+ * completed again afterwards.
+ */
+export function stepCompletedAnnouncement(
+  step: string,
+  lines: CartLine[],
+  currency: CurrencyCode,
+  options: { shippingTier: string; coupon?: string },
+): StepAnnouncement | undefined {
+  if (step === 'address') {
+    const params = addShippingInfoParams(lines, currency, options.shippingTier, options.coupon);
+    return params === undefined ? undefined : { event: 'add_shipping_info', params };
+  }
+  if (step === 'payment') {
+    const params = addPaymentInfoParams(lines, currency, options.coupon);
+    return params === undefined ? undefined : { event: 'add_payment_info', params };
+  }
+  return undefined;
+}
+
 /** A discount code that was submitted: how it went, and the code itself unless the store does not know it. */
 export type CouponAnnouncement = { status: 'success' | 'expired' | 'invalid'; coupon?: string };
 
