@@ -1,6 +1,6 @@
 import type { Contact } from '../engine/checkout-form.js';
 import type { PricedOrder } from '../engine/pricing.js';
-import { purchaseParams } from './announcements.js';
+import { purchaseParams } from './purchase-announcements.js';
 import { hashedUserData, type HashedUserData } from './hash.js';
 import { takeOrderLists } from './order-lists.js';
 import { rememberAnnounced, wasAnnounced } from './purchase-marker.js';

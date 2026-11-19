@@ -114,7 +114,7 @@ export function parseTrackable(raw: string | undefined): TrackableProduct | unde
 }
 
 /** One line the pricing worked out as an item, with the list it was picked from if there was one. */
-function itemFromPriced(line: PricedLine, list: ListContext | undefined): TrackedItem {
+export function itemFromPriced(line: PricedLine, list: ListContext | undefined): TrackedItem {
   return {
     item_id: line.sku,
     item_name: line.name,
@@ -142,12 +142,4 @@ export function trackedLines(lines: CartLine[], currency: CurrencyCode, coupon?:
     value: items.itemsNet / 100,
     ...(items.appliedCoupon === undefined ? {} : { coupon: items.appliedCoupon.code }),
   };
-}
-
-/**
- * The lines of an order the server priced, as items: each in the currency the order was placed in, with the discount
- * on one unit, and with the list it was picked from when `lists` names its variant SKU.
- */
-export function trackedOrderLines(lines: PricedLine[], lists: ListsByVariant = {}): TrackedItem[] {
-  return lines.map((line) => itemFromPriced(line, lists[line.variantSku]));
 }

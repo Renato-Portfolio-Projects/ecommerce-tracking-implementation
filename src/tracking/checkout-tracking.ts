@@ -1,7 +1,7 @@
 import { loadCart } from '../components/cart-client.js';
 import { currentCurrency } from '../components/currency-switcher.js';
 import type { CartLine } from '../engine/cart.js';
-import { applyCouponParams, beginCheckoutParams, stepCompletedAnnouncement } from './announcements.js';
+import { applyCouponParams, beginCheckoutParams, stepCompletedAnnouncement } from './checkout-announcements.js';
 import { whenCurrencySettled } from './currency-wait.js';
 import { rememberOrderLists } from './order-lists.js';
 import { pushEvent } from './push-event.js';
@@ -14,7 +14,7 @@ import { pushEvent } from './push-event.js';
  * (`checkout:step-completed`, from checkout-steps.ts, and `checkout:coupon-submitted` and `checkout:order-confirmed`, from
  * checkout-review.ts), and what is left is read from the page itself: `data-track-view`
  * on the heading, `data-track-tier` on each shipping method, and `data-applied-coupon` on the review, so this file keeps no copy
- * of the page's state and knows no price, method or word. What each announcement carries is built in announcements.ts and tested
+ * of the page's state and knows no price, method or word. What each announcement carries is built in checkout-announcements.ts and tested
  * there, and pushEvent checks it against the tracking plan; this file is only the wiring to the page, which cannot be tested
  * without a page and is checked in a real browser.
  *

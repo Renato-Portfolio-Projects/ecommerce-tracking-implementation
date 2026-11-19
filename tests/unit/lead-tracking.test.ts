@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { announceLead, type LeadDetail } from '../../src/tracking/lead-tracking';
+import { announceLead, generateLeadParams, type LeadDetail } from '../../src/tracking/lead-tracking';
+import { pushEvent } from '../../src/tracking/push-event';
 
 // What happens when the popup says a lead was kept: the email is turned into its fingerprint, and the lead is announced
 // with the code, how the popup was opened and the fingerprint, and nothing else of what was typed. The hashing needs a secure
@@ -126,5 +127,46 @@ describe('announceLead', () => {
   it('does not throw when the page will not let it write to the dataLayer', async () => {
     globalThis.dataLayer = Object.freeze([]) as unknown as unknown[];
     await expect(announceLead(detail)).resolves.toBeUndefined();
+  });
+});
+
+describe('generateLeadParams', () => {
+  const FINGERPRINT = 'a68414a03cfb6a8136979bfaa406739eeb4a195a60d8345121b38d1c4038140f';
+  // What the popup announces: the shopper's details are in it so the listener can fingerprint the email, and none of them
+  // is meant to reach the dataLayer.
+  const popup = {
+    firstName: 'Maya',
+    email: 'maya.tremblay@example.com',
+    marketing: true,
+    code: 'WELCOME10',
+    source: 'auto',
+  };
+
+  it('carries the code the popup issued and how the popup was opened, and nothing the shopper typed', () => {
+    expect(generateLeadParams(popup)).toStrictEqual({ coupon: 'WELCOME10', source: 'auto' });
+    const written = JSON.stringify(generateLeadParams(popup, { sha256_email_address: FINGERPRINT }));
+    for (const typed of ['Maya', 'maya.tremblay@example.com', 'marketing']) expect(written).not.toContain(typed);
+  });
+
+  it('adds the email fingerprint, which the caller makes, and leaves user_data out when there is none', () => {
+    expect(generateLeadParams(popup, { sha256_email_address: FINGERPRINT })).toStrictEqual({
+      coupon: 'WELCOME10',
+      source: 'auto',
+      user_data: { sha256_email_address: FINGERPRINT },
+    });
+    expect(generateLeadParams(popup)).not.toHaveProperty('user_data');
+  });
+
+  it('keeps how the popup was opened', () => {
+    expect(generateLeadParams({ ...popup, source: 'manual' }).source).toBe('manual');
+  });
+
+  it('is a complete generate_lead announcement, with a fingerprint and without one', () => {
+    for (const userData of [{ sha256_email_address: FINGERPRINT }, undefined]) {
+      globalThis.dataLayer = undefined;
+      const result = pushEvent('generate_lead', generateLeadParams(popup, userData));
+      expect(result.problems, String(userData)).toStrictEqual([]);
+      expect(layer()[0]).toMatchObject({ event: 'generate_lead', coupon: 'WELCOME10', source: 'auto' });
+    }
   });
 });

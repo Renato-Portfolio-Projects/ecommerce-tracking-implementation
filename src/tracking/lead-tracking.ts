@@ -1,4 +1,3 @@
-import { generateLeadParams } from './announcements.js';
 import { hashedUserData, type HashedUserData } from './hash.js';
 import { pushEvent } from './push-event.js';
 
@@ -24,6 +23,22 @@ export interface LeadDetail {
   marketing: boolean;
   code: string;
   source: string;
+}
+
+/** A lead as the dataLayer gets it: the code the popup issued, how the popup was opened, and the email's fingerprint when the page could make one. */
+export type LeadAnnouncement = { coupon: string; source: string; user_data?: HashedUserData };
+
+/**
+ * The lead the popup announced. Only the code and how the popup was opened are taken from what the popup announces:
+ * the first name, the email as typed and the marketing tick are not carried. The fingerprint is made by the caller,
+ * which has to wait for the browser to make it, and is added when there is one.
+ */
+export function generateLeadParams(lead: { code: string; source: string }, userData?: HashedUserData): LeadAnnouncement {
+  return {
+    coupon: lead.code,
+    source: lead.source,
+    ...(userData === undefined ? {} : { user_data: userData }),
+  };
 }
 
 /** Fingerprints the address and announces the lead, with the fingerprint when there is one. Never throws into the page. */

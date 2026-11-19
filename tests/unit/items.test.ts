@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { cartToItemsInput, type CartLine } from '../../src/engine/cart';
 import { findProduct, listContextFor } from '../../src/engine/catalog';
-import { priceItems, priceOrder, type PricedOrder } from '../../src/engine/pricing';
+import { priceItems } from '../../src/engine/pricing';
 import { CURRENCIES } from '../../src/store/currencies';
 import {
   itemFromTrackable,
   parseTrackable,
   trackableProduct,
   trackedLines,
-  trackedOrderLines,
 } from '../../src/tracking/items';
 
 const logoTee = findProduct('SI-TEE-002')!;
@@ -224,73 +223,5 @@ describe('trackedLines with a discount code', () => {
 
   it('gives nothing for no lines, even with a code', () => {
     expect(trackedLines([], 'CAD', 'WELCOME10')).toStrictEqual({ items: [], value: 0 });
-  });
-});
-
-describe('trackedOrderLines', () => {
-  const order = (coupon?: string, currency = 'CAD', quantity = 2): PricedOrder => {
-    const result = priceOrder({
-      lines: [
-        { sku: 'SI-TEE-002', colour: 'Ink', size: 'M', quantity },
-        { sku: 'SI-PNT-001', colour: 'Ink', size: '32', quantity: 1 },
-      ],
-      currency,
-      ...(coupon === undefined ? {} : { coupon }),
-      destination: { country: 'CA', province: 'ON' },
-      shippingMethod: 'express',
-    });
-    if (!result.ok) throw new Error('could not price the order');
-    return result.order;
-  };
-
-  it("turns an order's lines into items with the variant, the quantity, the price of one unit and the discount on one", () => {
-    expect(trackedOrderLines(order('WELCOME10').lines)).toStrictEqual([
-      {
-        item_id: 'SI-TEE-002',
-        item_name: 'Logo Tee',
-        item_category: 'Tees',
-        item_variant: 'Ink / M',
-        price: 38,
-        quantity: 2,
-        discount: 3.8,
-      },
-      {
-        item_id: 'SI-PNT-001',
-        item_name: 'Plain Chino',
-        item_category: 'Pants',
-        item_variant: 'Ink / 32',
-        price: 96,
-        quantity: 1,
-        discount: 9.6,
-      },
-    ]);
-  });
-
-  it('puts no discount on an order that used no code', () => {
-    for (const item of trackedOrderLines(order().lines)) expect(item).not.toHaveProperty('discount');
-  });
-
-  it('prices each unit in the currency the order was placed in', () => {
-    const placed = order('WELCOME10', 'GBP');
-    const items = trackedOrderLines(placed.lines);
-    expect(items.map((item) => item.price)).toStrictEqual(placed.lines.map((line) => line.unitPrice / 100));
-    expect(items[0].price).toBe(21.28);
-  });
-
-  it('adds the list a line was picked from, found by its variant SKU, and only to a line the note names', () => {
-    const items = trackedOrderLines(order().lines, { 'SI-TEE-002-INK-M': teesList });
-    expect(items[0]).toMatchObject({ item_list_id: 'tees', item_list_name: 'Tees', index: 2 });
-    expect(items[1]).not.toHaveProperty('item_list_id');
-    expect(items[1]).not.toHaveProperty('item_list_name');
-    expect(items[1]).not.toHaveProperty('index');
-  });
-
-  it('ignores an entry of the note that no line of the order has', () => {
-    const items = trackedOrderLines(order().lines, { 'SI-TEE-001-PAPER-M': teesList });
-    for (const item of items) expect(item).not.toHaveProperty('item_list_id');
-  });
-
-  it('gives nothing for an order with no lines', () => {
-    expect(trackedOrderLines([])).toStrictEqual([]);
   });
 });
