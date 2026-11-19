@@ -292,6 +292,16 @@ describe('the checkout page, for tracking', () => {
     expect(script).toContain('checkout:coupon-submitted');
   });
 
+  it('tells tracking when the server has confirmed an order, and leaves the note of lists for the thank-you page', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('checkout:order-confirmed');
+    expect(script).toContain('second-impression:order-lists');
+  });
+
+  it('does not carry the code that makes fingerprints, since nothing is fingerprinted until the order is shown', () => {
+    expect(scriptOf(OPEN, page)).not.toContain('SHA-256');
+  });
+
   it('is the only page that carries that script', () => {
     for (const file of ['index.html', 'cart/index.html', 'about/index.html', 'thank-you/index.html']) {
       const script = scriptOf(OPEN, readPage(OPEN, file));

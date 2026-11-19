@@ -83,6 +83,16 @@ function renderTotals(order: PricedOrder, words: { free: string }): void {
   document.querySelector<HTMLElement>('[data-thank-you-discount-row]')!.hidden = order.discount === 0;
 }
 
+/**
+ * Told once the order is on the page, which order it is: tracking announces the purchase from it (src/tracking/purchase-tracking.ts).
+ * It carries the order as the server priced it and the contact, which has to be fingerprinted before anything reaches the dataLayer,
+ * and nothing of the address or the card. It is not told for a missing, wrong or expired token, nor when the store could not be
+ * reached, since no order was shown then.
+ */
+function announceOrderShown(answer: OrderAnswer): void {
+  document.dispatchEvent(new CustomEvent('thank-you:order-shown', { detail: { orderNumber: answer.orderNumber, order: answer.order, contact: answer.contact } }));
+}
+
 function showOrder(answer: OrderAnswer): void {
   const words = wordsOf();
   loading().hidden = true;
@@ -100,6 +110,7 @@ function showOrder(answer: OrderAnswer): void {
     brand: answer.payment.brand,
     last4: answer.payment.last4,
   });
+  announceOrderShown(answer);
 }
 
 function showNotFound(): void {

@@ -1,14 +1,18 @@
 import { loadCart } from '../components/cart-client.js';
 import { currentCurrency } from '../components/currency-switcher.js';
+import type { CartLine } from '../engine/cart.js';
 import { applyCouponParams, beginCheckoutParams, stepCompletedAnnouncement } from './announcements.js';
 import { whenCurrencySettled } from './currency-wait.js';
+import { rememberOrderLists } from './order-lists.js';
 import { pushEvent } from './push-event.js';
 
 /**
  * Turns what the checkout page does into announcements to the dataLayer: `begin_checkout` when the page loads with items in the
  * cart, `add_shipping_info` and `add_payment_info` when the address and payment steps are completed, and `apply_coupon` when a
- * discount code is submitted. The page already announces what happens in it (`checkout:step-completed`, from checkout-steps.ts,
- * and `checkout:coupon-submitted`, from checkout-review.ts), and what is left is read from the page itself: `data-track-view`
+ * discount code is submitted. It also leaves a note, for the thank-you page, of where each line of an order was picked from, since
+ * the `purchase` is announced from that page (src/tracking/purchase-tracking.ts). The page already announces what happens in it
+ * (`checkout:step-completed`, from checkout-steps.ts, and `checkout:coupon-submitted` and `checkout:order-confirmed`, from
+ * checkout-review.ts), and what is left is read from the page itself: `data-track-view`
  * on the heading, `data-track-tier` on each shipping method, and `data-applied-coupon` on the review, so this file keeps no copy
  * of the page's state and knows no price, method or word. What each announcement carries is built in announcements.ts and tested
  * there, and pushEvent checks it against the tracking plan; this file is only the wiring to the page, which cannot be tested
@@ -55,6 +59,15 @@ function handleCouponSubmitted(event: Event): void {
   if (params) pushEvent('apply_coupon', params);
 }
 
+/**
+ * The server confirmed the order, and the cart is about to be emptied: leaves the note of where each line was picked from, which
+ * the thank-you page reads once. Nothing is announced here, since the purchase is announced from the page that shows the order.
+ */
+function handleOrderConfirmed(event: Event): void {
+  const lines = (event as CustomEvent<{ lines?: unknown } | null>).detail?.lines;
+  if (Array.isArray(lines)) rememberOrderLists(lines as CartLine[]);
+}
+
 let started = false;
 
 /** Starts listening. Safe to call more than once. */
@@ -64,4 +77,5 @@ export function initCheckoutTracking(): void {
   announceCheckoutBegun();
   document.addEventListener('checkout:step-completed', handleStepCompleted);
   document.addEventListener('checkout:coupon-submitted', handleCouponSubmitted);
+  document.addEventListener('checkout:order-confirmed', handleOrderConfirmed);
 }

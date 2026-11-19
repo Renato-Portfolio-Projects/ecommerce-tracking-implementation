@@ -3,7 +3,7 @@ import { checkPayment, type KeptCard } from '../demo/test-cards';
 import { fill } from '../engine/fill';
 import { formatMoney } from '../engine/money';
 import { priceOrder, type PricedOrder } from '../engine/pricing';
-import { cartToItemsInput } from '../engine/cart';
+import { cartToItemsInput, type CartLine } from '../engine/cart';
 import { shippingCost } from '../engine/shipping';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 import type { CurrencyCode } from '../store/currencies';
@@ -23,8 +23,9 @@ import { currentCurrency } from './currency-switcher';
  * tracking can tell which one a shopper chose. This file draws each method's price beside it, whether or not the review
  * is showing yet, and prices the order with the method that is chosen.
  *
- * It tells tracking about the code, and nothing else of what it knows: a code that was submitted is announced with how it went
- * (`checkout:coupon-submitted`), and the code that is applied is written on the review (`data-applied-coupon`).
+ * It tells tracking three things, and nothing else of what it knows: a code that was submitted is announced with how it went
+ * (`checkout:coupon-submitted`), the code that is applied is written on the review (`data-applied-coupon`), and an order that the
+ * server has confirmed is announced with the lines the cart held (`checkout:order-confirmed`), just before the cart is emptied.
  *
  * Whether the three steps are all done is read from the page itself, the same way a shopper sees it (each
  * step closed with its summary showing), rather than asked of checkout-steps.ts directly, so the two files
@@ -203,6 +204,15 @@ function announceOrderSubmitFailed(): void {
   document.dispatchEvent(new CustomEvent('checkout:order-submit-failed'));
 }
 
+/**
+ * Told when the server has confirmed the order, with the lines the cart held, just before the cart is emptied and the browser goes
+ * to the thank-you page. The order on the server keeps no list, and the thank-you page, which announces the purchase, is a separate
+ * page load, so tracking leaves a note of where each line was picked from for it (src/tracking/checkout-tracking.ts).
+ */
+function announceOrderConfirmed(lines: CartLine[]): void {
+  document.dispatchEvent(new CustomEvent('checkout:order-confirmed', { detail: { lines } }));
+}
+
 function showOrderError(text: string): void {
   const box = orderErrorBox();
   box.textContent = text;
@@ -291,6 +301,7 @@ async function handlePlaceOrder(): Promise<void> {
 
   placed = true;
   clearIdempotencyKey();
+  announceOrderConfirmed(cart.lines);
   clearCart();
   location.href = `/thank-you?token=${encodeURIComponent(token)}`;
 }
