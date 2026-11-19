@@ -1,15 +1,16 @@
 import { cartToItemsInput, type CartLine } from '../engine/cart.js';
 import { findCollection, type ListContext } from '../engine/catalog.js';
 import { amountsInAllCurrencies } from '../engine/money.js';
-import { priceItems } from '../engine/pricing.js';
+import { priceItems, type PricedLine } from '../engine/pricing.js';
 import { CURRENCIES, type CurrencyCode } from '../store/currencies.js';
 import type { Product } from '../store/products.js';
 
 /**
  * Builds the items that go into an announcement, in the GA4 item schema that `docs/tracking-plan.md` describes:
  * `item_id` is the product's SKU, `item_category` the collection's name, `price` the price of one unit in the
- * currency being shown (the sale price on a sale item), and a cart line adds its variant, its quantity and the
- * list it was picked from (`item_list_id`, `item_list_name` and `index`, counting from 1).
+ * currency being shown (the sale price on a sale item), and a cart line adds its variant, its quantity, the
+ * discount a code takes off one unit (only when a code is applied) and the list it was picked from
+ * (`item_list_id`, `item_list_name` and `index`, counting from 1).
  */
 export interface TrackedItem {
   item_id: string;
@@ -18,10 +19,18 @@ export interface TrackedItem {
   item_variant?: string;
   price: number;
   quantity?: number;
+  /** What a discount code takes off one unit, in the currency of `price`. Missing when no code was applied. */
+  discount?: number;
   item_list_id?: string;
   item_list_name?: string;
   index?: number;
 }
+
+/**
+ * The lists the lines of an order were picked from, by each line's variant SKU (for example SI-TEE-002-INK-M). An
+ * order carries no lists, so the checkout leaves them in a note for the thank-you page (src/tracking/order-lists.ts).
+ */
+export type ListsByVariant = Record<string, ListContext>;
 
 /**
  * What a page carries about one product, written into the page when it is built, so that the script never works
@@ -35,10 +44,15 @@ export interface TrackableProduct {
   price: Record<CurrencyCode, number>;
 }
 
-/** Cart lines as items, with the value of the lot (the items after any discount, without shipping or tax). */
+/**
+ * Cart lines as items, with the value of the lot (the items after any discount, without shipping or tax), and the
+ * code that was applied, as the store spells it. A code that is expired or that the store does not know is not
+ * applied, so it is not here either.
+ */
 export interface TrackedLines {
   items: TrackedItem[];
   value: number;
+  coupon?: string;
 }
 
 /** A product as a page carries it, with its price in every currency. Run when the page is built. */
@@ -99,25 +113,33 @@ export function parseTrackable(raw: string | undefined): TrackableProduct | unde
   return { item_id, item_name, item_category, price: amounts as Record<CurrencyCode, number> };
 }
 
+/** One line the pricing worked out as an item, with the list it was picked from if there was one. */
+export function itemFromPriced(line: PricedLine, list: ListContext | undefined): TrackedItem {
+  return {
+    item_id: line.sku,
+    item_name: line.name,
+    item_category: line.category,
+    item_variant: line.variant,
+    price: line.unitPrice / 100,
+    quantity: line.quantity,
+    ...(line.unitDiscount > 0 ? { discount: line.unitDiscount / 100 } : {}),
+    ...listFields(list),
+  };
+}
+
 /**
- * Cart lines as items in one currency, with their total value. Prices come from `priceItems`, the cart's own
- * pricing, so an event never disagrees with the cart about what a line costs. A cart is checked line by line
- * when it is built, so lines that cannot be priced do not happen; if one did, nothing is announced for it.
+ * Cart lines as items in one currency, with their total value, after the discount of `coupon` if it is a code the
+ * store accepts (the code as typed, in any case). Prices come from `priceItems`, the cart's own pricing, so an event
+ * never disagrees with the cart about what a line costs. A cart is checked line by line when it is built, so lines
+ * that cannot be priced do not happen; if one did, nothing is announced for it. No lines give nothing, even with a code.
  */
-export function trackedLines(lines: CartLine[], currency: CurrencyCode): TrackedLines {
-  const priced = priceItems(cartToItemsInput({ lines }, currency));
-  if (!priced.ok) return { items: [], value: 0 };
+export function trackedLines(lines: CartLine[], currency: CurrencyCode, coupon?: string): TrackedLines {
+  const priced = priceItems(cartToItemsInput({ lines }, currency, coupon));
+  if (!priced.ok || priced.items.lines.length === 0) return { items: [], value: 0 };
   const { items } = priced;
   return {
-    items: items.lines.map((line, index) => ({
-      item_id: line.sku,
-      item_name: line.name,
-      item_category: line.category,
-      item_variant: line.variant,
-      price: line.unitPrice / 100,
-      quantity: line.quantity,
-      ...listFields(lines[index].list),
-    })),
+    items: items.lines.map((line, index) => itemFromPriced(line, lines[index].list)),
     value: items.itemsNet / 100,
+    ...(items.appliedCoupon === undefined ? {} : { coupon: items.appliedCoupon.code }),
   };
 }

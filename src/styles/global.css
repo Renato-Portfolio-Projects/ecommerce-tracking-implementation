@@ -1244,7 +1244,7 @@ body:has(.cart-drawer[open]) {
   border-radius: 2px;
 }
 
-/* The order summary: the line items, the shipping method choice, the coupon field and the totals. */
+/* The order summary: the line items, the coupon field and the totals. */
 .checkout-review {
   margin-top: var(--space-5);
   padding-top: var(--space-4);
@@ -1297,8 +1297,9 @@ body:has(.cart-drawer[open]) {
   font-weight: 600;
 }
 
+/* The shipping method choice, in the address step: the form's own gap sets the space around it, as around any other field. */
 .checkout-shipping-methods {
-  margin: var(--space-4) 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }

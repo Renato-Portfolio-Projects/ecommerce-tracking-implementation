@@ -68,5 +68,8 @@ import { WORDS } from '../store/words';
 
 <script>
   import { initThankYou } from '../components/thank-you';
+  import { initPurchaseTracking } from '../tracking/purchase-tracking';
+  // Listening starts first, so that the announcement of the order cannot come before it.
+  initPurchaseTracking();
   initThankYou();
 </script>

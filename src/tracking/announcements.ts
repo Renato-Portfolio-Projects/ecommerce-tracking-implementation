@@ -5,9 +5,13 @@ import { itemFromTrackable, trackedLines, type TrackableProduct, type TrackedIte
 import type { Promotion } from './promotions.js';
 
 /**
- * What each announcement from a home page carries, built from what the page carries as data, so that the code
+ * What each announcement from a page carries, built from what the page carries as data, so that the code
  * that listens to the page and the tests both use one description of it. pushEvent checks the result against
  * the tracking plan.
+ *
+ * These are the announcements of the browsing and the cart, which every store page can make, so they are in the script every
+ * store page loads. The checkout's are built in checkout-announcements.ts, the lead's in lead-tracking.ts and the purchase's in
+ * purchase-announcements.ts, so that a page that never makes those events does not carry them.
  */
 
 /** A product in a list: what the page carries about it, and the list it is in with its place there. */

@@ -178,7 +178,7 @@ Built in the fourth part of this work. One page, `/checkout`, with three editabl
 | `checkout.continue` | Continue | The button that checks a step and, once it passes, collapses it to a summary |
 | `checkout.edit` | Edit | The button on a completed step's summary that reopens it |
 | `checkout.testModeNote` | This is a demo store. Only test cards work, and nothing is really charged. | A note above the payment fields |
-| `checkout.shippingMethodHeading` | Shipping method | Above the Standard and Express choice, in the order summary |
+| `checkout.shippingMethodHeading` | Shipping method | Above the Standard and Express choice, in the address step |
 | `checkout.discount` | Discount | A line in the order summary, shown only when a coupon is applied |
 | `checkout.shipping` | Shipping | A line in the order summary |
 | `checkout.tax` | Tax | A line in the order summary |

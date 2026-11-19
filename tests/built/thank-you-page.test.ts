@@ -98,3 +98,30 @@ describe('the script that runs the thank-you page', () => {
     }
   });
 });
+
+// A purchase is announced from this page, once the order is on it. What is announced, and when, cannot be checked here, since no
+// script runs: that is proven in a real browser. The page's script is what is carried here, and what it is not.
+describe('the thank-you page, for tracking', () => {
+  it('is loaded with the script that announces the purchase, which hears that the order is on the page', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('thank-you:order-shown');
+  });
+
+  it('carries the memory it needs: which orders were announced, and the note of lists the checkout left', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('second-impression:purchases-announced');
+    expect(script).toContain('second-impression:order-lists');
+  });
+
+  it('carries the code that makes the fingerprints, since the purchase carries the email and the phone', () => {
+    expect(scriptOf(OPEN, page)).toContain('SHA-256');
+  });
+
+  it('is the only page that carries that script', () => {
+    for (const file of ['index.html', 'cart/index.html', 'checkout/index.html', 'about/index.html']) {
+      const script = scriptOf(OPEN, readPage(OPEN, file));
+      expect(script, file).not.toContain('thank-you:order-shown');
+      expect(script, file).not.toContain('second-impression:purchases-announced');
+    }
+  });
+});

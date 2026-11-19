@@ -1,9 +1,9 @@
-import { checkCoupon } from '../engine/coupons';
+import { checkCoupon, type CouponCheck } from '../engine/coupons';
 import { checkPayment, type KeptCard } from '../demo/test-cards';
 import { fill } from '../engine/fill';
 import { formatMoney } from '../engine/money';
 import { priceOrder, type PricedOrder } from '../engine/pricing';
-import { cartToItemsInput } from '../engine/cart';
+import { cartToItemsInput, type CartLine } from '../engine/cart';
 import { shippingCost } from '../engine/shipping';
 import { SHIPPING_METHODS } from '../store/shipping-methods';
 import type { CurrencyCode } from '../store/currencies';
@@ -18,6 +18,14 @@ import { currentCurrency } from './currency-switcher';
  * charged. It re-prices whenever anything that affects the total changes: a step is completed or reopened, the
  * shipping method is chosen, a coupon is applied, the shopper picks another currency, or the cart itself changes
  * (another tab, say).
+ *
+ * The shipping method is chosen in the address step, not here (checkout.astro), where a real store asks for it and where
+ * tracking can tell which one a shopper chose. This file draws each method's price beside it, whether or not the review
+ * is showing yet, and prices the order with the method that is chosen.
+ *
+ * It tells tracking three things, and nothing else of what it knows: a code that was submitted is announced with how it went
+ * (`checkout:coupon-submitted`), the code that is applied is written on the review (`data-applied-coupon`), and an order that the
+ * server has confirmed is announced with the lines the cart held (`checkout:order-confirmed`), just before the cart is emptied.
  *
  * Whether the three steps are all done is read from the page itself, the same way a shopper sees it (each
  * step closed with its summary showing), rather than asked of checkout-steps.ts directly, so the two files
@@ -116,23 +124,21 @@ interface ReviewWords {
 
 const wordsOf = () => JSON.parse(section().dataset.words ?? '{}') as ReviewWords;
 
-/** Re-prices and redraws the whole review, if it is showing. Does nothing otherwise, so nothing is computed for a
- * shopper who has not reached it yet, and does nothing once the order is placed, so the cart emptying itself
- * right before the browser navigates to the thank-you page never re-prices an order that is already done. */
+/** Re-prices and redraws the whole review, if it is showing, and always draws the two shipping methods' prices, which sit
+ * in the address step where the shopper chooses and so are needed before the review exists. Does nothing once the
+ * order is placed, so the cart emptying itself right before the browser navigates to the thank-you page never
+ * re-prices an order that is already done. */
 function redraw(): void {
   if (placed) return;
-  section().hidden = !allStepsComplete();
-  if (section().hidden) return;
   const words = wordsOf();
   const { currency, result } = priceNow();
-  if (!result.ok) {
-    // Only reachable if the address step's own values were valid moments ago and no longer are, which the
-    // address step's own check would already have caught on its next submission; nothing to show here.
-    return;
-  }
+  // Not ok only if the address step's own values were valid moments ago and no longer are, which the address
+  // step's own check would already have caught on its next submission; there is nothing to show then.
+  if (result.ok) showShippingPrices(currency, result.order.itemsNet, { free: words.free });
+  section().hidden = !allStepsComplete();
+  if (section().hidden || !result.ok) return;
   renderLines(result.order);
   renderTotals(result.order, { free: words.free });
-  showShippingPrices(currency, result.order.itemsNet, { free: words.free });
 }
 
 /** A changed cart or a changed currency is honestly a new attempt at checking out, whatever caused the change:
@@ -140,6 +146,26 @@ function redraw(): void {
 function handleOrderChanged(): void {
   clearIdempotencyKey();
   redraw();
+}
+
+/**
+ * Says, on the review itself, which code is applied, as the store spells it, and nothing when none is. Tracking reads it
+ * (src/tracking/checkout-tracking.ts), so that it never keeps a second copy of what this file knows.
+ */
+function showAppliedCoupon(code: string | undefined): void {
+  if (code === undefined) delete section().dataset.appliedCoupon;
+  else section().dataset.appliedCoupon = code;
+}
+
+/**
+ * Told whenever a code is submitted, with how it went (`valid`, `expired` or `invalid`, the words of `checkCoupon`) and, for the
+ * first two, the store's own code. Never what was typed, because the box takes any text and a shopper can type or paste
+ * anything into it. An empty box submits no code, so nothing is told.
+ */
+function announceCouponSubmitted(checked: CouponCheck): void {
+  if (checked.status === 'none') return;
+  const detail = checked.status === 'invalid' ? { status: checked.status } : { status: checked.status, code: checked.coupon.code };
+  document.dispatchEvent(new CustomEvent('checkout:coupon-submitted', { detail }));
 }
 
 function applyCoupon(event: SubmitEvent): void {
@@ -158,7 +184,9 @@ function applyCoupon(event: SubmitEvent): void {
     appliedCoupon = '';
     showCouponMessage(checked.status === 'expired' ? words.couponExpired : words.couponInvalid);
   }
+  showAppliedCoupon(checked.status === 'valid' ? checked.coupon.code : undefined);
   redraw();
+  announceCouponSubmitted(checked);
 }
 
 /** Told the moment "Place order" sends its request, so checkout-steps.ts stops the three steps above being
@@ -174,6 +202,15 @@ function announceOrderSubmitting(): void {
  * retry, would otherwise have no way to. */
 function announceOrderSubmitFailed(): void {
   document.dispatchEvent(new CustomEvent('checkout:order-submit-failed'));
+}
+
+/**
+ * Told when the server has confirmed the order, with the lines the cart held, just before the cart is emptied and the browser goes
+ * to the thank-you page. The order on the server keeps no list, and the thank-you page, which announces the purchase, is a separate
+ * page load, so tracking leaves a note of where each line was picked from for it (src/tracking/checkout-tracking.ts).
+ */
+function announceOrderConfirmed(lines: CartLine[]): void {
+  document.dispatchEvent(new CustomEvent('checkout:order-confirmed', { detail: { lines } }));
 }
 
 function showOrderError(text: string): void {
@@ -264,6 +301,7 @@ async function handlePlaceOrder(): Promise<void> {
 
   placed = true;
   clearIdempotencyKey();
+  announceOrderConfirmed(cart.lines);
   clearCart();
   location.href = `/thank-you?token=${encodeURIComponent(token)}`;
 }

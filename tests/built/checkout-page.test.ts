@@ -17,7 +17,8 @@ describe('the checkout page, before any script has run', () => {
   it('is named and described in the store\'s words', () => {
     expect(page).toContain(`<title>${WORDS['checkout.title']} | Second Impression</title>`);
     expect(page).toContain(`<meta name="description" content="${WORDS['checkout.description']}">`);
-    expect(page).toContain(`<h1>${WORDS['checkout.heading']}</h1>`);
+    // The heading also carries the attribute that tracking looks for, which the tests for tracking below check.
+    expect(page).toMatch(new RegExp(`<h1[^>]*>${WORDS['checkout.heading']}</h1>`));
   });
 
   it('has no lead popup, footer link or corner tab: a shopper checking out is never invited to start over', () => {
@@ -180,16 +181,34 @@ describe('the checkout page, before any script has run', () => {
     expect(template).toContain(`aria-label="${WORDS['cart.quantity']}"`);
   });
 
-  it('lists both shipping methods, in order, standard chosen by default', () => {
-    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
-    expect(section).toContain(`<legend>${WORDS['checkout.shippingMethodHeading']}</legend>`);
-    const radios = [...section.matchAll(/<input type="radio" name="shippingMethod" value="(\w+)"( checked)?/g)];
+  it('lists both shipping methods in the address step, in order, standard chosen by default', () => {
+    const step = page.match(/data-checkout-form="address"[\s\S]*?<\/form>/)![0];
+    expect(step).toContain(`<legend>${WORDS['checkout.shippingMethodHeading']}</legend>`);
+    const radios = [...step.matchAll(/<input type="radio" name="shippingMethod" value="(\w+)"( checked)?/g)];
     expect(radios.map((match) => match[1])).toEqual(SHIPPING_METHODS.map((method) => method.id));
     expect(radios.map((match) => !!match[2])).toEqual(SHIPPING_METHODS.map((_, index) => index === 0));
     for (const method of SHIPPING_METHODS) {
-      expect(section, method.id).toContain(`<span>${method.name}</span>`);
-      expect(section, method.id).toContain(`data-checkout-shipping-price="${method.id}"`);
+      expect(step, method.id).toContain(`<span>${method.name}</span>`);
+      expect(step, method.id).toContain(`data-checkout-shipping-price="${method.id}"`);
     }
+  });
+
+  it('puts the shipping methods after the address fields and before the demo button and Continue, so completing the step confirms the choice', () => {
+    const step = page.match(/data-checkout-form="address"[\s\S]*?<\/form>/)![0];
+    const at = (text: string) => step.indexOf(text);
+    expect(at('name="postalCode"')).toBeGreaterThan(-1);
+    expect(at('<fieldset class="checkout-shipping-methods">')).toBeGreaterThan(at('name="postalCode"'));
+    expect(at('data-checkout-demo="address"')).toBeGreaterThan(at('</fieldset>'));
+    expect(at(`class="btn">${WORDS['checkout.continue']}</button>`)).toBeGreaterThan(at('data-checkout-demo="address"'));
+  });
+
+  it('does not offer the shipping choice in the review any more: the review shows only what the chosen method costs', () => {
+    const section = page.match(/<section class="checkout-review"[\s\S]*?<\/section>/)![0];
+    expect(section).not.toContain('shippingMethod');
+    expect(section).not.toContain('checkout-shipping');
+    expect(section).not.toContain(WORDS['checkout.shippingMethodHeading']);
+    // The Shipping row of the totals is still there: it is tested with the other four totals, below.
+    expect(section).toContain(`<dt>${WORDS['checkout.shipping']}</dt><dd data-checkout-total="shipping"></dd>`);
   });
 
   it('has a coupon form in the store\'s words, its field styled like every other field, and a hidden message box beside it', () => {
@@ -241,6 +260,54 @@ describe('the script that runs the checkout steps', () => {
       const script = scriptOf(OPEN, readPage(OPEN, file));
       expect(script, file).not.toContain('data-checkout-form');
       expect(script, file).not.toContain('data-checkout-review');
+    }
+  });
+});
+
+// The checkout page is where four of the events are announced. Its heading says the page is a checkout, each shipping method
+// names itself, and the review says which code it has applied once it has one (written by its script, so not in the page as built).
+// What is announced, and when, cannot be checked here, since no script runs: that is proven in a real browser.
+describe('the checkout page, for tracking', () => {
+  it('marks its heading, and nothing else, as the checkout being looked at', () => {
+    expect(page.match(/data-track-view="checkout"/g)).toHaveLength(1);
+    expect(page).toContain(`<h1 data-track-view="checkout">${WORDS['checkout.heading']}</h1>`);
+  });
+
+  it('names each shipping method as it is announced, with the name the store gives it', () => {
+    expect(SHIPPING_METHODS.length).toBeGreaterThan(1);
+    for (const method of SHIPPING_METHODS) {
+      const radio = page.match(new RegExp(`<input type="radio" name="shippingMethod" value="${method.id}"[^>]*>`))![0];
+      expect(radio, method.id).toContain(`data-track-tier="${method.name}"`);
+    }
+  });
+
+  it('does not say a code is applied before the shopper has applied one', () => {
+    expect(page).not.toContain('data-applied-coupon');
+  });
+
+  it('is loaded with the script that announces its events, which hears when a step is completed and when a code is submitted', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('data-track-view="checkout"');
+    expect(script).toContain('checkout:step-completed');
+    expect(script).toContain('checkout:coupon-submitted');
+  });
+
+  it('tells tracking when the server has confirmed an order, and leaves the note of lists for the thank-you page', () => {
+    const script = scriptOf(OPEN, page);
+    expect(script).toContain('checkout:order-confirmed');
+    expect(script).toContain('second-impression:order-lists');
+  });
+
+  it('does not carry the code that makes fingerprints, since nothing is fingerprinted until the order is shown', () => {
+    expect(scriptOf(OPEN, page)).not.toContain('SHA-256');
+  });
+
+  it('is the only page that carries that script', () => {
+    for (const file of ['index.html', 'cart/index.html', 'about/index.html', 'thank-you/index.html']) {
+      const script = scriptOf(OPEN, readPage(OPEN, file));
+      expect(script, file).not.toContain('data-track-view="checkout"');
+      expect(script, file).not.toContain('checkout:step-completed');
+      expect(script, file).not.toContain('checkout:coupon-submitted');
     }
   });
 });

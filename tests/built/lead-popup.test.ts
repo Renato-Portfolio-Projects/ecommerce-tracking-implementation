@@ -307,3 +307,30 @@ describe('the lead popup, for tracking', () => {
     }
   });
 });
+
+// A lead that the server kept is announced as a generate_lead by the form's own file. Only a visitor who has been shown the
+// popup can make a lead, so the code that announces it, and the code that turns the address into its fingerprint, are not worth
+// carrying on every page. What it does is checked by driving a page in a browser.
+describe('the lead, for tracking', () => {
+  const assets = new URL('_astro/', OPEN);
+  const scripts = readdirSync(assets)
+    .filter((name) => name.endsWith('.js'))
+    .map((name) => ({ name, code: readFileSync(new URL(name, assets), 'utf8') }));
+  // Found by a selector only the form's file writes, as above.
+  const formFiles = scripts.filter(({ code }) => code.includes('data-lead-send-error'));
+
+  it('is announced by the form\'s own file, as a generate_lead', () => {
+    expect(formFiles).toHaveLength(1);
+    expect(formFiles[0].code).toContain('generate_lead');
+  });
+
+  it('is announced with the fingerprint of the address, which some file of the site makes', () => {
+    expect(scripts.some(({ code }) => code.includes('SHA-256'))).toBe(true);
+  });
+
+  it('keeps the code that makes a fingerprint out of what every page that has the popup loads with it', () => {
+    for (const file of pages) {
+      expect(scriptOf(OPEN, readPage(OPEN, file)), file).not.toContain('SHA-256');
+    }
+  });
+});

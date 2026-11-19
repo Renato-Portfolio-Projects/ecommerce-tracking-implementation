@@ -92,7 +92,7 @@ export const EVENTS: EventSpec[] = [
     destinations: ['ga4', 'meta-pixel', 'meta-capi'],
     metaEvent: 'Lead',
     viaServer: true,
-    params: ['event_id', 'coupon', 'user_data'],
+    params: ['event_id', 'coupon', 'source', 'user_data'],
   },
   {
     name: 'view_item_list',
@@ -149,14 +149,14 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'add_shipping_info',
-    firesWhen: 'The shipping step is completed.',
+    firesWhen: 'The address step, which includes the shipping method, is completed.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'currency', 'value', 'coupon', 'shipping_tier', 'items'],
   },
   {
     name: 'add_payment_info',
-    firesWhen: 'The payment step is completed.',
+    firesWhen: 'The payment step is completed with a card the store accepts.',
     destinations: ['ga4', 'meta-pixel'],
     metaEvent: 'AddPaymentInfo',
     viaServer: false,
@@ -182,7 +182,8 @@ export const EVENTS: EventSpec[] = [
   },
   {
     name: 'apply_coupon',
-    firesWhen: 'A discount code is submitted (status: success, invalid or expired).',
+    firesWhen:
+      'A discount code is submitted in the order review (status: success, invalid or expired). A code the store does not know is reported without its text.',
     destinations: ['ga4'],
     viaServer: false,
     params: ['event_id', 'coupon', 'status'],
